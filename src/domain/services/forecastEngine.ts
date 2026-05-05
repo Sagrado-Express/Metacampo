@@ -1,4 +1,4 @@
-import { Forecast } from '../types/blueprint';
+import { Forecast } from '@/types/blueprint';
 
 export class ForecastEngine {
   /**

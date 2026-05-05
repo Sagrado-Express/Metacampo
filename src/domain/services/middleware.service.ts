@@ -1,4 +1,4 @@
-import { Cliente, VPMResult, ITSEConfig } from '../types/schema';
+import { Cliente, VPMResult, ITSEConfig } from '@/types/schema';
 import { VpmService } from './vpm.service';
 
 /**

@@ -1,4 +1,4 @@
-import { Cliente, PerformanceBand } from '../types/schema';
+import { Cliente, PerformanceBand } from '@/types/schema';
 import { VpmService } from './vpm.service';
 
 export interface VisitPlan {

@@ -1,4 +1,4 @@
-import { AuditLog } from '../types/schema';
+import { AuditLog } from '@/types/schema';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

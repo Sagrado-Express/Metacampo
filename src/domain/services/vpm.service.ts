@@ -1,4 +1,4 @@
-import { ITSEConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cultivo, IBGEBenchmark, Cliente } from '../types/schema';
+import { ITSEConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cultivo, IBGEBenchmark, Cliente } from '@/types/schema';
 
 /**
  * Domain Service for VPM (Valor Potencial de Mercado) calculations.

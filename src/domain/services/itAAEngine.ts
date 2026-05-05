@@ -1,4 +1,4 @@
-import { Segmento, ITAAConfig } from '../types/blueprint';
+import { Segmento, ITAAConfig } from '@/types/blueprint';
 
 export const SEGMENTOS: Segmento[] = [
   'Semente',
