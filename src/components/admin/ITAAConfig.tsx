@@ -78,7 +78,7 @@ export default function ITAAConfig() {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">R$</span>
                       <input 
                         type="number"
-                        value={config.valores[segmento]}
+                        value={config.valores[segmento as Segmento]}
                         onChange={(e) => handleValueChange(cultura, segmento, Number(e.target.value))}
                         className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all font-tabular"
                       />
@@ -87,7 +87,7 @@ export default function ITAAConfig() {
                   <div className="w-24 text-right pt-5">
                     <p className="text-[10px] text-muted-foreground font-bold">MIX</p>
                     <p className="text-xs font-bold text-success font-tabular">
-                      {(config.mixTecnico[segmento] * 100).toFixed(1)}%
+                      {(config.mixTecnico[segmento as Segmento] * 100).toFixed(1)}%
                     </p>
                   </div>
                 </div>
