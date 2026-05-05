@@ -1,4 +1,4 @@
-import { ScoringWeights } from '../../types/blueprint';
+import { ScoringWeights } from '@/types/blueprint';
 
 export class ScoringEngine {
   /**

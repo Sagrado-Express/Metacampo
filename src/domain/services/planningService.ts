@@ -1,4 +1,4 @@
-import { Cliente, GoalDiagnostic, ITAAConfig } from '../types/blueprint';
+import { Cliente, GoalDiagnostic, ITAAConfig } from '@/types/blueprint';
 
 export class PlanningService {
   /**
