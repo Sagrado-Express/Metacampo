@@ -38,7 +38,7 @@ export class ITAAEngine {
     return (
       (hectares.soja * (itAAConfigs['Soja'] || 0)) +
       (hectares.milho * (itAAConfigs['Milho'] || 0)) +
-      (hectares.algodao * (itAAConfigs['Algodão'] || 0))
+      (hectares.algodao * (itAAConfigs['Algodao'] || itAAConfigs['Algodão'] || 0))
     );
   }
 }

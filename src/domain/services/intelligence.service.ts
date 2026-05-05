@@ -3,7 +3,7 @@ import { VpmService } from './vpm.service';
 
 export interface VisitPlan {
   clientId: string;
-  priority: 'ALTA' | 'MÉDIA' | 'BAIXA';
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM';
   reason: string;
 }
 
@@ -32,17 +32,17 @@ export class IntelligenceService {
       const pareto = paretoResults.find(p => p.clientId === client.id);
       const isTopClient = (pareto?.cumulativePercentage || 100) <= 80;
       
-      let priority: 'ALTA' | 'MÉDIA' | 'BAIXA' = 'BAIXA';
+      let priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' = 'MEDIUM';
       let reason = 'Manutenção de rotina';
 
       if (isTopClient) {
-        priority = 'ALTA';
+        priority = 'CRITICAL';
         reason = 'Proteção de faturamento (Pareto 80)';
       } else if (client.confidenceLevel === 'VERMELHO') {
-        priority = 'ALTA';
+        priority = 'CRITICAL';
         reason = 'Risco de perda de cliente (Confiança Vermelha)';
       } else if (client.performanceBand === 'AMARELO') {
-        priority = 'MÉDIA';
+        priority = 'HIGH';
         reason = 'Oportunidade de recuperação de share';
       }
 

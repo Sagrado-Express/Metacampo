@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { TrendingUp, ArrowUpRight, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react'
+import { TrendingUp, ArrowUpRight, AlertCircle, CheckCircle2, ChevronRight, type LucideIcon } from 'lucide-react'
 
 export default function ForecastToGo() {
   const data = {
@@ -124,7 +124,16 @@ export default function ForecastToGo() {
   )
 }
 
-function ForecastCard({ label, value, description, icon: Icon, color, alert }: any) {
+interface ForecastCardProps {
+  label: string;
+  value: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+  alert?: boolean;
+}
+
+function ForecastCard({ label, value, description, icon: Icon, color, alert }: ForecastCardProps) {
   return (
     <div className={`glass-card p-6 ${alert ? 'border-destructive/30 bg-destructive/5' : ''}`}>
       <div className="flex items-center justify-between mb-4">
