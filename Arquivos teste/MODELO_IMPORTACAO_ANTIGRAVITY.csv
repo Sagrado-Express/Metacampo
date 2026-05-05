@@ -1,0 +1,7 @@
+ID_Cliente,Nome_Cliente,Produto,Segmento,Volume,Faturamento_R$
+CL-001,Fazenda Boa Vista,Soja Tratada,Sementes,500,1250000.00
+CL-002,Agropecuaria Santa Helena,Milho Hibrido,Sementes,300,850000.00
+CL-003,Grupo SLC Agricola,Herbicida Total,Defensivos,1200,450000.00
+CL-001,Fazenda Boa Vista,Fungicida Premium,Defensivos,200,320000.00
+CL-004,Usina Raizen,Adubo NPK,Fertilizantes,5000,2100000.00
+CL-005,Fazenda Colorado,Inseticida Power,Defensivos,150,180000.00

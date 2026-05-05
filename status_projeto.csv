@@ -1,0 +1,6 @@
+﻿Project,ID,Tipo,Título,Assunto,Contexto,Hero,Status,Prioridade,Pontos,Início (P),Fim (P),Início (R),Fim (R),Dependência,OKR_Link,Strategic_Value,Market
+GTM-GC,1,Infra,Next.js & Supabase Setup,Governance,Initial project bootstrapping,Daniel,Concluído,Alta,5,21/04/2026,22/04/2026,21/04/2026,22/04/2026,,,,Indefinido
+GTM-GC,2,Design,Valora Tokens Migration,Design,Design system inheritance,Daniel,Concluído,Alta,8,22/04/2026,23/04/2026,22/04/2026,22/04/2026,1.0,,,Indefinido
+GTM-GC,3,Backend,Supabase Schema Design,Data,Tables for Portfolios and Targets,Daniel,Em Andamento,Alta,13,23/04/2026,25/04/2026,,,1.0,,,Indefinido
+GTM-GC,4,Frontend,Executive Shell (Sidebar/Layout),UI,Main application navigation,Daniel,Concluído,Média,8,25/04/2026,27/04/2026,22/04/2026,22/04/2026,2.0,,,Indefinido
+GTM-GC,5,Feature,Macro Dashboard View,Dashboard,Initial KPI visualization,Daniel,Concluído,Alta,13,27/04/2026,30/04/2026,22/04/2026,22/04/2026,4.0,,,Indefinido

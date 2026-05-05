@@ -1,0 +1,6 @@
+ID_Cliente,Nome_Cliente,Produto,Segmento,Volume,Faturamento_R$,vendedor,marca,principio_ativo,data_emissao,loja_cliente,uf_entrega,cidade_entrega,cod_grupo,nome_grupo
+CL-001,Fazenda Boa Vista,Soja Tratada,Sementes,500,1250000.00,Ricardo Santos,Sementes Brasil,Tratamento Industrial,2024-05-01,Matriz Sul,RS,Passo Fundo,G-01,Grupo Boa Vista
+CL-002,Agropecuaria Santa Helena,Milho Hibrido,Sementes,300,850000.00,Ana Paula,CornTech,Genetica K,2024-05-02,Filial Cerrado,MT,Sorriso,G-42,Agro Helena
+CL-003,Grupo SLC Agricola,Herbicida Total,Defensivos,1200,450000.00,Ricardo Santos,SafeCrop,Glifosato,2024-05-03,Matriz,GO,Rio Verde,G-SLC,SLC Matriz
+CL-001,Fazenda Boa Vista,Fungicida Premium,Defensivos,200,320000.00,Ricardo Santos,SafeCrop,Tebiconazol,2024-05-04,Matriz Sul,RS,Passo Fundo,G-01,Grupo Boa Vista
+CL-004,Usina Raizen,Adubo NPK,Fertilizantes,5000,2100000.00,Carlos Oliveira,NutriPlant,N-P-K,2024-05-05,Usina-01,SP,Piracicaba,G-RAI,Raizen Group
