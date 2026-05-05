@@ -35,7 +35,7 @@ export function GoalDiagnostic() {
               <CheckCircle2 className="text-success mb-2" size={32} />
               <p className="text-sm font-bold text-success uppercase">Desafio Viável</p>
               <p className="text-[10px] text-muted-foreground text-center mt-1">
-                Sua carteira suporta a meta de R$ {(meta/1M).toFixed(1)}M com {shareAlvo}% de share.
+                Sua carteira suporta a meta de R$ {(meta/1000000).toFixed(1)}M com {shareAlvo}% de share.
               </p>
             </>
           ) : (
@@ -43,7 +43,7 @@ export function GoalDiagnostic() {
               <AlertTriangle className="text-destructive mb-2" size={32} />
               <p className="text-sm font-bold text-destructive uppercase">Atenção: Gap de Potencial</p>
               <p className="text-[10px] text-muted-foreground text-center mt-1">
-                Necessário mapear mais R$ {((vpmNecessario - vpmMapeado)/1M).toFixed(1)}M em áreas.
+                Necessário mapear mais R$ {((vpmNecessario - vpmMapeado)/1000000).toFixed(1)}M em áreas.
               </p>
             </>
           )}
