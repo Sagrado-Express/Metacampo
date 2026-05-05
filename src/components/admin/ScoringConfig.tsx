@@ -38,25 +38,25 @@ export default function ScoringConfig() {
             <WeightSlider 
               label="VPM (Potencial de Mercado)" 
               value={weights.vpm} 
-              onChange={(v) => handleWeightChange('vpm', v)} 
+              onChange={(v: number) => handleWeightChange('vpm', v)} 
               description="Peso do volume financeiro total possível por cliente."
             />
             <WeightSlider 
               label="Share de Acesso" 
               value={weights.acesso} 
-              onChange={(v) => handleWeightChange('acesso', v)} 
+              onChange={(v: number) => handleWeightChange('acesso', v)} 
               description="Peso da participação atual da empresa no cliente."
             />
             <WeightSlider 
               label="Gap Técnico (Embrapa)" 
               value={weights.gapTecnico} 
-              onChange={(v) => handleWeightChange('gapTecnico', v)} 
+              onChange={(v: number) => handleWeightChange('gapTecnico', v)} 
               description="Oportunidade baseada na diferença entre uso real e recomendado."
             />
             <WeightSlider 
               label="Relacionamento / Risco" 
               value={weights.relacionamento} 
-              onChange={(v) => handleWeightChange('relacionamento', v)} 
+              onChange={(v: number) => handleWeightChange('relacionamento', v)} 
               description="Fatores qualitativos e fidelidade comercial."
             />
           </div>
@@ -96,7 +96,14 @@ export default function ScoringConfig() {
   )
 }
 
-function WeightSlider({ label, value, onChange, description }: any) {
+interface WeightSliderProps {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  description: string;
+}
+
+function WeightSlider({ label, value, onChange, description }: WeightSliderProps) {
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-end">
@@ -118,7 +125,13 @@ function WeightSlider({ label, value, onChange, description }: any) {
   )
 }
 
-function ColorBox({ color, label, range }: any) {
+interface ColorBoxProps {
+  color: string;
+  label: string;
+  range: string;
+}
+
+function ColorBox({ color, label, range }: ColorBoxProps) {
   return (
     <div className="flex-1 flex flex-col items-center gap-1">
       <div className={`w-full h-8 rounded-md shadow-lg ${color}`} />

@@ -120,7 +120,13 @@ export default function PortfolioTable() {
   )
 }
 
-function HecBadge({ label, value, color }: any) {
+interface HecBadgeProps {
+  label: string;
+  value: number;
+  color: string;
+}
+
+function HecBadge({ label, value, color }: HecBadgeProps) {
   if (value === 0) return null
   return (
     <div className={`px-2 py-1 rounded text-[10px] font-bold ${color}`}>

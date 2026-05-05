@@ -43,10 +43,10 @@ export default function VisitPlanner() {
           </h3>
           
           <div className="space-y-8">
-            <FrequencySlider label="Azul (Estratégico)" color="bg-primary" value={frequencies.azul} count={counts.azul} onChange={(v) => setFrequencies({...frequencies, azul: v})} />
-            <FrequencySlider label="Verde (Crescimento)" color="bg-success" value={frequencies.verde} count={counts.verde} onChange={(v) => setFrequencies({...frequencies, verde: v})} />
-            <FrequencySlider label="Amarelo (Manutenção)" color="bg-warning" value={frequencies.amarelo} count={counts.amarelo} onChange={(v) => setFrequencies({...frequencies, amarelo: v})} />
-            <FrequencySlider label="Vermelho (Baixa Prioridade)" color="bg-destructive" value={frequencies.vermelho} count={counts.vermelho} onChange={(v) => setFrequencies({...frequencies, vermelho: v})} />
+            <FrequencySlider label="Azul (Estratégico)" color="bg-primary" value={frequencies.azul} count={counts.azul} onChange={(v: number) => setFrequencies({...frequencies, azul: v})} />
+            <FrequencySlider label="Verde (Crescimento)" color="bg-success" value={frequencies.verde} count={counts.verde} onChange={(v: number) => setFrequencies({...frequencies, verde: v})} />
+            <FrequencySlider label="Amarelo (Manutenção)" color="bg-warning" value={frequencies.amarelo} count={counts.amarelo} onChange={(v: number) => setFrequencies({...frequencies, amarelo: v})} />
+            <FrequencySlider label="Vermelho (Baixa Prioridade)" color="bg-destructive" value={frequencies.vermelho} count={counts.vermelho} onChange={(v: number) => setFrequencies({...frequencies, vermelho: v})} />
           </div>
         </div>
 
@@ -111,7 +111,15 @@ export default function VisitPlanner() {
   )
 }
 
-function FrequencySlider({ label, color, value, count, onChange }: any) {
+interface FrequencySliderProps {
+  label: string;
+  color: string;
+  value: number;
+  count: number;
+  onChange: (v: number) => void;
+}
+
+function FrequencySlider({ label, color, value, count, onChange }: FrequencySliderProps) {
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-end">
