@@ -68,7 +68,17 @@ export default function HomePortal() {
   )
 }
 
-function PortalCard({ href, icon: Icon, title, subtitle, description, color, disabled = false }: any) {
+interface PortalCardProps {
+  href: string;
+  icon: any;
+  title: string;
+  subtitle: string;
+  description: string;
+  color: string;
+  disabled?: boolean;
+}
+
+function PortalCard({ href, icon: Icon, title, subtitle, description, color, disabled = false }: PortalCardProps) {
   const CardContent = (
     <div className={`glass-card p-8 h-full flex flex-col group transition-all duration-500 ${color} ${disabled ? 'opacity-50 grayscale' : 'cursor-pointer'}`}>
       <div className="mb-6 flex justify-between items-start">
