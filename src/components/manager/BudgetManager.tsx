@@ -104,7 +104,12 @@ export default function BudgetManager() {
   )
 }
 
-function StatRow({ label, value }: any) {
+interface StatRowProps {
+  label: string;
+  value: string;
+}
+
+function StatRow({ label, value }: StatRowProps) {
   return (
     <div className="flex justify-between items-end">
       <span className="text-[10px] font-bold text-muted-foreground uppercase">{label}</span>
@@ -113,7 +118,13 @@ function StatRow({ label, value }: any) {
   )
 }
 
-function VendedorRow({ nome, share, valor }: any) {
+interface VendedorRowProps {
+  nome: string;
+  share: number;
+  valor: string;
+}
+
+function VendedorRow({ nome, share, valor }: VendedorRowProps) {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-[10px] font-bold uppercase">

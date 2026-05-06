@@ -1,5 +1,5 @@
 'use client'
-
+import React from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ShieldCheck, MapPin, BarChart3, Lock, ChevronRight } from 'lucide-react'
@@ -70,7 +70,7 @@ export default function HomePortal() {
 
 interface PortalCardProps {
   href: string;
-  icon: any;
+  icon: React.ElementType;
   title: string;
   subtitle: string;
   description: string;

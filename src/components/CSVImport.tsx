@@ -12,7 +12,7 @@ function cn(...inputs: ClassValue[]) {
 
 export function CSVImport() {
   const [isUploading, setIsUploading] = useState(false)
-  const [importResult, setImportResult] = useState<any>(null)
+  const [importResult, setImportResult] = useState<{clientCount: number, totalRevenue: number, recordCount: number} | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -35,15 +35,15 @@ export function CSVImport() {
         
         const consolidated = MiddlewareService.processStrategicConsolidation(parsedData, [])
         const clientCount = Object.keys(consolidated).length
-        const totalRevenue = Object.values(consolidated).reduce((acc: number, curr: any) => acc + curr.totalRevenue, 0)
+        const totalRevenue = Object.values(consolidated).reduce((acc: number, curr: { totalRevenue: number }) => acc + curr.totalRevenue, 0)
 
         setImportResult({
           clientCount,
           totalRevenue,
           recordCount: parsedData.length
         })
-      } catch (err: any) {
-        setError(err.message || 'Erro ao processar arquivo.')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Erro ao processar arquivo.')
       } finally {
         setIsUploading(false)
       }
