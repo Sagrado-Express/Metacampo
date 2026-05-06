@@ -2,10 +2,15 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Filter, TrendingUp, Users } from 'lucide-react'
+import { Search, Filter, TrendingUp, Users, Target, BarChart3, ChevronRight } from 'lucide-react'
 import { Cliente } from '@/types/blueprint'
 
+import PlanningModal from './workspaces/PlanningModal'
+
 export default function PortfolioTable() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedCliente, setSelectedCliente] = useState<string | null>(null)
+  
   const [clientes, setClientes] = useState<Cliente[]>([
     {
       id: '1',
@@ -31,8 +36,19 @@ export default function PortfolioTable() {
     }
   ])
 
+  const openPlanning = (nome: string) => {
+    setSelectedCliente(nome)
+    setIsModalOpen(true)
+  }
+
   return (
     <div className="space-y-6">
+      <PlanningModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        clienteNome={selectedCliente || ''} 
+      />
+      
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
@@ -66,8 +82,10 @@ export default function PortfolioTable() {
                 <th className="px-6 py-4 text-center">Hectares (S/M/A)</th>
                 <th className="px-6 py-4">VPM Individual</th>
                 <th className="px-6 py-4">Previsão Vendas</th>
+                <th className="px-6 py-4 text-center">Profundidade</th>
                 <th className="px-6 py-4 text-center">Share Acesso</th>
                 <th className="px-6 py-4 text-center">Scoring</th>
+                <th className="px-6 py-4 text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
@@ -98,6 +116,17 @@ export default function PortfolioTable() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
+                    <div className="flex justify-center gap-1">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div 
+                          key={i} 
+                          className={`w-1.5 h-3 rounded-full ${i < (parseInt(cliente.id) % 6 + 1) ? 'bg-accent' : 'bg-white/10'}`} 
+                          title="Segmento Mapeado"
+                        />
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
                     <div className="inline-flex flex-col items-center">
                       <span className="text-sm font-black text-accent">{cliente.shareAcesso}%</span>
                       <div className="w-16 h-1 bg-white/10 rounded-full mt-1 overflow-hidden">
@@ -109,6 +138,14 @@ export default function PortfolioTable() {
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${getBadgeColor(cliente.segmentacao)}`}>
                       {cliente.segmentacao} ({cliente.nota})
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => openPlanning(cliente.nome)}
+                      className="p-2 bg-accent/10 border border-accent/20 rounded-lg text-accent hover:bg-accent hover:text-white transition-all"
+                    >
+                      <Target size={16} />
+                    </button>
                   </td>
                 </tr>
               ))}
