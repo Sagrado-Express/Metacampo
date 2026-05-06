@@ -11,16 +11,18 @@ export default function ITAAConfig() {
     'Soja': ITAAEngine.calculateITAA('Soja', {
       'Semente': 800,
       'Fertilizante': 1200,
-      'Defensivos': 900,
+      'Agroquímicos': 900,
       'Nutrição': 300,
-      'Biológicos': 150
+      'Biológico': 150,
+      'Regulador de Crescimento': 0
     }),
     'Milho': ITAAEngine.calculateITAA('Milho', {
       'Semente': 600,
       'Fertilizante': 1500,
-      'Defensivos': 700,
+      'Agroquímicos': 700,
       'Nutrição': 250,
-      'Biológicos': 100
+      'Biológico': 100,
+      'Regulador de Crescimento': 0
     })
   })
 

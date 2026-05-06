@@ -7,7 +7,7 @@ import { Landmark, Calendar, ChevronDown, Split, Info } from 'lucide-react'
 export default function BudgetManager() {
   const [activeMonth, setActiveMonth] = useState('Outubro')
   
-  const segments = ['Semente', 'Fertilizante', 'Defensivos', 'Nutrição', 'Biológicos']
+  const segments = ['Semente', 'Fertilizante', 'Agroquímicos', 'Nutrição', 'Biológico', 'Regulador de Crescimento']
   const months = ['Setembro', 'Outubro', 'Novembro', 'Dezembro', 'Janeiro', 'Fevereiro']
 
   return (

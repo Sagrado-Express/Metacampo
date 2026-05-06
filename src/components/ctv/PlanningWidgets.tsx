@@ -57,9 +57,10 @@ export function SegmentDrillDown() {
   const segments = [
     { label: 'Semente', value: 4500000, color: 'bg-blue-500' },
     { label: 'Fertilizante', value: 6800000, color: 'bg-emerald-500' },
-    { label: 'Defensivos', value: 3200000, color: 'bg-amber-500' },
+    { label: 'Agroquímicos', value: 3200000, color: 'bg-amber-500' },
     { label: 'Nutrição', value: 850000, color: 'bg-purple-500' },
-    { label: 'Biológicos', value: 450000, color: 'bg-pink-500' },
+    { label: 'Biológico', value: 450000, color: 'bg-pink-500' },
+    { label: 'Regulador', value: 200000, color: 'bg-orange-500' },
   ]
 
   const total = segments.reduce((acc, s) => acc + s.value, 0)
