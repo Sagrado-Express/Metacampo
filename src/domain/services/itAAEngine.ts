@@ -3,9 +3,10 @@ import { Segmento, ITAAConfig } from '@/types/blueprint';
 export const SEGMENTOS: Segmento[] = [
   'Semente',
   'Fertilizante',
-  'Defensivos',
+  'Agroquímicos',
   'Nutrição',
-  'Biológicos'
+  'Biológico',
+  'Regulador de Crescimento'
 ];
 
 export class ITAAEngine {
@@ -28,17 +29,15 @@ export class ITAAEngine {
     };
   }
 
-  /**
-   * Passo 4: Calcula o VPM Individual baseado nos hectares e no ITAA da cultura
-   */
   static calculateVPMIndividual(
-    hectares: { soja: number; milho: number; algodao: number },
-    itAAConfigs: Record<string, number> // Record<cultura, itaa_total>
+    hectares: Record<string, number>,
+    itAAConfigs: Record<string, number>
   ): number {
-    return (
-      (hectares.soja * (itAAConfigs['Soja'] || 0)) +
-      (hectares.milho * (itAAConfigs['Milho'] || 0)) +
-      (hectares.algodao * (itAAConfigs['Algodao'] || itAAConfigs['Algodão'] || 0))
-    );
+    return Object.keys(hectares).reduce((total, cultura) => {
+      const chaveNormalizada = Object.keys(itAAConfigs).find(
+        k => k.toLowerCase() === cultura.toLowerCase()
+      );
+      return total + (hectares[cultura] * (chaveNormalizada ? itAAConfigs[chaveNormalizada] : 0));
+    }, 0);
   }
 }

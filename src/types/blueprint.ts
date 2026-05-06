@@ -5,7 +5,7 @@
 
 export type Role = 'ADMIN' | 'GESTOR' | 'CTV';
 
-export type Segmento = 'Semente' | 'Fertilizante' | 'Defensivos' | 'Nutrição' | 'Biológicos';
+export type Segmento = 'Semente' | 'Fertilizante' | 'Agroquímicos' | 'Nutrição' | 'Biológico' | 'Regulador de Crescimento';
 
 export interface ITAAConfig {
   cultura: string;
