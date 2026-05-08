@@ -1,99 +1,144 @@
-import { ITSEConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cultivo, IBGEBenchmark, Cliente } from '@/types/schema';
+import { ITSEConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cliente, IBGEBenchmark } from '@/types/schema';
 
 /**
  * Domain Service for VPM (Valor Potencial de Mercado) calculations.
- * Pure logic implementation to match Excel (Simulador Carteira CTV AA) results.
+ * Fully aligned with the Excel Master Prompt (Agr-1 and Agr-2).
  */
 export class VpmService {
-  /**
-   * Calculates VPM breakdown based on Area (ha) and ITSE Configs.
-   * Formula: VPM = Area * ValuePerHectare (per segment)
-   * Ensures 2-decimal rounding for financial consistency.
-   */
-  static calculateVPM(
-    areaHa: number,
-    itseConfigs: ITSEConfig[],
-    cultivoId: string
-  ): VPMResult {
-    const breakdown = itseConfigs
-      .filter((config) => config.cultivoId === cultivoId)
-      .map((config) => ({
-        productSegmentId: config.productSegmentId,
-        value: Number((areaHa * config.valuePerHectare).toFixed(2)),
-      }));
+  
+  // ==========================================
+  // 1. MOTOR DE CÁLCULO FINANCEIRO (AGR-1)
+  // ==========================================
 
-    const totalVpm = Number(
-      breakdown.reduce((acc, item) => acc + item.value, 0).toFixed(2)
-    );
+  /**
+   * Calculates the Required Area (Simulação) based on Sales Goal and Target Share.
+   * Formula: Área Necessária = Meta de Venda ÷ (Share Alvo × IT-SE Total)
+   */
+  static calculateRequiredArea(
+    metaVenda: number,
+    shareAlvoDecimal: number,
+    itseTotal: number,
+    areaCadastrada: number
+  ): { areaNecessaria: number; areaInvalida: boolean; alert?: string } {
+    if (shareAlvoDecimal <= 0 || itseTotal <= 0) return { areaNecessaria: 0, areaInvalida: false };
+
+    const areaNecessaria = parseFloat((metaVenda / (shareAlvoDecimal * itseTotal)).toFixed(2));
+    const areaInvalida = areaNecessaria > areaCadastrada;
 
     return {
-      cultivoId,
-      totalVpm,
-      breakdown,
+      areaNecessaria,
+      areaInvalida,
+      alert: areaInvalida ? `ALERTA: Área Necessária (${areaNecessaria}ha) excede a Área Cadastrada (${areaCadastrada}ha). Ajuste a Meta ou o Share.` : undefined
     };
   }
 
   /**
-   * Determines the Performance Band based on attained value vs target.
+   * Calculates Planned Share per segment.
+   * Formula: Meta_Segmento ÷ VPM_Segmento
    */
-  static getPerformanceBand(attained: number, target: number): PerformanceBand {
-    if (target <= 0) return 'CINZA';
-    const percentage = (attained / target) * 100;
-
-    if (percentage >= 100) return 'AZUL';
-    if (percentage >= 90) return 'VERDE';
-    if (percentage >= 70) return 'AMARELO';
-    if (percentage > 0) return 'VERMELHO';
-    return 'CINZA';
+  static calculatePlannedShare(metaSegmento: number, vpmSegmento: number): number {
+    if (vpmSegmento <= 0) return 0;
+    return parseFloat((metaSegmento / vpmSegmento).toFixed(4)); // Keeps as decimal (e.g., 0.15 = 15%)
   }
 
+  // ==========================================
+  // 2. MOTOR DE SEGMENTAÇÃO PARETO 80/20 (AGR-2)
+  // ==========================================
+
   /**
-   * Calculates Pareto distribution to help determine Performance Bands
-   * across a portfolio of clients.
-   * Now supports qualitativeWeight for influence-based adjustments.
+   * Automates Step 15 segmentation based on the strict Agr-2 Excel rules.
    */
   static calculatePareto(
-    clients: { id: string; revenue: number; qualitativeWeight: number }[]
-  ): { clientId: string; cumulativePercentage: number }[] {
-    const sorted = [...clients]
-      .map((c) => ({ ...c, adjustedValue: c.revenue * c.qualitativeWeight }))
-      .sort((a, b) => b.adjustedValue - a.adjustedValue);
+    clients: { id: string; name: string; vpmTotal: number }[]
+  ): { clientId: string; performanceBand: PerformanceBand; cumulativePercentage: number }[] {
     
-    const total = sorted.reduce((acc, curr) => acc + curr.adjustedValue, 0);
-    let cumulative = 0;
+    // 1. Ranking: Order by VPM Total descending
+    const sorted = [...clients].sort((a, b) => b.vpmTotal - a.vpmTotal);
+    
+    const totalPortfolioVpm = sorted.reduce((acc, curr) => acc + curr.vpmTotal, 0);
+    if (totalPortfolioVpm === 0) return sorted.map(c => ({ clientId: c.id, performanceBand: 'CINZA', cumulativePercentage: 0 }));
 
-    return sorted.map((item) => {
-      cumulative += item.adjustedValue;
+    let cumulativeVpm = 0;
+    const result = sorted.map(item => {
+      cumulativeVpm += item.vpmTotal;
       return {
-        clientId: item.id,
-        cumulativePercentage: Number(((cumulative / total) * 100).toFixed(2)),
+        ...item,
+        cumulativePercentage: Number(((cumulativeVpm / totalPortfolioVpm) * 100).toFixed(2))
       };
     });
-  }
 
-  /**
-   * Adjusts the potential share based on the agricultural window.
-   * (Step 8: Ajuste de share pelo calendário agrícola)
-   */
-  static calculateAdjustedShare(currentDate: Date, window: AgriculturalWindow): number {
-    const now = currentDate.getTime();
-    const start = window.plantingStart.getTime();
-    const end = window.harvestEnd.getTime();
+    // 2. Corte 80/20
+    const grupoEstrategico = result.filter(c => c.cumulativePercentage <= 80);
+    const grupoComplementar = result.filter(c => c.cumulativePercentage > 80);
 
-    // Within window: 100% potential
-    if (now >= start && now <= end) {
-      return 1.0;
+    // If no one is strictly <= 80 because of huge first client, put at least first client in Estratégico
+    if (grupoEstrategico.length === 0 && result.length > 0) {
+      grupoEstrategico.push(result[0]);
+      grupoComplementar.shift();
     }
 
-    // Outside window: 0% potential (MVP logic)
-    return 0.0;
+    // 3. Sub-segmentação Grupo Estratégico (Top 50% Azul, Bottom 50% Verde)
+    const midEstrategico = Math.ceil(grupoEstrategico.length / 2);
+    const assignedEstrategico = grupoEstrategico.map((c, index) => ({
+      clientId: c.id,
+      cumulativePercentage: c.cumulativePercentage,
+      performanceBand: (index < midEstrategico) ? 'AZUL' as PerformanceBand : 'VERDE' as PerformanceBand
+    }));
+
+    // 4. Sub-segmentação Grupo Complementar (Top 50% Amarelo, Bottom 50% Vermelho)
+    const midComplementar = Math.ceil(grupoComplementar.length / 2);
+    const assignedComplementar = grupoComplementar.map((c, index) => ({
+      clientId: c.id,
+      cumulativePercentage: c.cumulativePercentage,
+      performanceBand: (index < midComplementar) ? 'AMARELO' as PerformanceBand : 'VERMELHO' as PerformanceBand
+    }));
+
+    return [...assignedEstrategico, ...assignedComplementar];
+  }
+
+  // ==========================================
+  // 3. MONITORAMENTO E SALDO TO-GO (PASSO 12)
+  // ==========================================
+
+  /**
+   * Calculates the TO-GO Balance.
+   * Formula: Previsão de Venda - (Faturamento + Pedidos Pendentes)
+   */
+  static calculateToGo(previsaoVenda: number, faturamento: number, pedidosPendentes: number): number {
+    const toGo = previsaoVenda - (faturamento + pedidosPendentes);
+    return parseFloat(Math.max(0, toGo).toFixed(2)); // Ensures we don't return negative if over-delivered
   }
 
   /**
-   * Materializes the real area for a client (Step 3).
-   * Validates client areas against IBGE benchmarks (Step 2 - Materialização).
-   * Ensures CTVs don't "invent" area beyond the municipality physical ceiling.
+   * Calculates the Access Gap.
+   * Formula: VPM Total - Faturamento Total
    */
+  static calculateAccessGap(vpmTotal: number, faturamentoTotal: number): number {
+    const gap = vpmTotal - faturamentoTotal;
+    return parseFloat(Math.max(0, gap).toFixed(2));
+  }
+
+  /**
+   * Efficiency Indicator: Ranks sellers by Budget Gap % (lowest gap first).
+   */
+  static rankSellers(
+    sellers: { name: string; meta: number; faturamento: number; pedidos: number }[]
+  ): { name: string; gapPercent: number; toGoTotal: number }[] {
+    return sellers.map(s => {
+      const toGo = this.calculateToGo(s.meta, s.faturamento, s.pedidos);
+      const gapPercent = s.meta > 0 ? (toGo / s.meta) * 100 : 0;
+      return {
+        name: s.name,
+        toGoTotal: toGo,
+        gapPercent: parseFloat(gapPercent.toFixed(2))
+      };
+    }).sort((a, b) => a.gapPercent - b.gapPercent); // Ascending (closest to goal first)
+  }
+
+  // ==========================================
+  // 4. LEGACY VALIDATIONS (IBGE & CALENDAR)
+  // ==========================================
+
   static validateAreaAgainstIBGE(
     summedClientArea: number,
     benchmark: IBGEBenchmark
@@ -101,57 +146,18 @@ export class VpmService {
     if (summedClientArea > benchmark.areaPlantadaHa) {
       return {
         isValid: false,
-        warning: `Alerta: Área total lançada (${summedClientArea} ha) excede o teto IBGE do município para ${benchmark.culturaNome} (${benchmark.areaPlantadaHa} ha).`
+        warning: `Alerta: Área total lançada (${summedClientArea} ha) excede o teto IBGE do município (${benchmark.areaPlantadaHa} ha).`
       };
     }
     return { isValid: true };
   }
 
-  /**
-   * Generates a prioritized visit plan for the CTV (Step 16).
-   * Prioritization Logic: 
-   * 1. Pareto Band A + RED Confidence (Critical Risk)
-   * 2. Pareto Band A + Upcoming Agricultural Window (Urgency)
-   * 3. Pareto Band B + Opportunity
-   */
-  static generateVisitPlan(
-    clients: (Cliente & { vpmTotal: number })[],
-    windows: AgriculturalWindow[]
-  ): { clientId: string; priority: 'CRITICAL' | 'HIGH' | 'MEDIUM'; reason: string }[] {
-    const sortedByVpm = [...clients].sort((a, b) => b.vpmTotal - a.vpmTotal);
-    const totalVpm = sortedByVpm.reduce((acc, c) => acc + c.vpmTotal, 0);
-    let cumulative = 0;
-
-    return sortedByVpm.map((client) => {
-      cumulative += client.vpmTotal;
-      const isBandA = (cumulative / totalVpm) <= 0.8;
-      
-      let priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' = 'MEDIUM';
-      let reason = 'Manutenção de Relacionamento';
-
-      if (isBandA) {
-        if (client.confidenceLevel === 'VERMELHO') {
-          priority = 'CRITICAL';
-          reason = 'Alto Risco em Cliente Estratégico (Pareto A)';
-        } else if (client.confidenceLevel === 'AMARELO') {
-          priority = 'HIGH';
-          reason = 'Acompanhamento Necessário (Potencial em Risco)';
-        } else {
-          priority = 'HIGH';
-          reason = 'Garantir Execução do Potencial (Pareto A)';
-        }
-      }
-
-      return {
-        clientId: client.id,
-        priority,
-        reason
-      };
-    }).sort((a, b) => {
-      const pMap = { CRITICAL: 0, HIGH: 1, MEDIUM: 2 };
-      return pMap[a.priority] - pMap[b.priority];
-    });
+  static calculateAdjustedShare(currentDate: Date, window: AgriculturalWindow): number {
+    const now = currentDate.getTime();
+    const start = window.plantingStart.getTime();
+    const end = window.harvestEnd.getTime();
+    if (now >= start && now <= end) return 1.0;
+    return 0.0;
   }
-
-
 }
+
