@@ -81,6 +81,8 @@ export class VpmService {
     const midEstrategico = Math.ceil(grupoEstrategico.length / 2);
     const assignedEstrategico = grupoEstrategico.map((c, index) => ({
       clientId: c.id,
+      name: c.name,
+      vpmTotal: c.vpmTotal,
       cumulativePercentage: c.cumulativePercentage,
       performanceBand: (index < midEstrategico) ? 'AZUL' as PerformanceBand : 'VERDE' as PerformanceBand
     }));
@@ -89,6 +91,8 @@ export class VpmService {
     const midComplementar = Math.ceil(grupoComplementar.length / 2);
     const assignedComplementar = grupoComplementar.map((c, index) => ({
       clientId: c.id,
+      name: c.name,
+      vpmTotal: c.vpmTotal,
       cumulativePercentage: c.cumulativePercentage,
       performanceBand: (index < midComplementar) ? 'AMARELO' as PerformanceBand : 'VERMELHO' as PerformanceBand
     }));
