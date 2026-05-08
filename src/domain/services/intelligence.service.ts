@@ -21,8 +21,8 @@ export class IntelligenceService {
     // 1. Calculate Pareto with weights
     const paretoInput = clients.map(c => ({
       id: c.id,
-      revenue: revenues[c.id] || 0,
-      qualitativeWeight: c.qualitativeWeight || 1.0
+      name: c.name,
+      vpmTotal: (revenues[c.id] || 0) * (c.qualitativeWeight || 1.0)
     }));
 
     const paretoResults = VpmService.calculatePareto(paretoInput);

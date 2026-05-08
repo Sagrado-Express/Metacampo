@@ -1,99 +1,55 @@
 import { describe, it, expect } from 'vitest';
 import { VpmService } from '../vpm.service';
-import { ITSEConfig, AgriculturalWindow } from '../../../types/schema';
 
 describe('VpmService', () => {
-  it('should calculate VPM correctly (Golden Master: 100ha * 3500)', () => {
-    const areaHa = 100;
-    const itseConfigs: ITSEConfig[] = [
-      {
-        id: '1',
-        empresaId: 'T1',
-        safraId: 'S1',
-        cultivoId: 'C1',
-        productSegmentId: 'PS1',
-        valuePerHectare: 3500,
-      }
-    ];
+  it('should calculate Required Area correctly (Agr-1)', () => {
+    const metaVenda = 100000;
+    const shareAlvo = 0.2; // 20%
+    const itseTotal = 5000;
+    const areaReal = 150;
 
-    const result = VpmService.calculateVPM(areaHa, itseConfigs, 'C1');
+    const result = VpmService.calculateRequiredArea(metaVenda, shareAlvo, itseTotal, areaReal);
     
-    expect(result.totalVpm).toBe(350000);
-    expect(result.breakdown[0].value).toBe(350000);
+    // 100,000 / (0.2 * 5000) = 100,000 / 1000 = 100
+    expect(result.areaNecessaria).toBe(100);
+    expect(result.areaInvalida).toBe(false);
   });
 
-  it('should handle multiple product segments with 2-decimal rounding', () => {
-    const areaHa = 120.55;
-    const itseConfigs: ITSEConfig[] = [
-      {
-        id: '1',
-        empresaId: 'T1',
-        safraId: 'S1',
-        cultivoId: 'C1',
-        productSegmentId: 'PS1',
-        valuePerHectare: 1250.40,
-      },
-      {
-        id: '2',
-        empresaId: 'T1',
-        safraId: 'S1',
-        cultivoId: 'C1',
-        productSegmentId: 'PS2',
-        valuePerHectare: 800.15,
-      }
-    ];
-
-    const result = VpmService.calculateVPM(areaHa, itseConfigs, 'C1');
-    
-    expect(result.breakdown[0].value).toBe(150735.72);
-    expect(result.breakdown[1].value).toBe(96458.08);
-    expect(result.totalVpm).toBe(247193.80);
+  it('should alert when Required Area exceeds Registered Area', () => {
+    const result = VpmService.calculateRequiredArea(200000, 0.2, 5000, 150);
+    // 200,000 / 1000 = 200. 200 > 150.
+    expect(result.areaInvalida).toBe(true);
+    expect(result.alert).toContain('excede');
   });
 
-  it('should determine Performance Bands correctly', () => {
-    expect(VpmService.getPerformanceBand(100, 100)).toBe('AZUL');
-    expect(VpmService.getPerformanceBand(95, 100)).toBe('VERDE');
-    expect(VpmService.getPerformanceBand(75, 100)).toBe('AMARELO');
-    expect(VpmService.getPerformanceBand(10, 100)).toBe('VERMELHO');
-    expect(VpmService.getPerformanceBand(0, 100)).toBe('CINZA');
-  });
-
-  it('should calculate Pareto with qualitative weights', () => {
+  it('should calculate Pareto 80/20 with color splitting (Agr-2)', () => {
     const clients = [
-      { id: '1', revenue: 100, qualitativeWeight: 1.0 }, // Value: 100
-      { id: '2', revenue: 50, qualitativeWeight: 3.0 },  // Value: 150 (Prioritized)
-      { id: '3', revenue: 200, qualitativeWeight: 0.5 }, // Value: 100
+      { id: '1', name: 'C1', vpmTotal: 1000 },
+      { id: '2', name: 'C2', vpmTotal: 800 },
+      { id: '3', name: 'C3', vpmTotal: 600 },
+      { id: '4', name: 'C4', vpmTotal: 200 },
+      { id: '5', name: 'C5', vpmTotal: 100 },
     ];
 
     const result = VpmService.calculatePareto(clients);
     
-    // Total adjusted: 100 + 150 + 100 = 350
-    // Rank: 2 (150/350=42.86%), 1 (250/350=71.43%), 3 (350/350=100%)
-    expect(result[0].clientId).toBe('2');
-    expect(result[0].cumulativePercentage).toBe(42.86);
-    expect(result[1].clientId).toBe('1');
-    expect(result[1].cumulativePercentage).toBe(71.43);
+    // Total: 2700
+    // 1000/2700 = 37% (Azul)
+    // 1800/2700 = 66% (Verde)
+    // 2400/2700 = 88.8% (Complementar - Amarelo)
+    // 2600/2700 = 96.2% (Complementar - Vermelho)
+    
+    expect(result[0].performanceBand).toBe('AZUL');
+    expect(result[1].performanceBand).toBe('VERDE');
+    expect(result[2].performanceBand).toBe('AMARELO');
+    expect(result[3].performanceBand).toBe('AMARELO'); // 50% top of complementary
+    expect(result[4].performanceBand).toBe('VERMELHO');
   });
 
-  it('should adjust share based on agricultural window', () => {
-    const window: AgriculturalWindow = {
-      id: 'w1',
-      empresaId: 'e1',
-      cultivoId: 'c1',
-      region: 'Sul',
-      plantingStart: new Date('2024-09-01'),
-      plantingEnd: new Date('2024-10-31'),
-      harvestStart: new Date('2025-02-01'),
-      harvestEnd: new Date('2025-04-30'),
-    };
-
-    expect(VpmService.calculateAdjustedShare(new Date('2024-10-01'), window)).toBe(1.0);
-    expect(VpmService.calculateAdjustedShare(new Date('2025-03-01'), window)).toBe(1.0);
-    expect(VpmService.calculateAdjustedShare(new Date('2024-08-01'), window)).toBe(0.0);
+  it('should calculate TO-GO balance correctly', () => {
+    expect(VpmService.calculateToGo(1000, 700, 100)).toBe(200);
+    expect(VpmService.calculateToGo(500, 600, 0)).toBe(0);
   });
+});
 
-  it('should materialize area preferring reported value', () => {
-    expect(VpmService.materializeArea(500, 450)).toBe(500);
-    expect(VpmService.materializeArea(0, 450)).toBe(450);
-  });
 });
