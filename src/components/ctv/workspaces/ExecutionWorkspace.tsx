@@ -23,7 +23,7 @@ export default function ExecutionWorkspace() {
         <KPICard label="Meta Consolidada" value="R$ 15.0M" subValue="Faturamento YTD" />
         <KPICard label="Realizado (Sales)" value="R$ 8.2M" subValue="54% da Meta" color="text-success" />
         <KPICard label="Pedidos Carteira" value="R$ 2.1M" subValue="Em Processamento" color="text-accent" />
-        <KPICard label="Saldo TO GO" value="R$ 4.7M" subValue="Gap para Meta" color="text-warning" />
+        <KPICard label="Saldo TO-GO" value="R$ 4.7M" subValue="Gap para Meta" color="text-warning" />
       </div>
 
       {/* Execution List */}
@@ -46,7 +46,7 @@ export default function ExecutionWorkspace() {
                 <th className="px-6 py-4 text-center">Progresso (%)</th>
                 <th className="px-6 py-4 text-right">Meta (R$)</th>
                 <th className="px-6 py-4 text-right">Real + Pedidos</th>
-                <th className="px-6 py-4 text-right text-warning">Saldo TO GO</th>
+                <th className="px-6 py-4 text-right text-warning">Saldo TO-GO</th>
                 <th className="px-6 py-4 text-center">Confiança</th>
               </tr>
             </thead>
@@ -114,7 +114,7 @@ export default function ExecutionWorkspace() {
           description="A janela de adubação de base do Café fecha em 15 dias." 
           status="URGENTE"
           color="text-destructive"
-          value="R$ 400k Pendentes"
+          value="R$ 400k em Aberto"
         />
         <AlertCard 
           icon={AlertCircle} 

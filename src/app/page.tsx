@@ -42,7 +42,7 @@ export default function CockpitGestor() {
   return (
     <Shell 
       title={`Olá, ${cockpitData.gestor}`}
-      subtitle={`Seu território tem R$ ${cockpitData.pendentes}M pendentes.`}
+      subtitle={`Seu território tem R$ ${cockpitData.saldoToGo}M de Saldo TO-GO.`}
     >
       <div className="space-y-8">
 
