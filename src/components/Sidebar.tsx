@@ -15,11 +15,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: "Portal", href: "/", icon: LayoutDashboard },
-  { name: "CTV (Campo)", href: "/ctv", icon: Users },
-  { name: "Gestor (Regional)", href: "/manager", icon: TrendingUp },
-  { name: "Administração", href: "/admin", icon: Settings },
-  { name: "Governança", href: "/governance", icon: Target },
+  { name: "Cockpit do Gestor", href: "/", icon: LayoutDashboard },
+  { name: "Tabela Mãe (Inventário)", href: "/ctv/tabela-mae", icon: Users },
+  { name: "Segmentação (Pareto)", href: "/ctv/planejamento", icon: Target },
+  { name: "Configurações", href: "/admin", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -28,9 +27,8 @@ export function Sidebar() {
   return (
     <div className="flex h-full w-64 flex-col bg-sidebar-background border-r border-sidebar-border">
       <div className="flex h-16 shrink-0 items-center px-6">
-        <Leaf className="h-8 w-8 text-accent" />
-        <span className="ml-3 text-xl font-bold tracking-tight text-sidebar-primary">
-          GTM-GC
+        <span className="text-xl font-black tracking-tighter text-primary">
+          METACAMPO
         </span>
       </div>
       

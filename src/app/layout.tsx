@@ -21,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="dark">
+    <html lang="pt-BR" className="light">
       <body className={`${inter.variable} antialiased`}>
         <Suspense fallback={<div>Carregando...</div>}>
           <MeetingModeProvider>

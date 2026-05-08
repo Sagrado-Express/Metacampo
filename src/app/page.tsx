@@ -8,10 +8,10 @@ import { MapPin, TrendingUp, AlertCircle, ChevronRight } from 'lucide-react'
 // Dummy Data for the UI
 const cockpitData = {
   gestor: "Daniel",
-  pendentes: "12.4",
   metaGlobal: "50.0",
   realizadoYtd: "37.6",
   percentualRealizado: 75.2,
+  saldoToGo: "12.4",
   topClientes: [
     { nome: "Fazenda São Jorge", valor: "R$ 4.2M", cor: "bg-[#1D4ED8] text-white" }, // Azul
     { nome: "Grupo Bom Futuro", valor: "R$ 3.8M", cor: "bg-[#1D4ED8] text-white" }, // Azul
@@ -34,34 +34,17 @@ const cockpitData = {
   ]
 }
 
+import { Shell } from '@/components/Shell'
+
 export default function CockpitGestor() {
   const isHighGap = (parseFloat(cockpitData.metaGlobal) - parseFloat(cockpitData.realizadoYtd)) > 10;
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-8 font-sans">
-      <div className="max-w-[1400px] mx-auto space-y-8">
-        
-        {/* HEADER */}
-        <header className="flex items-center justify-between">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <Logo size="lg" />
-          </motion.div>
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-right"
-          >
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-1">
-              Cockpit do Gestor
-            </p>
-            <h1 className="text-2xl font-black tracking-tight text-primary">
-              Olá, {cockpitData.gestor}. Seu território tem <span className="text-[#CA8A04]">R$ {cockpitData.pendentes}M</span> pendentes.
-            </h1>
-          </motion.div>
-        </header>
+    <Shell 
+      title={`Olá, ${cockpitData.gestor}`}
+      subtitle={`Seu território tem R$ ${cockpitData.pendentes}M pendentes.`}
+    >
+      <div className="space-y-8">
 
         {/* TOP ROW: KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -90,8 +73,8 @@ export default function CockpitGestor() {
             </div>
           </div>
           <KpiCard 
-            label="Saldo TO-GO" 
-            value={`R$ ${cockpitData.pendentes}M`} 
+            label="Saldo TO-GO (Ação)" 
+            value={`R$ ${cockpitData.saldoToGo}M`} 
             highlight={isHighGap}
             delay={0.3}
           />
@@ -189,7 +172,7 @@ export default function CockpitGestor() {
         </div>
 
       </div>
-    </div>
+    </Shell>
   )
 }
 
