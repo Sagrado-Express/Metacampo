@@ -92,7 +92,9 @@ export interface Cliente {
   };
   performanceBand: PerformanceBand; // Pareto population position
   confidenceLevel: ConfidenceLevel; // Probability of closing (V2)
-  qualitativeWeight: number; // For Pareto priority adjustments (influence)
+  creditRating: 'A' | 'B' | 'C' | 'D'; // Importado via ERP/Financeiro
+  walletShare: number; // % de participação no cliente
+  qualitativeWeight: number; // For Pareto priority adjustments (influence/relationship)
 }
 
 export interface Cultivo {
@@ -148,30 +150,4 @@ export interface IBGEBenchmark {
   valorTotalBrl: number; // Total value of production in the municipality
 }
 
-/**
- * Embrapa Management Benchmark (ref_tecnica_soja/etc.)
- * Stores technical recommendations per phenological stage.
- */
-export interface ManagementBenchmark {
-  id: string;
-  culturaId: string;
-  estadioNome: string; // Ex: "V3-V6", "R1"
-  alvoTecnico: string; // Ex: "Lagartas", "Ferrugem"
-  operacaoRecomendada: string;
-  doseReferenciaLha: number; // L/ha
-  ordem: number; // Sequence in the crop cycle
-}
 
-/**
- * Client Management Tracking (log_manejo_cliente)
- * Consolidated view of technical coverage vs. faturamento.
- */
-export interface ClientManagementLog {
-  clientId: string;
-  culturaId: string;
-  estadioAtual: string;
-  volumeRealizado: number; // From Middleware (Sales)
-  volumeNecessario: number; // Area * Dose Embrapa
-  indiceManejo: number; // (%)
-  lastUpdate: Date;
-}

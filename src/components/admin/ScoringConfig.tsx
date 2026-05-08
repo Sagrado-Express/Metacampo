@@ -8,12 +8,12 @@ import { ScoringWeights } from '@/types/blueprint'
 export default function ScoringConfig() {
   const [weights, setWeights] = useState<ScoringWeights>({
     vpm: 40,
-    acesso: 30,
-    gapTecnico: 20,
+    walletShare: 30,
+    creditRating: 20,
     relacionamento: 10
   })
 
-  const total = weights.vpm + weights.acesso + weights.gapTecnico + weights.relacionamento
+  const total = weights.vpm + weights.walletShare + weights.creditRating + weights.relacionamento
   const isInvalid = total !== 100
 
   const handleWeightChange = (key: keyof ScoringWeights, value: number) => {
@@ -42,22 +42,22 @@ export default function ScoringConfig() {
               description="Peso do volume financeiro total possível por cliente."
             />
             <WeightSlider 
-              label="Share de Acesso" 
-              value={weights.acesso} 
-              onChange={(v: number) => handleWeightChange('acesso', v)} 
-              description="Peso da participação atual da empresa no cliente."
+              label="Wallet Share (Participação)" 
+              value={weights.walletShare} 
+              onChange={(v: number) => handleWeightChange('walletShare', v)} 
+              description="Peso da participação comercial (Share) no cliente."
             />
             <WeightSlider 
-              label="Gap Técnico (Embrapa)" 
-              value={weights.gapTecnico} 
-              onChange={(v: number) => handleWeightChange('gapTecnico', v)} 
-              description="Oportunidade baseada na diferença entre uso real e recomendado."
+              label="Rating de Crédito" 
+              value={weights.creditRating} 
+              onChange={(v: number) => handleWeightChange('creditRating', v)} 
+              description="Capacidade de pagamento e risco de inadimplência."
             />
             <WeightSlider 
-              label="Relacionamento / Risco" 
+              label="Grau de Influência / Relacionamento" 
               value={weights.relacionamento} 
               onChange={(v: number) => handleWeightChange('relacionamento', v)} 
-              description="Fatores qualitativos e fidelidade comercial."
+              description="Fatores qualitativos e fidelidade comercial (B2B)."
             />
           </div>
 

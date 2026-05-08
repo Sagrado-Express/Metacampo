@@ -6,7 +6,7 @@ Este documento define o contexto, as restrições e as diretrizes para a atuaç�
 - **Projeto**: Antigravity (Meta Campo) V4.
 - **Domínio**: Agronegócio (Gestão Comercial, VPM e Consultoria Técnica).
 - **Stack**: Next.js, Supabase Pro, Vercel Edge, Upstash Redis.
-- **Objetivo**: Implementar os 16 passos de sucesso do CTV com inteligência Embrapa.
+- **Objetivo**: Implementar os 16 passos de sucesso do CTV com foco exclusivo em Inteligência Comercial e Financeira.
 
 ## 🛠️ Regras de Ouro para a IA
 
@@ -20,9 +20,9 @@ Este documento define o contexto, as restrições e as diretrizes para a atuaç�
 - Siga a fórmula: `VPM = Área * Valor/ha * Fator Sazonal (Calendário)`.
 - Qualquer alteração no `VpmService` deve ser validada por testes unitários exaustivos.
 
-### 3. Fidelidade Técnica (Embrapa)
-- Todas as recomendações de manejo devem seguir rigorosamente os manuais da **Embrapa (Sistemas de Produção)**.
-- O cálculo de **Índice de Manejo** é obrigatório para definir o "Grau de Confiança" do cliente.
+### 3. Foco Comercial Exclusivo
+- **NUNCA** implemente ou sugira motores agronômicos (como regras da Embrapa ou fases fenológicas).
+- O sucesso do cliente é medido por **VPM, Wallet Share, Rating de Crédito e Saldo "TO GO"**.
 
 ### 4. Rich Aesthetics (UX/UI)
 - Mantenha o padrão de **Glassmorphism**, **Dark Mode** e animações suaves via **Framer Motion**.

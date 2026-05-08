@@ -1,6 +1,6 @@
 # Roadmap: Antigravity (Meta Campo) - V4
 
-Plano de execução focado na entrega funcional da Inteligência Técnica (Embrapa) e Soberania de Dados.
+Plano de execução focado na entrega funcional da Inteligência Comercial e Soberania de Dados.
 
 ## 🟢 Fase 1: Setup & Modelagem (Semanas 1-2) - CONCLUÍDO
 - [x] Bootstrap Next.js + Supabase.
@@ -20,18 +20,17 @@ Plano de execução focado na entrega funcional da Inteligência Técnica (Embra
 - [x] Motor de Auditoria Imutável (Log de alterações).
 - [x] Soberania de Dados (Processamento Memory-First).
 
-## 🟡 Fase 4: Inteligência Embrapa & Priorização (Semana 8) - EM ANDAMENTO
-- [x] Motor de Manejo Soja (Base Embrapa SP-17).
-- [x] Matriz de Pareto com Peso Qualitativo.
-- [x] Gerador de Planos de Visita (Passo 16).
-- [x] Implementação da Régua de Confiança (4 Cores).
-- [ ] Refinamento da Coleta de Estádios Fenológicos via Mobile.
+## 🟡 Fase 4: Inteligência Comercial & Priorização (Semana 8) - EM ANDAMENTO
+- [x] Workspaces Integrados (Diagnóstico, Tabela Mãe, Planejamento, Execução, Agenda).
+- [x] Matriz de Pareto com Pilares Comerciais (VPM, Share, Rating, Relacionamento).
+- [x] Gerador de Planos de Visita (Passo 16) baseados em Pareto.
+- [x] Implementação da Régua de Confiança.
+- [ ] Refinamento do Saldo "TO GO" na interface.
 
-## 🔵 Fase 5: Expansão da Inteligência Técnica (Semanas 9-10)
-- [ ] **Motor de Manejo: Milho** (Base Embrapa).
-- [ ] **Motor de Manejo: Algodão** (Base Embrapa).
+## 🔵 Fase 5: Expansão Comercial (Semanas 9-10)
+- [ ] Conexão com base de Rating de Crédito do ERP.
 - [ ] Dashboard de Market Share por Cultura (Deep Dive).
 - [ ] Homologação Final e Deployment Production.
 
 ---
-*Status atualizado em: 04/05/2026 (Reflexo da PRD V4)*
+*Status atualizado em: 08/05/2026 (Reflexo da PRD V4 - Pivot Comercial)*

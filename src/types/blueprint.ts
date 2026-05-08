@@ -16,8 +16,8 @@ export interface ITAAConfig {
 
 export interface ScoringWeights {
   vpm: number;
-  acesso: number;
-  gapTecnico: number;
+  walletShare: number;
+  creditRating: number;
   relacionamento: number;
 }
 

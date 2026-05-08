@@ -6,17 +6,17 @@ export class ScoringEngine {
    */
   static calculateNota(
     indicadores: {
-      vpm: number;        // Normalizado 0-10
-      acesso: number;      // Normalizado 0-10
-      gapTecnico: number;  // Normalizado 0-10
+      vpm: number;          // Normalizado 0-10
+      walletShare: number;  // Normalizado 0-10
+      creditRating: number; // Normalizado 0-10 (Ex: A=10, B=7.5, C=5, D=0)
       relacionamento: number; // Normalizado 0-10
     },
     pesos: ScoringWeights // Somatório deve ser 100
   ): number {
     const nota = (
       (indicadores.vpm * (pesos.vpm / 100)) +
-      (indicadores.acesso * (pesos.acesso / 100)) +
-      (indicadores.gapTecnico * (pesos.gapTecnico / 100)) +
+      (indicadores.walletShare * (pesos.walletShare / 100)) +
+      (indicadores.creditRating * (pesos.creditRating / 100)) +
       (indicadores.relacionamento * (pesos.relacionamento / 100))
     );
 

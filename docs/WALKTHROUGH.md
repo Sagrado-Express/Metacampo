@@ -1,52 +1,49 @@
 # 🚀 Walkthrough: Antigravity MVP V4
 
-Este documento resume as funcionalidades implementadas no **Antigravity (Simulador de Carteira)**, detalhando como a arquitetura e a metodologia dos 16 passos foram materializadas no código.
+Este documento resume as funcionalidades implementadas no **Antigravity (Simulador de Carteira)**, detalhando como a arquitetura e a metodologia dos 16 passos focam exclusivamente em gestão comercial e VPM.
 
 ---
 
 ## 🏗️ 1. Arquitetura "Memory-First" (Middleware Transiente)
-Para garantir a **Soberania de Dados** e otimizar custos, implementamos um middleware que processa faturamentos do ERP sem persistir dados brutos sensíveis.
+Para garantir a **Soberania de Dados** e otimizar custos, implementamos um middleware que processa dados de clientes e faturamentos (CSVs) sem persistir dados brutos sensíveis em banco de dados permanente.
 
 - **Tecnologia**: Vercel Edge Runtime (Alta performance, Baixa latência).
-- **Funcionalidade**: O `MiddlewareService` recebe CSVs granulares, consolida os resultados estratégicos em memória RAM e descarta o arquivo original imediatamente.
+- **Funcionalidade**: O sistema recebe CSVs granulares via Upload On-the-Fly, consolida os resultados financeiros na sessão (RAM) e gera as visões dos Workspaces.
 - **Segurança**: Respeita a diretriz de *Zero-Footprint Ingestion*.
 
 ## 🌍 2. Inteligência de Território & Acesso
-A ferramenta agora opera sob o conceito de **Share de Acesso** (Acesso), comparando a captura real da empresa contra o potencial total (Acesso Disponível).
+A ferramenta opera sob o conceito de **Wallet Share** (Share de Acesso), medindo o retorno comercial real (Faturado) sobre o potencial mapeado (VPM).
 
-- **Benchmarking IBGE (PAM)**: Validação de território no `CropSimulationModal`. O sistema bloqueia "hectares fantasmas" comparando com o teto municipal real.
-- **Share de Acesso Realizado**: O `MarketShareChart` (rebatizado para Acesso) visualiza a dominância no território e identifica Gaps de Acesso.
-
-## 🧬 2.1 Inteligência de Manejo (Base Embrapa)
-A grande evolução da V4 é a integração das diretrizes técnicas da Embrapa como o "Motor de Manejo" do software.
-
-- **IT-SE Ativo**: O componente `ManagementIntelligence` calcula o Índice de Manejo (%) comparando o volume faturado (ERP) com as doses recomendadas (Embrapa) por estádio fenológico.
-- **Escala Fenológica (Passo 5)**: O sistema rastreia se a lavoura está em Vegetativo (V) ou Reprodutivo (R), disparando alertas de oportunidade de venda técnica.
+- **Benchmarking IBGE (PAM)**: Validação de território contra os dados do PAM para evitar que o CTV "invente" hectares.
+- **Saldo "TO GO"**: Foco em cruzar o Planejado com o Realizado YTD para mostrar claramente o GAP financeiro de vendas.
 
 ## ⚙️ 3. Motor de Cálculo VPM & Confiança
-O coração do sistema é o `VpmService`, que traduz a lógica complexa de agronegócio em indicadores táticos:
+O coração do sistema é o cálculo financeiro que traduz áreas e culturas em potencial monetário:
 
-- **Pareto de Acesso**: Priorização de clientes por gap de faturamento vs. potencial técnico.
-- **Régua de Confiança (4 Cores)**: Identificação visual de risco. Agora influenciada automaticamente pelo Gap de Manejo técnico.
+- **Pareto Comercial**: Priorização de clientes com base no maior retorno financeiro, cruzando VPM, Wallet Share e Rating de Crédito.
+- **Régua de Confiança**: Identificação visual de risco do plano comercial do CTV (Azul, Verde, Amarelo, Vermelho).
 
-## 🖥️ 4. Dashboard Executivo & Ação Tática
-A interface foi construída seguindo o Design System da Valora, focando em produtividade e clareza.
+## 🖥️ 4. Workspaces Integrados (UX/UI Premium)
+A interface foi reconstruída utilizando 5 Workspaces integrados com Top Navigation Premium:
 
-- **Aba Portfolio**: Visão consolidada de performance, share de acesso e inteligência de manejo.
-- **Plano de Visitas (Passo 16)**: Gerador automático de tarefas táticas baseado em risco técnico e valor. O CTV recebe uma lista prioritária de "quem visitar hoje" para proteger o faturamento.
+1. **Diagnóstico**: Dashboard principal de viabilidade e velocímetro de VPM.
+2. **Tabela Mãe**: Tabela de gestão de clientes com régua Pareto.
+3. **Planejamento**: Modal cirúrgico de "Handshake" (Matrix Cultura x Segmento).
+4. **Execução**: Cockpit financeiro (Saldo TO GO e Régua de Confiança).
+5. **Agenda Tática**: Gerador automático de visitas para clientes prioritários.
 
 ## 📜 5. Governança e Regras de Ouro
 O arquivo [GEMINI.md](file:///g:/Meu%20Drive/Projetos%20Antigravity/Simulador%20de%20Carteira/docs/GEMINI.md) estabelece a "Lei do Projeto":
 1. Soberania de Dados.
-2. Fidelidade ao VPM e ao Manejo Técnico Embrapa.
+2. Foco Exclusivo em Inteligência Comercial e Financeira.
 3. Estética Premium (Rich Aesthetics).
 
 ---
 
 ### ✅ Verificação Técnica
-- **Motor de Manejo**: Validado contra as tabelas de dose da Embrapa SP-17.
 - **Acesso**: Lógica de cálculo de Share testada para precisão decimal.
-- **UI**: Responsiva e animada com Framer Motion.
+- **Motor Comercial**: Cálculo de VPM validado contra a tabela IT-SE e Hectares.
+- **UI**: 5 Workspaces com navegação animada em Framer Motion.
 
 ---
-**Antigravity V4** - *Transformando intuição comercial em ciência de mercado.*
+**Antigravity V4** - *Transformando potencial comercial em execução tática.*

@@ -6,11 +6,11 @@ Este documento consolida a visão estratégica e técnica para o desenvolvimento
 
 ## 1. Metodologia: O Cockpit de Execução (16 Passos)
 
-O sistema automatiza a jornada de sucesso do CTV, transformando dados de território em inteligência consultiva técnica baseada nos manuais da Embrapa.
+O sistema automatiza a jornada de sucesso do CTV, transformando dados de território em inteligência comercial e financeira.
 
 - **Diagnóstico:** Validação de VPM (Value Potential Mapping) vs Meta.
-- **Planejamento:** Mapeamento de áreas reais e definição de Share de Acesso.
-- **Execução:** Monitoramento de Gap Técnico e Forecast "TO GO".
+- **Planejamento:** Mapeamento de áreas reais e definição de Wallet Share.
+- **Execução:** Monitoramento de Saldo "TO GO" e Gestão de Forecast.
 - **Governança:** Handshake e congelamento da estratégia para auditoria.
 
 ---
@@ -19,12 +19,12 @@ O sistema automatiza a jornada de sucesso do CTV, transformando dados de territ�
 
 | Módulo | Inputs Principais | Outputs e Lógica |
 | :--- | :--- | :--- |
-| **1. Admin (Setup)** | IT-SE ($/ha), Pesos de Scoring. | Cálculo do DNA Financeiro e Régua de Cores (Pareto). |
+| **1. Admin (Setup)** | IT-SE ($/ha), Pesos de Scoring Comerciais. | Cálculo do DNA Financeiro e Régua de Cores (Pareto). |
 | **2. Diagnóstico CTV** | Meta de Vendas, Share Alvo %. | Velocímetro de viabilidade e VPM Necessário. |
-| **3. Tabela Mãe (MVP)** | Upload CSV ou Adição Manual (Nome, Área, Cultura). | Cálculo automático de VPM Individual e Share Realizado. |
-| **4. Drill-Down** | Previsão por Segmento (Sementes, Fert, etc). | Validação contra teto técnico e alertas de mix de portfólio. |
-| **5. Cockpit Financeiro** | Realizado YTD (via Ingestão Memory-First). | Saldo "TO GO", Projeção de Forecast e Alertas de Gap. |
-| **6. Gestão de Campo** | Frequência de Visitas por cor. | Agenda prioritária baseada em Valor e Risco Técnico. |
+| **3. Tabela Mãe (MVP)** | Upload CSV ou Adição Manual (Nome, Área, Cultura). | Cálculo automático de VPM Individual e Wallet Share. |
+| **4. Drill-Down** | Previsão por Segmento (Sementes, Fert, etc). | Validação contra teto financeiro e alertas de rentabilidade. |
+| **5. Cockpit Financeiro** | Realizado YTD (via Ingestão Memory-First). | Saldo "TO GO", Projeção de Forecast e Alertas de Gap Comercial. |
+| **6. Gestão de Campo** | Frequência de Visitas por cor. | Agenda prioritária baseada em Valor e Risco Comercial. |
 
 ---
 

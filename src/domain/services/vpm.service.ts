@@ -153,26 +153,5 @@ export class VpmService {
     });
   }
 
-  /**
-   * Calculates the Management Index (%) based on Embrapa standards (Step 13 - V4).
-   * Formula: (Volume Realizado / (Área * Dose Ref)) * 100
-   */
-  static calculateManagementIndex(
-    volumeRealizado: number,
-    areaHa: number,
-    doseRefLha: number
-  ): number {
-    const volumeNecessario = areaHa * doseRefLha;
-    if (volumeNecessario <= 0) return 0;
-    return Number(((volumeRealizado / volumeNecessario) * 100).toFixed(2));
-  }
 
-  /**
-   * Triggers technical alerts based on Management Index.
-   */
-  static getManagementAlert(index: number): { status: 'CRITICAL' | 'WARNING' | 'OK'; icon: string } {
-    if (index < 50) return { status: 'CRITICAL', icon: '🔴' };
-    if (index < 80) return { status: 'WARNING', icon: '🟡' };
-    return { status: 'OK', icon: '✅' };
-  }
 }
