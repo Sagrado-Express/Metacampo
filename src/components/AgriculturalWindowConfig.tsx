@@ -10,7 +10,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function AgriculturalWindowConfig() {
+export default function AgriculturalWindowConfig() {
   const [windows, setWindows] = useState<AgriculturalWindow[]>([
     {
       id: '1',
