@@ -2,6 +2,7 @@
 
 import ITAAConfig from '@/components/admin/ITAAConfig'
 import ScoringConfig from '@/components/admin/ScoringConfig'
+import AgriculturalWindowConfig from '@/components/AgriculturalWindowConfig'
 import { motion } from 'framer-motion'
 import { ShieldCheck } from 'lucide-react'
 
@@ -40,6 +41,14 @@ export default function AdminPage() {
           transition={{ delay: 0.2 }}
         >
           <ScoringConfig />
+        </motion.section>
+
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <AgriculturalWindowConfig />
         </motion.section>
       </main>
 

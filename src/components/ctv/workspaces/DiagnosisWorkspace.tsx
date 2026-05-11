@@ -82,11 +82,16 @@ export default function DiagnosisWorkspace() {
 
           <div className="space-y-2 mt-8">
             <div className="flex justify-between text-[10px] font-bold uppercase">
-              <span>Aderncia ao Mix</span>
+              <span>Aderência ao Mix</span>
               <span className="text-success">92%</span>
             </div>
-            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-success" style={{ width: '92%' }} />
+            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden relative">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: '92%' }}
+                transition={{ duration: 1.5, ease: "circOut" }}
+                className="h-full bg-success shimmer" 
+              />
             </div>
           </div>
         </div>

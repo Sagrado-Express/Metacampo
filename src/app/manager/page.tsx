@@ -33,6 +33,36 @@ export default function ManagerPage() {
       </header>
 
       <main className="max-w-7xl mx-auto space-y-16">
+        {/* KPI OVERVIEW */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <ManagerKpi 
+            label="Budget Regional" 
+            value="R$ 19.0M" 
+            subValue="Target Original" 
+            icon={Landmark}
+          />
+          <ManagerKpi 
+            label="Forecast Atual" 
+            value="R$ 18.5M" 
+            subValue="-2.6% vs Budget" 
+            icon={TrendingUp}
+            status="warning"
+          />
+          <ManagerKpi 
+            label="Realizado YTD" 
+            value="R$ 12.4M" 
+            subValue="65% da Meta" 
+            icon={TrendingUp}
+          />
+          <ManagerKpi 
+            label="Gap TO-GO" 
+            value="R$ 6.1M" 
+            subValue="Faltante p/ Meta" 
+            icon={TrendingUp}
+            status="error"
+          />
+        </div>
+
         <motion.section 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -55,5 +85,30 @@ export default function ManagerPage() {
         </p>
       </footer>
     </div>
+  )
+}
+
+function ManagerKpi({ label, value, subValue, icon: Icon, status }: any) {
+  const getStatusColor = () => {
+    if (status === 'warning') return 'text-warning'
+    if (status === 'error') return 'text-destructive'
+    return 'text-accent'
+  }
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-card p-6 border-white/5"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{label}</span>
+        <div className={`p-2 rounded-lg bg-white/5 ${getStatusColor()}`}>
+          <Icon size={18} />
+        </div>
+      </div>
+      <h3 className="text-3xl font-black font-tabular tracking-tighter">{value}</h3>
+      <p className={`text-[10px] font-bold uppercase mt-1 ${getStatusColor()}`}>{subValue}</p>
+    </motion.div>
   )
 }

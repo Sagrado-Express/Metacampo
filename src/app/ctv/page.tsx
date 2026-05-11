@@ -16,9 +16,10 @@ import {
 import DiagnosisWorkspace from '@/components/ctv/workspaces/DiagnosisWorkspace'
 
 // Placeholder Workspaces (will be moved to separate files)
-import PortfolioTable from '@/components/ctv/PortfolioTable'
+import TabelaMae from '@/components/ctv/workspaces/TabelaMae'
 import ExecutionWorkspace from '@/components/ctv/workspaces/ExecutionWorkspace'
 import TacticalAgendaWorkspace from '@/components/ctv/workspaces/TacticalAgendaWorkspace'
+import ParetoPlanning from '@/components/ctv/workspaces/ParetoPlanning'
 
 type Workspace = 'DIAGNOSIS' | 'PORTFOLIO' | 'PLANNING' | 'EXECUTION' | 'AGENDA'
 
@@ -103,19 +104,11 @@ export default function CTVPlanningPage() {
             )}
 
             {activeWorkspace === 'PORTFOLIO' && (
-              <PortfolioTable />
+              <TabelaMae onNavigate={() => setActiveWorkspace('PLANNING')} />
             )}
 
             {activeWorkspace === 'PLANNING' && (
-              <div className="flex items-center justify-center h-[60vh] glass-card">
-                <div className="text-center space-y-4">
-                  <Target className="text-accent mx-auto" size={48} />
-                  <h2 className="text-2xl font-black uppercase">Módulo de Planejamento Cirúrgico</h2>
-                  <p className="text-muted-foreground text-sm max-w-md">
-                    Este módulo é ativado via "Drill-down" na Tabela Mãe ou para revisões globais de metas.
-                  </p>
-                </div>
-              </div>
+              <ParetoPlanning />
             )}
 
             {activeWorkspace === 'EXECUTION' && (

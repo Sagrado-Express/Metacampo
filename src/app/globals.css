@@ -85,4 +85,34 @@
   .label-finance {
     @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
   }
+
+  /* Shimmer Effect for Loading states or Emphasis */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .premium-bg {
+    @apply bg-gradient-to-br from-[#F9F8F6] via-[#FFFFFF] to-[#F5F5F4];
+  }
 }

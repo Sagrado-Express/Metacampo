@@ -44,7 +44,7 @@ export default function CockpitGestor() {
       title={`Olá, ${cockpitData.gestor}`}
       subtitle={`Seu território tem R$ ${cockpitData.saldoToGo}M de Saldo TO-GO.`}
     >
-      <div className="space-y-8">
+      <div className="space-y-8 premium-bg -m-8 p-8 min-h-screen">
 
         {/* TOP ROW: KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -62,12 +62,12 @@ export default function CockpitGestor() {
                 </h3>
                 <span className="text-sm font-bold text-[#15803D]">{cockpitData.percentualRealizado}%</span>
               </div>
-              <div className="w-full bg-[#F5F5F4] rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-[#F5F5F4] rounded-full h-2.5 overflow-hidden relative">
                 <motion.div 
                   initial={{ width: 0 }}
                   animate={{ width: `${cockpitData.percentualRealizado}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="bg-[#15803D] h-2.5 rounded-full"
+                  transition={{ duration: 1.5, ease: "circOut" }}
+                  className="bg-[#15803D] h-2.5 rounded-full shimmer"
                 ></motion.div>
               </div>
             </div>

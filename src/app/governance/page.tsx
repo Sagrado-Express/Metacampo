@@ -32,6 +32,19 @@ export default function GovernancePage() {
           <HandshakeWorkflow />
         </motion.section>
 
+        <motion.section 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-16"
+        >
+          <div className="flex items-center gap-2 mb-8">
+            <History className="text-accent" size={20} />
+            <h3 className="text-lg font-bold uppercase tracking-widest">Audit Trail & Histórico</h3>
+          </div>
+          <GovernanceTimeline />
+        </motion.section>
+
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 opacity-60">
           <div className="glass-card p-6 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-widest">Regras de Congelamento</h4>
@@ -55,6 +68,40 @@ export default function GovernancePage() {
           Governance Compliance Engine • Antigravity AI
         </p>
       </footer>
+    </div>
+  )
+}
+
+function GovernanceTimeline() {
+  const events = [
+    { date: '10/05/2026', time: '14:30', user: 'Daniel (CTV)', action: 'Materialização de Área Concluída', status: 'success' },
+    { date: '11/05/2026', time: '09:15', user: 'Daniel (CTV)', action: 'Proposta de Meta Enviada', status: 'warning' },
+    { date: '11/05/2026', time: '10:00', user: 'Ricardo (Gestor)', action: 'Revisão de Budget Solicitada', status: 'error' },
+    { date: '11/05/2026', time: '11:20', user: 'Daniel (CTV)', action: 'Meta Ajustada e Re-submetida', status: 'success' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      {events.map((event, i) => (
+        <div key={i} className="flex gap-4 group">
+          <div className="flex flex-col items-center">
+            <div className={`w-3 h-3 rounded-full mt-1.5 ${
+              event.status === 'success' ? 'bg-success' : 
+              event.status === 'warning' ? 'bg-warning' : 'bg-destructive'
+            } ring-4 ring-white/5`} />
+            {i < events.length - 1 && <div className="w-0.5 flex-1 bg-white/10 my-2" />}
+          </div>
+          <div className="flex-1 pb-6">
+            <div className="glass-card p-4 group-hover:border-accent/30 transition-all">
+              <div className="flex justify-between items-start mb-1">
+                <p className="text-xs font-black text-primary uppercase">{event.action}</p>
+                <p className="text-[10px] font-bold text-muted-foreground">{event.date} • {event.time}</p>
+              </div>
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Usuário: {event.user}</p>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

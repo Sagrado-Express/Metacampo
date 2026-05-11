@@ -12,7 +12,8 @@ import {
   ChevronDown,
   Info,
   DollarSign,
-  Maximize2
+  Maximize2,
+  Target
 } from 'lucide-react'
 import { VpmService } from '@/domain/services/vpm.service'
 import { PerformanceBand, ITSEConfig } from '@/types/schema'
@@ -43,7 +44,7 @@ interface ClienteInterativo {
   performanceBand: PerformanceBand;
 }
 
-export default function TabelaMae() {
+export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [clientes, setClientes] = useState<ClienteInterativo[]>([
     { id: '1', name: 'Fazenda Boa Esperança', municipio: 'Passo Fundo/RS', areaHa: 1000, metaVenda: 450000, shareAlvo: 0.15, vpmTotal: 0, areaNecessaria: 0, areaInvalida: false, performanceBand: 'CINZA' },
@@ -129,7 +130,8 @@ export default function TabelaMae() {
                 <th className="px-6 py-5 border-b-2 border-primary/10">Meta Consolidada</th>
                 <th className="px-6 py-5 border-b-2 border-primary/10 text-center">Share Alvo %</th>
                 <th className="px-6 py-5 border-b-2 border-primary/10 text-center">Viabilidade</th>
-                <th className="px-6 py-5 border-b-2 border-primary/10 text-right">Segmentação</th>
+                <th className="px-6 py-5 border-b-2 border-primary/10 text-center">Segmentação</th>
+                <th className="px-6 py-5 border-b-2 border-primary/10 text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/5">
@@ -212,10 +214,20 @@ export default function TabelaMae() {
                       </div>
                     </td>
 
-                    <td className="px-6 py-6 text-right">
+                    <td className="px-6 py-6 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest shadow-lg ${getBandStyle(cliente.performanceBand)}`}>
                         {cliente.performanceBand}
                       </span>
+                    </td>
+
+                    <td className="px-6 py-6 text-right">
+                      <button 
+                        onClick={onNavigate}
+                        className="p-2.5 bg-accent/10 border-2 border-accent/20 rounded-xl text-accent hover:bg-accent hover:text-white transition-all shadow-sm hover:shadow-accent/20"
+                        title="Abrir Planejamento de Pareto"
+                      >
+                        <Target size={18} />
+                      </button>
                     </td>
                   </motion.tr>
                 ))}

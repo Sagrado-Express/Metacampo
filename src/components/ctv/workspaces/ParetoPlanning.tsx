@@ -24,7 +24,7 @@ import {
   Cell,
   Legend
 } from 'recharts'
-import { VpmService } from '@/domain/services/vpm.service'
+import { VpmService, ParetoResult } from '@/domain/services/vpm.service'
 import { PerformanceBand } from '@/types/schema'
 
 // Mock Data (In real world, this comes from the Tabela Mae state)
@@ -42,7 +42,7 @@ const MOCK_CLIENTS = [
 ];
 
 export default function ParetoPlanning() {
-  const paretoData = useMemo(() => {
+  const paretoData = useMemo<ParetoResult[]>(() => {
     return VpmService.calculatePareto(MOCK_CLIENTS);
   }, []);
 
@@ -50,7 +50,7 @@ export default function ParetoPlanning() {
     const totalVpm = MOCK_CLIENTS.reduce((acc, c) => acc + c.vpmTotal, 0);
     const topClients = paretoData.filter(c => c.performanceBand === 'AZUL' || c.performanceBand === 'VERDE');
     const concentration = (topClients.length / paretoData.length) * 100;
-    const valueConcentration = (topClients.reduce((acc, c) => acc + (c as any).vpmTotal, 0) / totalVpm) * 100;
+    const valueConcentration = (topClients.reduce((acc, c) => acc + c.vpmTotal, 0) / totalVpm) * 100;
 
     return { totalVpm, concentration, valueConcentration, clientCount: paretoData.length };
   }, [paretoData]);
@@ -58,7 +58,7 @@ export default function ParetoPlanning() {
   // Chart Formatting
   const chartData = paretoData.map(c => ({
     name: c.name.split(' ')[1] || c.name, // Short name for Axis
-    vpm: (c as any).vpmTotal,
+    vpm: c.vpmTotal,
     acumulado: c.cumulativePercentage,
     band: c.performanceBand
   }));
@@ -177,28 +177,28 @@ export default function ParetoPlanning() {
               band="AZUL" 
               label="Estratégico Top" 
               count={paretoData.filter(c => c.performanceBand === 'AZUL').length}
-              percent={(paretoData.filter(c => c.performanceBand === 'AZUL').reduce((acc, c) => acc + (c as any).vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
+              percent={(paretoData.filter(c => c.performanceBand === 'AZUL').reduce((acc, c) => acc + c.vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
               color="bg-[#1E40AF]"
             />
             <SegmentRow 
               band="VERDE" 
               label="Estratégico Base" 
               count={paretoData.filter(c => c.performanceBand === 'VERDE').length}
-              percent={(paretoData.filter(c => c.performanceBand === 'VERDE').reduce((acc, c) => acc + (c as any).vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
+              percent={(paretoData.filter(c => c.performanceBand === 'VERDE').reduce((acc, c) => acc + c.vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
               color="bg-[#15803D]"
             />
             <SegmentRow 
               band="AMARELO" 
               label="Complementar" 
               count={paretoData.filter(c => c.performanceBand === 'AMARELO').length}
-              percent={(paretoData.filter(c => c.performanceBand === 'AMARELO').reduce((acc, c) => acc + (c as any).vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
+              percent={(paretoData.filter(c => c.performanceBand === 'AMARELO').reduce((acc, c) => acc + c.vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
               color="bg-[#EAB308]"
             />
             <SegmentRow 
               band="VERMELHO" 
               label="Cauda Longa" 
               count={paretoData.filter(c => c.performanceBand === 'VERMELHO').length}
-              percent={(paretoData.filter(c => c.performanceBand === 'VERMELHO').reduce((acc, c) => acc + (c as any).vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
+              percent={(paretoData.filter(c => c.performanceBand === 'VERMELHO').reduce((acc, c) => acc + c.vpmTotal, 0) / stats.totalVpm * 100).toFixed(1)}
               color="bg-[#BE123C]"
             />
           </div>

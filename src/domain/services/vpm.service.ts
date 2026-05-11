@@ -1,5 +1,13 @@
 import { ITSEConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cliente, IBGEBenchmark } from '@/types/schema';
 
+export interface ParetoResult {
+  clientId: string;
+  name: string;
+  vpmTotal: number;
+  performanceBand: PerformanceBand;
+  cumulativePercentage: number;
+}
+
 /**
  * Domain Service for VPM (Valor Potencial de Mercado) calculations.
  * Fully aligned with the Excel Master Prompt (Agr-1 and Agr-2).
@@ -50,13 +58,13 @@ export class VpmService {
    */
   static calculatePareto(
     clients: { id: string; name: string; vpmTotal: number }[]
-  ): { clientId: string; performanceBand: PerformanceBand; cumulativePercentage: number }[] {
+  ): ParetoResult[] {
     
     // 1. Ranking: Order by VPM Total descending
     const sorted = [...clients].sort((a, b) => b.vpmTotal - a.vpmTotal);
     
     const totalPortfolioVpm = sorted.reduce((acc, curr) => acc + curr.vpmTotal, 0);
-    if (totalPortfolioVpm === 0) return sorted.map(c => ({ clientId: c.id, performanceBand: 'CINZA', cumulativePercentage: 0 }));
+    if (totalPortfolioVpm === 0) return sorted.map(c => ({ clientId: c.id, name: c.name, vpmTotal: c.vpmTotal, performanceBand: 'CINZA', cumulativePercentage: 0 }));
 
     let cumulativeVpm = 0;
     const result = sorted.map(item => {
