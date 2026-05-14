@@ -1,100 +1,132 @@
-import { ITSEConfig } from '@/types/schema';
-
-export interface IngestedClientRow {
-  cliente: string;
-  municipio: string;
-  uf: string;
-  vendedor: string;
-  cultivo: string;
-  areaPlantadaHa: number;
-}
-
-export interface ClientFinancialData extends IngestedClientRow {
-  vpmSegmentos: Record<string, number>;
-  vpmTotal: number;
-}
+import { BillingSummary, CommercialSetup, PacingData } from '@/types/schema';
+import Papa from 'papaparse';
 
 /**
- * Service responsible for mapping CSV inputs to the METACAMPO internal structures.
- * Implements the mapping logic from the Excel Agr-1 sheet.
+ * METACAMPO - Ingestion Engine (The Senior Dev Perspective)
+ * Zero-Footprint Ingestion: Memory-First Processing.
+ * Implements ISO Normalization, Monthly Aggregation, and Delta Calculation.
  */
 export class IngestionMapper {
   
   /**
-   * Parses the raw CSV layout exactly as requested by the Master Prompt.
+   * Normalization: ISO Date conversion & Data Cleaning
    */
-  static parseCSV(csvContent: string): IngestedClientRow[] {
-    const lines = csvContent.split(/\r?\n/).map(l => l.trim()).filter(l => l);
-    if (lines.length < 2) return [];
-
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+  static normalizeDate(dateStr: string): Date {
+    if (!dateStr) return new Date();
     
-    const requiredHeaders = ['cliente', 'municipio', 'uf', 'vendedor', 'cultivo', 'area_plantada_ha'];
-    
-    // Check missing headers using loose matching or throw
-    // For resilience, we just look for substring matches if exact isn't found
-    const getColIndex = (keyword: string) => headers.findIndex(h => h.includes(keyword));
-    
-    const indices = {
-      cliente: getColIndex('cliente'),
-      municipio: getColIndex('municip') > -1 ? getColIndex('municip') : getColIndex('cidade'),
-      uf: getColIndex('uf') > -1 ? getColIndex('uf') : getColIndex('estado'),
-      vendedor: getColIndex('vendedor'),
-      cultivo: getColIndex('cultivo') > -1 ? getColIndex('cultivo') : getColIndex('cultura'),
-      area: getColIndex('area') > -1 ? getColIndex('area') : getColIndex('ha')
-    };
-
-    const results: IngestedClientRow[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim());
-      
-      results.push({
-        cliente: values[indices.cliente] || 'Desconhecido',
-        municipio: values[indices.municipio] || '',
-        uf: values[indices.uf] || '',
-        vendedor: values[indices.vendedor] || '',
-        cultivo: values[indices.cultivo] || '',
-        areaPlantadaHa: parseFloat(values[indices.area]) || 0
-      });
+    // Handle DD/MM/YYYY
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const [day, month, year] = parts.map(Number);
+        return new Date(year, month - 1, day);
+      }
     }
-
-    return results;
+    
+    // Fallback to native ISO
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? new Date() : date;
   }
 
   /**
-   * Calculates the VPM based on the 6 standard pillars (DNA Financeiro).
+   * Aggregation: Grouping by CTV + Client + Month + Segment
+   * Processed in memory to ensure instant feedback.
    */
-  static calculateClientFinancials(
-    rows: IngestedClientRow[],
-    itseConfigs: ITSEConfig[]
-  ): ClientFinancialData[] {
+  static aggregateBilling(csvContent: string): Partial<BillingSummary>[] {
+    const parsed = Papa.parse(csvContent, { 
+      header: true, 
+      skipEmptyLines: true,
+      dynamicTyping: true 
+    });
     
-    const pilares = ['Semente', 'Fertilizante', 'Agroquímicos', 'Nutrição', 'Biológico', 'Regulador de Crescimento'];
+    const rawData = parsed.data as any[];
+    const buckets: Record<string, number> = {};
 
-    return rows.map(row => {
-      const vpmSegmentos: Record<string, number> = {};
-      let vpmTotal = 0;
+    rawData.forEach(row => {
+      // Flexible header mapping (Normalizing legacy ERP headers)
+      const cnpj = row.CNPJ_Cliente || row.cnpj || '00.000.000/0000-00';
+      const ctvId = String(row.ID_CTV || row.ctv || row.vendedor || '');
+      const segmentId = row.Segmento || row.segmento || 'Outros';
+      const value = parseFloat(row.Valor_Liquido || row.valor || row.faturamento || '0');
+      const date = this.normalizeDate(row.Data_Nota || row.data || '');
 
-      pilares.forEach(pilar => {
-        // Find configuration for this crop and segment
-        const config = itseConfigs.find(c => 
-          c.cultivoId.toLowerCase() === row.cultivo.toLowerCase() && 
-          c.productSegmentId.toLowerCase() === pilar.toLowerCase()
-        );
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      
+      // Bucket Key: Client + CTV + Segment + Month + Year
+      const key = `${cnpj}|${ctvId}|${segmentId}|${month}|${year}`;
+      buckets[key] = (buckets[key] || 0) + value;
+    });
 
-        const valorHa = config ? config.valuePerHectare : 0;
-        const vpmSeg = parseFloat((row.areaPlantadaHa * valorHa).toFixed(2));
-        
-        vpmSegmentos[pilar] = vpmSeg;
-        vpmTotal += vpmSeg;
-      });
-
+    return Object.entries(buckets).map(([key, value]) => {
+      const [cnpj, ctvId, segmentId, month, year] = key.split('|');
       return {
-        ...row,
-        vpmSegmentos,
-        vpmTotal: parseFloat(vpmTotal.toFixed(2))
+        cnpjClient: cnpj,
+        ctvId,
+        segmentId,
+        realizedValue: value,
+        billingDate: new Date(parseInt(year), parseInt(month), 1)
       };
     });
+  }
+
+  /**
+   * Delta Calculation: Real-time comparison with targets.
+   * Generates PacingData with Shadow Target logic.
+   */
+  static calculatePacing(
+    aggregatedBilling: Partial<BillingSummary>[],
+    targets: CommercialSetup[]
+  ): PacingData[] {
+    const today = new Date();
+    const currentDay = today.getDate();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+    return targets.map(target => {
+      // Find matching billing for this bucket
+      const matchingBilling = aggregatedBilling.filter(b => 
+        b.ctvId === target.ctvId && 
+        b.segmentId === target.segmentId &&
+        b.billingDate?.getMonth() === target.month - 1 &&
+        b.billingDate?.getFullYear() === target.year
+      );
+
+      const realizedValue = matchingBilling.reduce((sum, b) => sum + (b.realizedValue || 0), 0);
+      
+      // Shadow Target (Phantom Line): Pro-rata target for the current day
+      const shadowTarget = (currentDay / daysInMonth) * target.targetValue;
+      const toGoBalance = Math.max(0, target.targetValue - realizedValue);
+
+      return {
+        month: target.month,
+        year: target.year,
+        ctvId: target.ctvId,
+        segmentId: target.segmentId,
+        targetValue: target.targetValue,
+        realizedValue,
+        shadowTarget,
+        toGoBalance,
+        performanceStatus: realizedValue >= shadowTarget ? 'AHEAD' : 'BEHIND'
+      };
+    });
+  }
+
+  /**
+   * Smart Reconciliation Check
+   * Identifies unmapped segments or new clients.
+   */
+  static identifyAnomalies(csvContent: string, knownSegments: string[]): string[] {
+    const parsed = Papa.parse(csvContent, { header: true, skipEmptyLines: true });
+    const rawData = parsed.data as any[];
+    const unknownSegments = new Set<string>();
+
+    rawData.forEach(row => {
+      const segment = row.Segmento || row.segmento;
+      if (segment && !knownSegments.includes(segment)) {
+        unknownSegments.add(segment);
+      }
+    });
+
+    return Array.from(unknownSegments);
   }
 }

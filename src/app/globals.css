@@ -1,47 +1,47 @@
 @import "tailwindcss";
 
 @theme {
-  /* METACAMPO - Agro 4.0 Premium Palette */
+  /* METACAMPO - Agro 4.0 Premium Palette (Morning Dew) */
   
-  /* Off-White / Sand Backgrounds */
-  --color-background: #F9F8F6;
-  --color-foreground: #2C2420; /* Marrom Café */
+  /* Background: Areia */
+  --color-background: #F5F5F0;
+  --color-foreground: #3E2723; /* Marrom Café */
   
-  --color-card: #FFFFFF;
-  --color-card-foreground: #2C2420;
+  --color-card: rgba(255, 255, 255, 0.7);
+  --color-card-foreground: #3E2723;
 
   /* Typography */
-  --color-muted: #F5F5F4; /* stone-100 */
-  --color-muted-foreground: #334155; /* Cinza Chumbo / slate-700 */
+  --color-muted: #EBEBE6; 
+  --color-muted-foreground: #5D4037; /* Café Suave */
 
   /* Action & Status Colors */
-  --color-primary: #2C2420; /* Marrom Café for primary buttons */
+  --color-primary: #2D5A27; /* Verde Clorofila */
   --color-primary-foreground: #FFFFFF;
   
-  --color-accent: #1D4ED8; /* Azul Safira */
-  --color-accent-foreground: #FFFFFF;
+  --color-accent: #D4AF37; /* Trigo / Gold */
+  --color-accent-foreground: #3E2723;
   
   /* Pareto & Status Colors */
-  --color-success: #15803D; /* Verde Clorofila */
-  --color-warning: #CA8A04; /* Amarelo Trigo */
-  --color-destructive: #EF4444; /* Vermelho Terra */
-  --color-info: #1D4ED8; /* Azul Safira */
+  --color-success: #2D5A27; /* Verde Clorofila */
+  --color-warning: #D4AF37; /* Amarelo Trigo */
+  --color-destructive: #A52A2A; /* Vermelho Terra */
+  --color-info: #1D4ED8; /* Azul Safira (Pareto) */
 
-  /* GTMGC Performance Bands (Legacy mapping) */
+  /* GTMGC Performance Bands */
   --color-band-azul: #1D4ED8;
-  --color-band-verde: #15803D;
-  --color-band-amarelo: #CA8A04;
-  --color-band-vermelho: #EF4444;
+  --color-band-verde: #2D5A27;
+  --color-band-amarelo: #D4AF37;
+  --color-band-vermelho: #A52A2A;
   --color-band-cinza: #9CA3AF;
   
-  --color-border: rgba(44, 36, 32, 0.08); /* Soft Sand/Brown border */
-  --color-input: rgba(44, 36, 32, 0.08);
-  --color-ring: #1D4ED8;
+  --color-border: rgba(62, 39, 35, 0.1); /* Café diluído */
+  --color-input: rgba(62, 39, 35, 0.05);
+  --color-ring: #2D5A27;
 
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: "Inter", "Montserrat", system-ui, -apple-system, sans-serif;
   
   --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  --radius-2xl: 1.5rem; /* 24px */
   
   --animate-in: in 0.3s ease-out;
   --animate-out: out 0.3s ease-in;
@@ -52,29 +52,41 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-accent/30;
+    @apply bg-background text-foreground antialiased selection:bg-primary/20;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer components {
-  /* Agro 4.0 Premium: Soft UI Glass/Card */
+  /* Agro 4.0 Premium: High-End Morning Dew Glass */
   .glass-card {
-    @apply relative overflow-hidden rounded-2xl bg-white transition-all duration-300;
-    /* Borda sutil */
-    border: 1px solid rgba(44, 36, 32, 0.04);
-    /* Sombra difusa e colorizada (tom de areia/marrom claro) */
-    box-shadow: 0 10px 40px -10px rgba(44, 36, 32, 0.05), 0 1px 3px rgba(44, 36, 32, 0.02);
+    @apply relative overflow-hidden rounded-[24px] bg-white/70 transition-all duration-500 backdrop-blur-md;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+      0 4px 24px -1px rgba(62, 39, 35, 0.05),
+      0 1px 2px 0 rgba(62, 39, 35, 0.02);
   }
   
   .glass-card:hover {
-    box-shadow: 0 20px 40px -10px rgba(44, 36, 32, 0.08), 0 1px 3px rgba(44, 36, 32, 0.02);
-    transform: translateY(-2px);
+    @apply bg-white/80;
+    box-shadow: 
+      0 20px 40px -10px rgba(44, 36, 32, 0.1),
+      0 1px 3px rgba(44, 36, 32, 0.05);
+    transform: translateY(-4px);
+  }
+
+  /* Ingestion Pill Progress */
+  .pill-progress-container {
+    @apply h-3 w-full overflow-hidden rounded-full bg-muted/50;
+  }
+  
+  .pill-progress-fill {
+    @apply h-full rounded-full bg-primary transition-all duration-1000 ease-out;
   }
 
   /* Executive Card */
   .card-executive {
-    @apply rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-md;
+    @apply rounded-[24px] border bg-card p-6 shadow-sm transition-all hover:shadow-md backdrop-blur-sm;
   }
 
   /* Financial Typography */
@@ -83,36 +95,11 @@
   }
 
   .label-finance {
-    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
-  }
-
-  /* Shimmer Effect for Loading states or Emphasis */
-  .shimmer {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .shimmer::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.4),
-      transparent
-    );
-    animation: shimmer 2s infinite;
-  }
-
-  @keyframes shimmer {
-    100% {
-      transform: translateX(100%);
-    }
+    @apply text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/80;
   }
 
   .premium-bg {
-    @apply bg-gradient-to-br from-[#F9F8F6] via-[#FFFFFF] to-[#F5F5F4];
+    @apply bg-gradient-to-br from-[#F5F5F0] via-[#FFFFFF] to-[#EBEBE6];
   }
 }
+

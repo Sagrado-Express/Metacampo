@@ -137,9 +137,41 @@ export interface ViewModeProps {
 }
 
 /**
- * IBGE PAM Reference (Benchmark)
- * Used for area validation and VPM calibration.
+ * METACAMPO Bucket-based Architecture (V3)
+ * Focused on instant "TO-GO" balance and pacing.
  */
+
+export interface CommercialSetup {
+  id: string;
+  month: number;
+  year: number;
+  ctvId: string;
+  managerId: string;
+  segmentId: string;
+  targetValue: number; // Meta R$
+}
+
+export interface BillingSummary {
+  id: string;
+  cnpjClient: string;
+  ctvId: string;
+  segmentId: string;
+  realizedValue: number;
+  billingDate: Date;
+}
+
+export interface PacingData {
+  month: number;
+  year: number;
+  ctvId: string;
+  segmentId: string;
+  targetValue: number;
+  realizedValue: number;
+  shadowTarget: number; // Where they should be today
+  toGoBalance: number;
+  performanceStatus: 'AHEAD' | 'BEHIND';
+}
+
 export interface IBGEBenchmark {
   ibgeCode: string; // 7 digits
   municipio: string;
@@ -149,5 +181,6 @@ export interface IBGEBenchmark {
   produtividadeRefKg: number; // Benchmark productivity
   valorTotalBrl: number; // Total value of production in the municipality
 }
+
 
 
