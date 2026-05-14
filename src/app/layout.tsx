@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   description: "Plataforma profissional de gestão e simulação de carteiras para o agronegócio.",
 };
 
+import { Sidebar } from "@/components/layout/Sidebar";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -22,13 +24,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="light">
-      <body className={`${inter.variable} antialiased`}>
+      <body className={`${inter.variable} antialiased bg-background`}>
         <Suspense fallback={<div>Carregando...</div>}>
           <MeetingModeProvider>
-            {children}
+            <div className="flex">
+              <Sidebar />
+              <main className="flex-1 ml-20 lg:ml-64 min-h-screen">
+                {children}
+              </main>
+            </div>
           </MeetingModeProvider>
         </Suspense>
       </body>
     </html>
   );
 }
+

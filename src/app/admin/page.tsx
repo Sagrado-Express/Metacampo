@@ -8,23 +8,24 @@ import { ShieldCheck } from 'lucide-react'
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground p-8 space-y-12">
+    <div className="p-8 space-y-12">
       <header className="flex items-center justify-between border-b border-white/10 pb-8">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center border border-accent/50 shadow-lg shadow-accent/20">
-            <ShieldCheck className="text-accent" size={28} />
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/10">
+            <ShieldCheck className="text-primary" size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase">Painel Administrativo</h1>
-            <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">Antigravity AI Master Blueprint V4</p>
+            <h1 className="text-3xl font-black tracking-tighter uppercase text-foreground">Painel Administrativo</h1>
+            <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest">MetaCampo SaaS</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
+        <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm border border-border px-4 py-2 rounded-full">
           <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
-          <span className="text-[10px] font-black uppercase tracking-widest">Soberania de Dados Ativa</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-foreground">Soberania de Dados Ativa</span>
         </div>
       </header>
+
 
       <main className="max-w-7xl mx-auto space-y-16">
         <motion.section 

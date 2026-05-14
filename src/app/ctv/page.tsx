@@ -35,16 +35,16 @@ export default function CTVPlanningPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="flex flex-col">
       {/* Top Navigation Premium */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 px-8">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50 px-8">
         <div className="max-w-7xl mx-auto h-24 flex items-center justify-between">
           <div className="flex items-center gap-8 h-full">
             <div className="flex flex-col">
-              <h1 className="text-xl font-black tracking-tighter uppercase leading-none">
-                Antigravity <span className="text-accent">AI</span>
+              <h1 className="text-xl font-black tracking-tighter uppercase leading-none text-primary">
+                MetaCampo
               </h1>
-              <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest mt-1">CTV Master Blueprint</p>
+              <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest mt-1">SaaS de Gestão Estratégica</p>
             </div>
 
             <nav className="flex h-full items-center gap-2">
@@ -54,12 +54,12 @@ export default function CTVPlanningPage() {
                   onClick={() => setActiveWorkspace(item.id as Workspace)}
                   className={`relative group px-6 h-12 rounded-xl flex flex-col items-center justify-center transition-all ${
                     activeWorkspace === item.id 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-muted-foreground hover:bg-white/5'
+                      ? 'bg-primary/10 text-primary' 
+                      : 'text-muted-foreground hover:bg-muted/50'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <item.icon size={18} className={activeWorkspace === item.id ? 'text-accent' : 'group-hover:text-foreground'} />
+                    <item.icon size={18} className={activeWorkspace === item.id ? 'text-primary' : 'group-hover:text-foreground'} />
                     <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
                   </div>
                   <span className="text-[7px] font-bold opacity-50 uppercase tracking-tighter mt-0.5">{item.description}</span>
@@ -67,13 +67,14 @@ export default function CTVPlanningPage() {
                   {activeWorkspace === item.id && (
                     <motion.div 
                       layoutId="activeTab"
-                      className="absolute -bottom-[13px] left-0 right-0 h-1 bg-accent rounded-full shadow-[0_0_15px_rgba(20,110,245,0.5)]"
+                      className="absolute -bottom-[13px] left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_15px_rgba(45,90,39,0.5)]"
                     />
                   )}
                 </button>
               ))}
             </nav>
           </div>
+
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden md:block">

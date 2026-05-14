@@ -68,69 +68,47 @@ export default function WorkspacePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar (Minimalist Premium) */}
-      <aside className="w-20 lg:w-64 border-r border-border/50 flex flex-col p-6 bg-white/20 backdrop-blur-md">
-        <div className="flex items-center gap-3 mb-12 px-2">
-          <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-white font-black text-xl">M</div>
-          <span className="hidden lg:block font-black text-xl tracking-tighter">METACAMPO</span>
+    <div className="p-8 lg:p-12">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-6">
+        <div>
+          <h1 className="text-4xl font-black tracking-tighter mb-2 text-foreground">Workspace Executivo</h1>
+          <p className="text-muted-foreground">Bem-vindo à Safra 26/27. Seu Saldo TO-GO aguarda ação.</p>
+        </div>
+        <div className="flex items-center gap-4">
+           <div className="px-6 py-3 rounded-2xl glass-card border-primary/20 flex items-center gap-4 bg-white/50 backdrop-blur-sm">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-foreground">Live: Faturamento YTD</span>
+           </div>
+        </div>
+      </header>
+
+      {/* Executive Cockpit Section */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        <div className="lg:col-span-1">
+          <PacingSpeedometer 
+            label="Realizado vs Meta Global"
+            realized={mockPacing.realized}
+            target={mockPacing.target}
+            shadowTarget={mockPacing.shadowTarget}
+          />
         </div>
         
-        <nav className="flex-1 space-y-2">
-          <NavItem icon={<LucideLayoutDashboard />} label="Cockpit" active />
-          <NavItem icon={<LucideUsers />} label="Carteira" />
-          <NavItem icon={<LucideSettings />} label="Ajustes" />
-        </nav>
-
-        <button className="mt-auto flex items-center gap-3 px-4 py-3 text-muted-foreground hover:text-destructive transition-colors">
-          <LucideLogOut size={20} />
-          <span className="hidden lg:block font-bold text-xs uppercase tracking-widest">Sair</span>
-        </button>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
-        <header className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-6">
-          <div>
-            <h1 className="text-4xl font-black tracking-tighter mb-2">Workspace Executivo</h1>
-            <p className="text-muted-foreground">Bem-vindo à Safra 26/27. Seu Saldo TO-GO aguarda ação.</p>
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="px-6 py-3 rounded-2xl glass-card border-primary/20 flex items-center gap-4">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-widest">Live: Faturamento YTD</span>
-             </div>
-          </div>
-        </header>
-
-        {/* Executive Cockpit Section */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
-          <div className="lg:col-span-1">
-            <PacingSpeedometer 
-              label="Realizado vs Meta Global"
-              realized={mockPacing.realized}
-              target={mockPacing.target}
-              shadowTarget={mockPacing.shadowTarget}
+        <div className="lg:col-span-2">
+          <div className="glass-card p-8 h-full flex flex-col justify-center">
+            <h3 className="text-xl font-bold mb-6">Câmara de Ingestão</h3>
+            <IngestionCenter 
+              onUpload={handleUpload}
+              isProcessing={isProcessing}
+              progress={progress}
             />
           </div>
-          
-          <div className="lg:col-span-2">
-            <div className="glass-card p-8 h-full flex flex-col justify-center">
-              <h3 className="text-xl font-bold mb-6">Câmara de Ingestão</h3>
-              <IngestionCenter 
-                onUpload={handleUpload}
-                isProcessing={isProcessing}
-                progress={progress}
-              />
-            </div>
-          </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Hunting Radar Section */}
-        <section>
-          <HuntingRadar clients={mockClients} />
-        </section>
-      </main>
+      {/* Hunting Radar Section */}
+      <section>
+        <HuntingRadar clients={mockClients} />
+      </section>
 
       {/* Reconciliation Modal */}
       <ReconciliationModal 
@@ -144,14 +122,3 @@ export default function WorkspacePage() {
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <button className={`
-      w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all
-      ${active ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}
-    `}>
-      {React.cloneElement(icon as React.ReactElement<any>, { size: 20 })}
-      <span className="hidden lg:block font-bold text-xs uppercase tracking-widest">{label}</span>
-    </button>
-  );
-}
