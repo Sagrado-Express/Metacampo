@@ -150,7 +150,7 @@ function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label
       w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all
       ${active ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"}
     `}>
-      {React.cloneElement(icon as React.ReactElement, { size: 20 })}
+      {React.cloneElement(icon as React.ReactElement<any>, { size: 20 })}
       <span className="hidden lg:block font-bold text-xs uppercase tracking-widest">{label}</span>
     </button>
   );
