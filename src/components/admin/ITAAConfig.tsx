@@ -100,19 +100,19 @@ export default function ITAAConfig() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card overflow-hidden"
+        className="glass-card-premium overflow-hidden border-primary/5"
       >
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-border/50 bg-muted/30">
-                <th className="p-6 text-left label-finance min-w-[180px]">Cultura</th>
+              <tr className="border-b border-border/50 bg-primary/[0.02]">
+                <th className="p-8 text-left label-finance min-w-[200px] text-primary">Cultura</th>
                 {SEGMENTOS.map((seg) => (
-                  <th key={seg} className="p-6 text-center label-finance min-w-[120px]">
+                  <th key={seg} className="p-8 text-center label-finance min-w-[140px] text-primary/70">
                     {seg}
                   </th>
                 ))}
-                <th className="p-6 text-right label-finance min-w-[140px] bg-primary/5">ITAA TOTAL</th>
+                <th className="p-8 text-right label-finance min-w-[160px] bg-primary/5 text-primary">ITAA TOTAL</th>
               </tr>
             </thead>
             <tbody>
@@ -123,19 +123,22 @@ export default function ITAAConfig() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="border-b border-border/30 hover:bg-white/40 transition-colors group"
+                    className="border-b border-border/30 hover:bg-white/60 transition-all group hover-lift"
                   >
-                    <td className="p-6">
-                      <div className="flex items-center gap-3">
+                    <td className="p-8">
+                      <div className="flex items-center gap-4">
                         <button 
                           onClick={() => removeCulture(cultura)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                          className="opacity-0 group-hover:opacity-100 p-2 text-destructive hover:bg-destructive/10 rounded-xl transition-all"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
-                        <span className="text-lg font-black tracking-tight text-foreground/80 group-hover:text-primary transition-colors">
-                          {cultura}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-xl font-black tracking-tight text-foreground transition-colors">
+                            {cultura}
+                          </span>
+                          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Matriz Ativa</span>
+                        </div>
                       </div>
                     </td>
                     
@@ -144,19 +147,19 @@ export default function ITAAConfig() {
                       const mix = (config.mixTecnico[seg as Segmento] * 100).toFixed(1);
                       
                       return (
-                        <td key={seg} className="p-4 text-center">
-                          <div className="flex flex-col items-center gap-1">
+                        <td key={seg} className="p-6 text-center">
+                          <div className="flex flex-col items-center gap-2">
                             <div className="relative group/input">
-                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold">R$</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold">R$</span>
                               <input 
                                 type="number"
                                 value={value}
                                 onChange={(e) => handleValueChange(cultura, seg as Segmento, Number(e.target.value))}
-                                className="w-24 bg-background/50 border border-border rounded-xl py-2 pl-6 pr-2 text-center text-xs font-black font-tabular focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                className="w-28 bg-white/50 border border-border/50 rounded-2xl py-3 pl-8 pr-3 text-center text-sm font-black font-tabular focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
                               />
                             </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-[8px] font-bold text-muted-foreground/60 uppercase tracking-tighter">MIX:</span>
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 rounded-full">
+                              <span className="text-[8px] font-bold text-primary/40 uppercase tracking-tighter">MIX:</span>
                               <span className="text-[10px] font-black text-primary font-tabular">{mix}%</span>
                             </div>
                           </div>
@@ -164,17 +167,18 @@ export default function ITAAConfig() {
                       );
                     })}
 
-                    <td className="p-6 text-right bg-primary/5">
+                    <td className="p-8 text-right bg-primary/[0.03]">
                       <div className="flex flex-col">
-                        <span className="text-xl font-black text-primary font-tabular">
+                        <span className="text-2xl font-black text-primary font-tabular tracking-tighter">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(config.total)}
                         </span>
-                        <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">100.0% SOMATÓRIA</span>
+                        <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] mt-1">Summation Correct</span>
                       </div>
                     </td>
                   </motion.tr>
                 ))}
               </AnimatePresence>
+
 
               {/* Inline Add Row */}
               {showAddRow && (

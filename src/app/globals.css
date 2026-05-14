@@ -101,5 +101,48 @@
   .premium-bg {
     @apply bg-gradient-to-br from-[#F5F5F0] via-[#FFFFFF] to-[#EBEBE6];
   }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-primary via-primary/80 to-accent;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px -5px rgba(45, 90, 39, 0.4);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px -5px rgba(212, 175, 55, 0.4);
+  }
+
+  /* Refined Glass Card */
+  .glass-card-premium {
+    @apply relative overflow-hidden rounded-[32px] bg-white/60 transition-all duration-500 backdrop-blur-xl border border-white/40;
+    box-shadow: 
+      0 10px 30px -10px rgba(62, 39, 35, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  }
+
+  .glass-card-premium:hover {
+    @apply bg-white/80 border-primary/20;
+    box-shadow: 
+      0 25px 50px -12px rgba(44, 36, 32, 0.12),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+  }
+
+  /* Micro-interactions */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  .active-pill {
+    @apply relative overflow-hidden;
+  }
+
+  .active-pill::after {
+    content: '';
+    @apply absolute bottom-0 left-0 h-[2px] w-full bg-primary shadow-[0_0_8px_rgba(45,90,39,0.6)];
+  }
 }
+
 

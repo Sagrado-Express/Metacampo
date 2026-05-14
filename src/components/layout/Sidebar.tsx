@@ -45,16 +45,23 @@ export function Sidebar() {
               key={item.label} 
               href={item.href}
               className={`
-                w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all
+                w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all relative group
                 ${isActive 
-                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                  ? "bg-primary text-white glow-primary" 
                   : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 }
               `}
             >
+              {isActive && (
+                <motion.div 
+                  layoutId="sidebarActive"
+                  className="absolute left-0 w-1 h-6 bg-white rounded-r-full"
+                />
+              )}
               {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
-              <span className="hidden lg:block font-bold text-xs uppercase tracking-widest">{item.label}</span>
+              <span className="hidden lg:block font-bold text-[10px] uppercase tracking-[0.2em]">{item.label}</span>
             </Link>
+
           );
         })}
       </nav>

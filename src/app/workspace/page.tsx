@@ -68,22 +68,25 @@ export default function WorkspacePage() {
   };
 
   return (
-    <div className="p-8 lg:p-12">
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-6">
+    <div className="p-8 lg:p-12 space-y-12">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter mb-2 text-foreground">Workspace Executivo</h1>
-          <p className="text-muted-foreground">Bem-vindo à Safra 26/27. Seu Saldo TO-GO aguarda ação.</p>
+          <h1 className="text-5xl font-black tracking-tighter mb-2 text-gradient">Workspace Executivo</h1>
+          <p className="text-muted-foreground font-medium">Safra 26/27 • Performance Estratégica MetaCampo</p>
         </div>
-        <div className="flex items-center gap-4">
-           <div className="px-6 py-3 rounded-2xl glass-card border-primary/20 flex items-center gap-4 bg-white/50 backdrop-blur-sm">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-widest text-foreground">Live: Faturamento YTD</span>
+        <div className="flex items-center gap-6">
+           <div className="px-8 py-4 rounded-[24px] glass-card-premium border-primary/10 flex items-center gap-4 hover-lift cursor-pointer">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(45,90,39,0.5)]" />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Live Data</span>
+                <span className="text-xs font-bold text-foreground">Faturamento YTD Ativo</span>
+              </div>
            </div>
         </div>
       </header>
 
       {/* Executive Cockpit Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-1">
           <PacingSpeedometer 
             label="Realizado vs Meta Global"
@@ -94,8 +97,11 @@ export default function WorkspacePage() {
         </div>
         
         <div className="lg:col-span-2">
-          <div className="glass-card p-8 h-full flex flex-col justify-center">
-            <h3 className="text-xl font-bold mb-6">Câmara de Ingestão</h3>
+          <div className="glass-card-premium p-10 h-full flex flex-col justify-center border-primary/5">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black tracking-tight">Câmara de Ingestão</h3>
+              <div className="px-4 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">Automated Pipeline</div>
+            </div>
             <IngestionCenter 
               onUpload={handleUpload}
               isProcessing={isProcessing}
@@ -104,6 +110,7 @@ export default function WorkspacePage() {
           </div>
         </div>
       </section>
+
 
       {/* Hunting Radar Section */}
       <section>
