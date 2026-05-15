@@ -1,39 +1,68 @@
-# Technical Architecture: Antigravity (Meta Campo)
+# MetaCampo SaaS (Antigravity V4) - Architecture Blueprint
 
-Este documento descreve a arquitetura técnica e o fluxo de dados do sistema, focando na metodologia dos 16 passos e na soberania de dados.
+## 🏗️ System Context
+- **Name**: MetaCampo SaaS (Antigravity V4)
+- **Architecture**: Memory-First Ingestion via Vercel Edge Runtime.
+- **Primary Goal**: Transformar dados transientes de faturação e território em inteligência comercial (VPM, Saldo TO-GO, Pareto).
 
-## 1. Fluxo de Dados (Memory-First)
+## 📥 Ingestion Protocols (Edge Runtime)
+### Rules
+1. **Zero Persistence for Raw Data**: NUNCA persistir dados brutos de faturação (YTD) na base de dados (Supabase). Apenas processar e guardar deltas e resumos.
+2. **IBGE Validation**: Validar `COD_MUNICIPIO_IBGE` contra a tabela estática do IBGE (PAM).
+3. **Auto-Linkage**: Ligar automaticamente a faturação aos budgets com base no `ID_CTV`, `Segmento` e `Mês`.
 
-```mermaid
-graph TD
-    A[ERP / CSV Data] -->|Transient Upload| B[Vercel Edge Functions]
-    B -->|Filter & Process| C[In-Memory Logic]
-    C -->|Transient Cache| D[Upstash Redis]
-    C -->|Calculate VPM| E[VPM Motor]
-    E -->|Strategic Results| F[Supabase Persistent Vault]
-    B -->|Purge Raw Data| G[End of Request]
-```
+## 📊 Data Schemas
 
-## 2. Motor de VPM (Valor de Potencial de Mercado)
+### 1. Base Clientes Território (Persistent Master)
+Tabela mestre que define a hierarquia comercial e materializa o potencial (hectares).
+- **Primary Key**: `DOCUMENTO`
+- **Fields**: 
+    - `ID_DIRETOR`, `ID_GERENTE`, `ID_CTV` (Commercial Hierarchy)
+    - `DOCUMENTO` (CNPJ/CPF limpo)
+    - `COD_MUNICIPIO_IBGE` (Validation: ibge_lookup)
+    - `HA_SOJA`, `HA_MILHO`, `HA_ALGODAO`, `HA_CANA`, `HA_CAFE` (Base for VPM)
+    - `RATING_CREDITO` (A-E)
+    - `RELACIONAMENTO` (1-5)
 
-O cálculo do VPM é o coração do sistema:
-- **Fórmula Base**: `VPM = Área Confirmada (ha) * Valor/ha (por Segmento/Cultura)`.
-- **Ajuste de Safra**: O VPM é multiplicado por um fator sazonal baseado no **Calendário Agrícola** (Janelas de Plantio/Colheita).
-- **Peso Qualitativo**: No cálculo do Pareto, o faturamento é multiplicado pelo `qualitativeWeight` (Influência do Cliente) para priorização inteligente.
+### 2. Setup Budget (Persistent Target)
+Metas financeiras fatiadas por Mês e Segmento para cada vendedor.
+- **Composite Key**: `[MES, ID_CTV, SEGMENTO]`
+- **Fields**:
+    - `MES` (MM)
+    - `ID_CTV` (Foreign Key)
+    - `SEGMENTO` (Sementes, Fertilizantes, Agroquímicos, Nutrição, Biológicos, Adjuvantes)
+    - `VALOR_META_R$` (Target Value)
 
-## 3. Metodologia de 16 Passos
+### 3. Faturamento YTD (Transient Edge)
+Ficheiro de extração de rotina (ERP). Processado em memória e descartado.
+- **Fields**:
+    - `DATA_NOTA` (YYYY-MM-DD)
+    - `DOCUMENTO` (Foreign Key)
+    - `ID_CTV` (Foreign Key)
+    - `SEGMENTO_PRODUTO` (Mapping target)
+    - `VALOR_LIQUIDO` (Realized Value)
 
-A aplicação divide os passos em blocos funcionais:
-1.  **Diagnóstico (1-8)**: Foco em materializar a área real e o potencial teórico.
-2.  **Consolidação (9-13)**: Foco em aprovação de metas e grau de confiança (4 cores).
-3.  **Execução (14-16)**: Planos de visita dinâmicos e proteção de faturamento.
+## ⚙️ Computational Engines
 
-## 4. Estratégia Offline-First
+### VPM_Engine
+- **Trigger**: Após ingestão da Tabela 1 e ITAA estático.
+- **Calculation**: Soma(HA_CULTURA * ITAA_CULTURA).
+- **Output**: Atualiza o potencial do cliente no Radar de Caça.
 
-Para CTVs operando em áreas de baixa conectividade:
-- **TanStack Query Persistence**: Os dados de check-in e consultas de carteira são cacheados no `localStorage` ou `IndexedDB`.
-- **Background Sync**: Sincronização automática assim que a conexão é restaurada.
-- **Check-in Leve**: O registro de visita prioriza texto e timestamp para garantir o funcionamento em conexões 2G/EDGE.
+### Saldo_TO_GO_Engine
+- **Trigger**: Durante a ingestão transiente da Tabela 3.
+- **Join Logic**: `Month(DATA_NOTA) == Budget.Month` AND `Segment == Budget.Segment`.
+- **Calculation**: `TO_GO = (Target_Value) - (SUM(Realized_Value))`.
+- **Output**: Velocímetro de Pacing Mensal no Cockpit.
 
----
-*Documentação técnica mantida pelo time de Engenharia.*
+### Pareto_Color_Engine
+- **Trigger**: Após cálculo do Saldo TO-GO.
+- **Logic**: 
+    - Top 80% VPM = Estratégicos.
+    - Se `(Faturado / VPM) > threshold` E `RATING == A|B` -> **AZUL**.
+    - Se gap alto -> **VERMELHO**.
+- **Output**: Card Color Tag no Workspace.
+
+## 🚨 Error Handling
+- **Unmapped Client**: Alerta e redirecionamento para Handshake.
+- **Unmapped Segment**: Suspender ingestão e abrir Modal de Conciliação.

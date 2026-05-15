@@ -36,7 +36,8 @@ interface ClienteInterativo {
   municipio: string;
   areaHa: number;
   metaVenda: number;
-  shareAlvo: number; // 0.2 = 20%
+  shareAlvo: number;
+  rating: string;
   // Computed fields
   vpmTotal: number;
   areaNecessaria: number;
@@ -60,6 +61,7 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
         areaHa: totalArea,
         metaVenda: totalArea * 450, // Initial mock meta for demo
         shareAlvo: 0.20,
+        rating: d.rating,
         vpmTotal: 0,
         areaNecessaria: 0,
         areaInvalida: false,
@@ -84,9 +86,15 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
       return { ...c, vpmTotal, areaNecessaria, areaInvalida };
     });
 
-    // 2. Calcular Pareto 80/20 (Motor Agr-2)
+    // 2. Calcular Pareto V4 (Performance + Risco)
     const paretoResults = VpmService.calculatePareto(
-      processed.map(p => ({ id: p.id, name: p.name, vpmTotal: p.vpmTotal }))
+      processed.map(p => ({ 
+        id: p.id, 
+        name: p.name, 
+        vpmTotal: p.vpmTotal,
+        realizedValue: p.metaVenda, // Using meta as proxy for demo
+        rating: p.rating
+      }))
     );
 
     // 3. Mesclar resultados do Pareto de volta aos clientes
@@ -95,6 +103,7 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
       return { ...p, performanceBand: pareto?.performanceBand || 'CINZA' };
     });
   }, [clientes]);
+
 
   const updateCliente = (id: string, field: keyof ClienteInterativo, value: number) => {
     setClientes(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));

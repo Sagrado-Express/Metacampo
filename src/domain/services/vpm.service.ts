@@ -54,10 +54,26 @@ export class VpmService {
   // ==========================================
 
   /**
-   * Automates Step 15 segmentation based on the strict Agr-2 Excel rules.
+   * Automates Step 15 segmentation based on the Antigravity V4 Blueprint.
+   * Rules:
+   * 1. Ranking: Order by VPM Total descending.
+   * 2. Cutoff: Top 80% cumulative VPM = Grupo Estratégico.
+   * 3. Color Logic (Estratégico):
+   *    - AZUL: (Faturado / VPM) >= 0.15 AND Rating in [A, B]
+   *    - VERMELHO: (Faturado / VPM) < 0.05 (High Gap)
+   *    - VERDE: Others in Estratégico
+   * 4. Color Logic (Complementar):
+   *    - AMARELO: Top 50% of remaining
+   *    - CINZA: Bottom 50% or Default
    */
   static calculatePareto(
-    clients: { id: string; name: string; vpmTotal: number }[]
+    clients: { 
+      id: string; 
+      name: string; 
+      vpmTotal: number; 
+      realizedValue?: number; 
+      rating?: string 
+    }[]
   ): ParetoResult[] {
     
     // 1. Ranking: Order by VPM Total descending
@@ -67,7 +83,7 @@ export class VpmService {
     if (totalPortfolioVpm === 0) return sorted.map(c => ({ clientId: c.id, name: c.name, vpmTotal: c.vpmTotal, performanceBand: 'CINZA', cumulativePercentage: 0 }));
 
     let cumulativeVpm = 0;
-    const result = sorted.map(item => {
+    const ranked = sorted.map(item => {
       cumulativeVpm += item.vpmTotal;
       return {
         ...item,
@@ -75,38 +91,34 @@ export class VpmService {
       };
     });
 
-    // 2. Corte 80/20
-    const grupoEstrategico = result.filter(c => c.cumulativePercentage <= 80);
-    const grupoComplementar = result.filter(c => c.cumulativePercentage > 80);
+    return ranked.map(c => {
+      const share = c.vpmTotal > 0 ? (c.realizedValue || 0) / c.vpmTotal : 0;
+      let band: PerformanceBand = 'CINZA';
 
-    // If no one is strictly <= 80 because of huge first client, put at least first client in Estratégico
-    if (grupoEstrategico.length === 0 && result.length > 0) {
-      grupoEstrategico.push(result[0]);
-      grupoComplementar.shift();
-    }
+      if (c.cumulativePercentage <= 80) {
+        // GRUPO ESTRATÉGICO
+        if (share >= 0.15 && ['A', 'B'].includes(c.rating || '')) {
+          band = 'AZUL';
+        } else if (share < 0.05) {
+          band = 'VERMELHO';
+        } else {
+          band = 'VERDE';
+        }
+      } else {
+        // GRUPO COMPLEMENTAR
+        band = c.cumulativePercentage <= 90 ? 'AMARELO' : 'CINZA';
+      }
 
-    // 3. Sub-segmentação Grupo Estratégico (Top 50% Azul, Bottom 50% Verde)
-    const midEstrategico = Math.ceil(grupoEstrategico.length / 2);
-    const assignedEstrategico = grupoEstrategico.map((c, index) => ({
-      clientId: c.id,
-      name: c.name,
-      vpmTotal: c.vpmTotal,
-      cumulativePercentage: c.cumulativePercentage,
-      performanceBand: (index < midEstrategico) ? 'AZUL' as PerformanceBand : 'VERDE' as PerformanceBand
-    }));
-
-    // 4. Sub-segmentação Grupo Complementar (Top 50% Amarelo, Bottom 50% Vermelho)
-    const midComplementar = Math.ceil(grupoComplementar.length / 2);
-    const assignedComplementar = grupoComplementar.map((c, index) => ({
-      clientId: c.id,
-      name: c.name,
-      vpmTotal: c.vpmTotal,
-      cumulativePercentage: c.cumulativePercentage,
-      performanceBand: (index < midComplementar) ? 'AMARELO' as PerformanceBand : 'VERMELHO' as PerformanceBand
-    }));
-
-    return [...assignedEstrategico, ...assignedComplementar];
+      return {
+        clientId: c.id,
+        name: c.name,
+        vpmTotal: c.vpmTotal,
+        cumulativePercentage: c.cumulativePercentage,
+        performanceBand: band
+      };
+    });
   }
+
 
   // ==========================================
   // 3. MONITORAMENTO E SALDO TO-GO (PASSO 12)
