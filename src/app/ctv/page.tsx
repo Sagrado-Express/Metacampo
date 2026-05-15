@@ -28,7 +28,8 @@ export default function CTVPlanningPage() {
 
   const navItems = [
     { id: 'DIAGNOSIS', label: 'Diagnóstico', icon: Activity, description: 'Passos 1, 3, 6, 7' },
-    { id: 'PORTFOLIO', label: 'Tabela Mãe', icon: Users, description: 'Passos 2, 9, 11, 14, 15' },
+    { id: 'PORTFOLIO', label: 'Plano de Negócios', icon: Users, description: 'Passos 2, 9, 11, 14, 15' },
+
     { id: 'PLANNING', label: 'Planejamento', icon: Target, description: 'Passos 4, 5, 8, 10' },
     { id: 'EXECUTION', label: 'Execução', icon: TrendingUp, description: 'Passos 12, 13' },
     { id: 'AGENDA', label: 'Agenda', icon: MapPin, description: 'Passo 16' },

@@ -94,12 +94,13 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
       {/* Header com Diagnóstico de Carteira */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-primary tracking-tight flex items-center gap-3">
+          <h2 className="text-2xl font-black text-primary tracking-tight flex items-center gap-3 text-gradient">
             <Users size={32} />
-            TABELA MÃE: INVENTÁRIO ESTRATÉGICO
+            PLANO DE NEGÓCIOS: INVENTÁRIO ESTRATÉGICO
           </h2>
           <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">Passos 2, 3 e 15 (Materialização e Segmentação)</p>
         </div>
+
         
         <div className="flex gap-3">
           <div className="relative">

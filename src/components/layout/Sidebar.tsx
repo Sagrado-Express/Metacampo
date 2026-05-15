@@ -28,7 +28,7 @@ export function Sidebar() {
   const menuItems = [
     { icon: <LucideLayoutDashboard />, label: "Cockpit", href: "/workspace" },
     { icon: <LucideShieldCheck />, label: "Admin", href: "/admin" },
-    { icon: <LucideUsers />, label: "Tabela Mãe", href: "/ctv/tabela-mae" },
+    { icon: <LucideUsers />, label: "Plano de Negócios", href: "/ctv/tabela-mae" },
     { icon: <LucideTrendingUp />, label: "ITAA Matrix", href: "/admin" }, 
     { icon: <LucideFileUp />, label: "Ingestão", href: "/workspace" },
   ];
