@@ -40,7 +40,7 @@ export class IngestionMapper {
     });
     
     const rawData = parsed.data as any[];
-    const buckets: Record<string, number> = {};
+    const buckets = new Map<string, number>();
 
     rawData.forEach(row => {
       // Flexible header mapping (Normalizing legacy ERP headers)
@@ -55,16 +55,20 @@ export class IngestionMapper {
       
       // Bucket Key: Client + CTV + Segment + Month + Year
       const key = `${cnpj}|${ctvId}|${segmentId}|${month}|${year}`;
-      buckets[key] = (buckets[key] || 0) + value;
+      
+      // Safe Math: Convert to cents for accumulation to avoid floating point errors
+      const currentCents = buckets.get(key) || 0;
+      const valueCents = Math.round(value * 100);
+      buckets.set(key, currentCents + valueCents);
     });
 
-    return Object.entries(buckets).map(([key, value]) => {
+    return Array.from(buckets.entries()).map(([key, cents]) => {
       const [cnpj, ctvId, segmentId, month, year] = key.split('|');
       return {
         cnpjClient: cnpj,
         ctvId,
         segmentId,
-        realizedValue: value,
+        realizedValue: cents / 100, // Convert back to float safely
         billingDate: new Date(parseInt(year), parseInt(month), 1)
       };
     });
@@ -73,6 +77,7 @@ export class IngestionMapper {
   /**
    * Delta Calculation: Real-time comparison with targets.
    * Generates PacingData with Shadow Target logic.
+   * O(M + N) Performance by using Hash Maps.
    */
   static calculatePacing(
     aggregatedBilling: Partial<BillingSummary>[],
@@ -82,20 +87,32 @@ export class IngestionMapper {
     const currentDay = today.getDate();
     const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-    return targets.map(target => {
-      // Find matching billing for this bucket
-      const matchingBilling = aggregatedBilling.filter(b => 
-        b.ctvId === target.ctvId && 
-        b.segmentId === target.segmentId &&
-        b.billingDate?.getMonth() === target.month - 1 &&
-        b.billingDate?.getFullYear() === target.year
-      );
+    // 1. O(N) Space/Time: Build an index Map for O(1) lookups
+    const billingIndex = new Map<string, number>();
+    aggregatedBilling.forEach(b => {
+      if (b.billingDate) {
+        const month = b.billingDate.getMonth() + 1; // 1-indexed to match target.month
+        const year = b.billingDate.getFullYear();
+        const key = `${b.ctvId}|${b.segmentId}|${month}|${year}`;
+        const currentCents = billingIndex.get(key) || 0;
+        const valueCents = Math.round((b.realizedValue || 0) * 100);
+        billingIndex.set(key, currentCents + valueCents);
+      }
+    });
 
-      const realizedValue = matchingBilling.reduce((sum, b) => sum + (b.realizedValue || 0), 0);
+    // 2. O(M) Time: Iterate targets
+    return targets.map(target => {
+      const key = `${target.ctvId}|${target.segmentId}|${target.month}|${target.year}`;
+      const realizedCents = billingIndex.get(key) || 0;
+      const realizedValue = realizedCents / 100;
       
       // Shadow Target (Phantom Line): Pro-rata target for the current day
-      const shadowTarget = (currentDay / daysInMonth) * target.targetValue;
-      const toGoBalance = Math.max(0, target.targetValue - realizedValue);
+      const targetCents = Math.round(target.targetValue * 100);
+      const shadowTargetCents = Math.round((currentDay / daysInMonth) * targetCents);
+      const shadowTarget = shadowTargetCents / 100;
+      
+      const toGoBalanceCents = Math.max(0, targetCents - realizedCents);
+      const toGoBalance = toGoBalanceCents / 100;
 
       return {
         month: target.month,

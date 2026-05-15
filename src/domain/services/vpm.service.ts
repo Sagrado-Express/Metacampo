@@ -14,6 +14,18 @@ export interface ParetoResult {
  */
 export class VpmService {
   
+  // Helper to convert Rating to Weight for tie-breaking
+  private static getRatingWeight(rating?: string): number {
+    switch (rating?.toUpperCase()) {
+      case 'A': return 5;
+      case 'B': return 4;
+      case 'C': return 3;
+      case 'D': return 2;
+      case 'E': return 1;
+      default: return 0;
+    }
+  }
+
   // ==========================================
   // 1. MOTOR DE CÁLCULO FINANCEIRO (AGR-1)
   // ==========================================
@@ -21,6 +33,7 @@ export class VpmService {
   /**
    * Calculates the Required Area (Simulação) based on Sales Goal and Target Share.
    * Formula: Área Necessária = Meta de Venda ÷ (Share Alvo × IT-SE Total)
+   * Uses Safe Math to avoid float division issues.
    */
   static calculateRequiredArea(
     metaVenda: number,
@@ -30,8 +43,13 @@ export class VpmService {
   ): { areaNecessaria: number; areaInvalida: boolean; alert?: string } {
     if (shareAlvoDecimal <= 0 || itseTotal <= 0) return { areaNecessaria: 0, areaInvalida: false };
 
-    const areaNecessaria = parseFloat((metaVenda / (shareAlvoDecimal * itseTotal)).toFixed(2));
-    const areaInvalida = areaNecessaria > areaCadastrada;
+    // Safe Math: Calculate area and round to 2 decimal places properly
+    const rawArea = metaVenda / (shareAlvoDecimal * itseTotal);
+    const areaNecessaria = Math.round(rawArea * 100) / 100;
+    
+    // Safe comparison using small epsilon to avoid float inconsistencies like 100.0000000001 > 100
+    const epsilon = 0.001;
+    const areaInvalida = (areaNecessaria - areaCadastrada) > epsilon;
 
     return {
       areaNecessaria,
@@ -46,7 +64,7 @@ export class VpmService {
    */
   static calculatePlannedShare(metaSegmento: number, vpmSegmento: number): number {
     if (vpmSegmento <= 0) return 0;
-    return parseFloat((metaSegmento / vpmSegmento).toFixed(4)); // Keeps as decimal (e.g., 0.15 = 15%)
+    return Math.round((metaSegmento / vpmSegmento) * 10000) / 10000; // Keeps as 4 decimal places safely
   }
 
   // ==========================================
@@ -55,16 +73,7 @@ export class VpmService {
 
   /**
    * Automates Step 15 segmentation based on the Antigravity V4 Blueprint.
-   * Rules:
-   * 1. Ranking: Order by VPM Total descending.
-   * 2. Cutoff: Top 80% cumulative VPM = Grupo Estratégico.
-   * 3. Color Logic (Estratégico):
-   *    - AZUL: (Faturado / VPM) >= 0.15 AND Rating in [A, B]
-   *    - VERMELHO: (Faturado / VPM) < 0.05 (High Gap)
-   *    - VERDE: Others in Estratégico
-   * 4. Color Logic (Complementar):
-   *    - AMARELO: Top 50% of remaining
-   *    - CINZA: Bottom 50% or Default
+   * Single-Pass O(N) calculation after sorting.
    */
   static calculatePareto(
     clients: { 
@@ -76,26 +85,34 @@ export class VpmService {
     }[]
   ): ParetoResult[] {
     
-    // 1. Ranking: Order by VPM Total descending
-    const sorted = [...clients].sort((a, b) => b.vpmTotal - a.vpmTotal);
-    
-    const totalPortfolioVpm = sorted.reduce((acc, curr) => acc + curr.vpmTotal, 0);
-    if (totalPortfolioVpm === 0) return sorted.map(c => ({ clientId: c.id, name: c.name, vpmTotal: c.vpmTotal, performanceBand: 'CINZA', cumulativePercentage: 0 }));
-
-    let cumulativeVpm = 0;
-    const ranked = sorted.map(item => {
-      cumulativeVpm += item.vpmTotal;
-      return {
-        ...item,
-        cumulativePercentage: Number(((cumulativeVpm / totalPortfolioVpm) * 100).toFixed(2))
-      };
+    // 1. O(N log N) Ranking: Order by VPM Total descending, tie-breaker by Rating
+    const sorted = [...clients].sort((a, b) => {
+      // Safe subtraction in cents for comparison
+      const diff = Math.round(b.vpmTotal * 100) - Math.round(a.vpmTotal * 100);
+      if (diff !== 0) return diff;
+      return this.getRatingWeight(b.rating) - this.getRatingWeight(a.rating);
     });
+    
+    // 2. O(N) Single-Pass: Calculate Total VPM
+    const totalPortfolioVpmCents = sorted.reduce((acc, curr) => acc + Math.round(curr.vpmTotal * 100), 0);
+    
+    if (totalPortfolioVpmCents === 0) {
+      return sorted.map(c => ({ clientId: c.id, name: c.name, vpmTotal: c.vpmTotal, performanceBand: 'CINZA', cumulativePercentage: 0 }));
+    }
 
-    return ranked.map(c => {
-      const share = c.vpmTotal > 0 ? (c.realizedValue || 0) / c.vpmTotal : 0;
+    // 3. O(N) Single-Pass: Cumulative assignment
+    let cumulativeVpmCents = 0;
+    
+    return sorted.map(c => {
+      const vpmCents = Math.round(c.vpmTotal * 100);
+      cumulativeVpmCents += vpmCents;
+      
+      const cumulativePercentage = Math.round((cumulativeVpmCents / totalPortfolioVpmCents) * 10000) / 100;
+      const share = vpmCents > 0 ? Math.round((c.realizedValue || 0) * 100) / vpmCents : 0;
+      
       let band: PerformanceBand = 'CINZA';
 
-      if (c.cumulativePercentage <= 80) {
+      if (cumulativePercentage <= 80) {
         // GRUPO ESTRATÉGICO
         if (share >= 0.15 && ['A', 'B'].includes(c.rating || '')) {
           band = 'AZUL';
@@ -106,14 +123,14 @@ export class VpmService {
         }
       } else {
         // GRUPO COMPLEMENTAR
-        band = c.cumulativePercentage <= 90 ? 'AMARELO' : 'CINZA';
+        band = cumulativePercentage <= 90 ? 'AMARELO' : 'CINZA';
       }
 
       return {
         clientId: c.id,
         name: c.name,
         vpmTotal: c.vpmTotal,
-        cumulativePercentage: c.cumulativePercentage,
+        cumulativePercentage,
         performanceBand: band
       };
     });
@@ -127,19 +144,25 @@ export class VpmService {
   /**
    * Calculates the TO-GO Balance.
    * Formula: Previsão de Venda - (Faturamento + Pedidos Pendentes)
+   * Uses Safe Math in cents.
    */
   static calculateToGo(previsaoVenda: number, faturamento: number, pedidosPendentes: number): number {
-    const toGo = previsaoVenda - (faturamento + pedidosPendentes);
-    return parseFloat(Math.max(0, toGo).toFixed(2)); // Ensures we don't return negative if over-delivered
+    const previsaoCents = Math.round(previsaoVenda * 100);
+    const faturamentoCents = Math.round(faturamento * 100);
+    const pedidosCents = Math.round(pedidosPendentes * 100);
+    
+    const toGoCents = previsaoCents - (faturamentoCents + pedidosCents);
+    return Math.max(0, toGoCents) / 100;
   }
 
   /**
    * Calculates the Access Gap.
    * Formula: VPM Total - Faturamento Total
+   * Uses Safe Math in cents.
    */
   static calculateAccessGap(vpmTotal: number, faturamentoTotal: number): number {
-    const gap = vpmTotal - faturamentoTotal;
-    return parseFloat(Math.max(0, gap).toFixed(2));
+    const gapCents = Math.round(vpmTotal * 100) - Math.round(faturamentoTotal * 100);
+    return Math.max(0, gapCents) / 100;
   }
 
   /**
