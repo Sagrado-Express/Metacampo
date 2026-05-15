@@ -14,18 +14,22 @@ import { LucideLayoutDashboard, LucideSettings, LucideUsers, LucideLogOut } from
  * METACAMPO SaaS (Premium Edition) - Main Workspace
  * Assembles the Executive Cockpit and Hunting Radar.
  */
+import { MONTHLY_MASTER_BASE } from "@/data/monthly_master";
+
 export default function WorkspacePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showReconciliation, setShowReconciliation] = useState(false);
   const [unmappedSegments, setUnmappedSegments] = useState<string[]>([]);
   
-  // Mock Data for initial state
+  // Dynamic Pacing from Monthly Master Base (CTV01 - May)
+  const ctvData = MONTHLY_MASTER_BASE.filter(d => d.ctvId === "CTV01" && d.mes === "05");
   const mockPacing = {
-    realized: 450000,
-    target: 1000000,
-    shadowTarget: 500000,
+    realized: ctvData.reduce((acc, curr) => acc + curr.realized, 0),
+    target: ctvData.reduce((acc, curr) => acc + curr.meta, 0),
+    shadowTarget: ctvData.reduce((acc, curr) => acc + curr.meta, 0) * (new Date().getDate() / 31),
   };
+
 
   const mockClients = MOCK_TEST_DATA.slice(0, 4).map(d => {
     const vpmTotal = (d.areas.soja + d.areas.milho + d.areas.algodao) * 3500;
