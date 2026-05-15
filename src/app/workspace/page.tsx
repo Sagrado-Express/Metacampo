@@ -16,22 +16,14 @@ import { LucideLayoutDashboard, LucideSettings, LucideUsers, LucideLogOut } from
  */
 import { MONTHLY_MASTER_BASE } from "@/data/monthly_master";
 
+import { ExecutiveCockpit } from "@/components/dashboard/ExecutiveCockpit";
+
 export default function WorkspacePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showReconciliation, setShowReconciliation] = useState(false);
   const [unmappedSegments, setUnmappedSegments] = useState<string[]>([]);
   
-  // Dynamic Pacing from Monthly Master Base (CTV01 - May)
-  const ctvData = MONTHLY_MASTER_BASE.filter(d => d.ctvId === "CTV01" && d.mes === "05");
-  const mockPacing = {
-    realized: ctvData.reduce((acc, curr) => acc + curr.realizado, 0),
-    target: ctvData.reduce((acc, curr) => acc + curr.meta, 0),
-
-    shadowTarget: ctvData.reduce((acc, curr) => acc + curr.meta, 0) * (new Date().getDate() / 31),
-  };
-
-
   const mockClients = MOCK_TEST_DATA.slice(0, 4).map(d => {
     const vpmTotal = (d.areas.soja + d.areas.milho + d.areas.algodao) * 3500;
     return {
@@ -44,7 +36,6 @@ export default function WorkspacePage() {
       pareto: "AZUL" as const
     };
   });
-
 
   const handleUpload = async (file: File) => {
     setIsProcessing(true);
@@ -74,42 +65,19 @@ export default function WorkspacePage() {
       
       setTimeout(() => {
         setIsProcessing(false);
-        // Here we would update the state with actual processed data
       }, 2500);
     };
     reader.readAsText(file);
   };
 
   return (
-    <div className="p-8 lg:p-12 space-y-12">
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
-        <div>
-          <h1 className="text-5xl font-black tracking-tighter mb-2 text-gradient">Workspace Executivo</h1>
-          <p className="text-muted-foreground font-medium">Safra 26/27 • Performance Estratégica MetaCampo</p>
-        </div>
-        <div className="flex items-center gap-6">
-           <div className="px-8 py-4 rounded-[24px] glass-card-premium border-primary/10 flex items-center gap-4 hover-lift cursor-pointer">
-              <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(45,90,39,0.5)]" />
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Live Data</span>
-                <span className="text-xs font-bold text-foreground">Faturamento YTD Ativo</span>
-              </div>
-           </div>
-        </div>
-      </header>
+    <div className="space-y-12">
+      {/* Executive Cockpit (RLS Simulation) */}
+      <ExecutiveCockpit />
 
-      {/* Executive Cockpit Section */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-1">
-          <PacingSpeedometer 
-            label="Realizado vs Meta Global"
-            realized={mockPacing.realized}
-            target={mockPacing.target}
-            shadowTarget={mockPacing.shadowTarget}
-          />
-        </div>
-        
-        <div className="lg:col-span-2">
+      <div className="p-8 lg:p-12 space-y-12">
+        {/* Ingestion & Pipeline Section */}
+        <section className="grid grid-cols-1 gap-10">
           <div className="glass-card-premium p-10 h-full flex flex-col justify-center border-primary/5">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-2xl font-black tracking-tight">Câmara de Ingestão</h3>
@@ -121,24 +89,24 @@ export default function WorkspacePage() {
               progress={progress}
             />
           </div>
-        </div>
-      </section>
+        </section>
 
+        {/* Hunting Radar Section */}
+        <section>
+          <HuntingRadar clients={mockClients} />
+        </section>
 
-      {/* Hunting Radar Section */}
-      <section>
-        <HuntingRadar clients={mockClients} />
-      </section>
-
-      {/* Reconciliation Modal */}
-      <ReconciliationModal 
-        isOpen={showReconciliation}
-        onClose={() => setShowReconciliation(false)}
-        unmappedItems={unmappedSegments}
-        availableSegments={["Sementes", "Fertilizantes", "Agroquímicos", "Nutrição", "Biológicos"]}
-        onMap={(item, seg) => console.log(`Mapping ${item} to ${seg}`)}
-      />
+        {/* Reconciliation Modal */}
+        <ReconciliationModal 
+          isOpen={showReconciliation}
+          onClose={() => setShowReconciliation(false)}
+          unmappedItems={unmappedSegments}
+          availableSegments={["Sementes", "Fertilizantes", "Agroquímicos", "Nutrição", "Biológicos"]}
+          onMap={(item, seg) => console.log(`Mapping ${item} to ${seg}`)}
+        />
+      </div>
     </div>
   );
 }
+
 

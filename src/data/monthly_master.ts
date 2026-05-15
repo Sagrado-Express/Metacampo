@@ -1,6 +1,6 @@
 /**
- * MetaCampo_Base_Master_Mensal (Mock)
- * Combined Budget and Realized data for Pacing and TO-GO analysis.
+  * MetaCampo_Base_Master_Mensal(Mock)
+  * Combined Budget and Realized data for Pacing and TO - GO analysis.
  */
 
 export const MONTHLY_MASTER_BASE = [
