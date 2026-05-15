@@ -25,8 +25,9 @@ export default function WorkspacePage() {
   // Dynamic Pacing from Monthly Master Base (CTV01 - May)
   const ctvData = MONTHLY_MASTER_BASE.filter(d => d.ctvId === "CTV01" && d.mes === "05");
   const mockPacing = {
-    realized: ctvData.reduce((acc, curr) => acc + curr.realized, 0),
+    realized: ctvData.reduce((acc, curr) => acc + curr.realizado, 0),
     target: ctvData.reduce((acc, curr) => acc + curr.meta, 0),
+
     shadowTarget: ctvData.reduce((acc, curr) => acc + curr.meta, 0) * (new Date().getDate() / 31),
   };
 
