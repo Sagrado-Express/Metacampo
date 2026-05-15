@@ -36,74 +36,95 @@ export function Sidebar() {
   return (
     <motion.aside 
       initial={false}
-      animate={{ width: isCollapsed ? 80 : 256 }}
-      className="fixed left-0 top-0 h-screen border-r border-border/50 flex flex-col p-4 bg-white/20 backdrop-blur-md z-40 transition-all duration-300 overflow-hidden"
+      animate={{ 
+        width: isCollapsed ? 80 : 280,
+        transition: { type: "spring", stiffness: 300, damping: 30 }
+      }}
+      className="fixed left-0 top-0 h-screen border-r border-border/40 flex flex-col p-4 bg-white/40 backdrop-blur-xl z-50 overflow-hidden group/sidebar shadow-2xl shadow-primary/5"
     >
-      {/* Header & Toggle */}
-      <div className="flex items-center justify-between mb-12 px-2 overflow-hidden">
+      {/* Header & Toggle Indicator */}
+      <div className="flex items-center justify-between mb-10 px-2">
         <div className="flex items-center gap-3 min-w-max">
-          <div className="h-10 w-10 bg-primary rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/20 shrink-0">
+          <div className="h-10 w-10 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-primary/20 shrink-0">
             M
           </div>
-          {!isCollapsed && (
-            <motion.span 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="font-black text-xl tracking-tighter text-foreground whitespace-nowrap"
-            >
-              METACAMPO
-            </motion.span>
-          )}
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.span 
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="font-black text-xl tracking-tighter text-primary whitespace-nowrap"
+              >
+                METACAMPO
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
         
         <button 
           onClick={toggleSidebar}
-          className="p-2 hover:bg-muted/50 rounded-lg transition-colors text-muted-foreground ml-auto"
+          className="p-2 hover:bg-primary/10 rounded-xl transition-all text-primary/60 hover:text-primary"
+          title={isCollapsed ? "Expandir" : "Recolher"}
         >
           {isCollapsed ? <LucideMenu size={20} /> : <LucideChevronLeft size={20} />}
         </button>
       </div>
       
-      <nav className="flex-1 space-y-2">
-        {menuItems.map((item) => {
+      {/* Navigation Items */}
+      <nav className="flex-1 space-y-3">
+        {menuItems.map((item, idx) => {
           const isActive = pathname === item.href;
           return (
             <Link 
               key={item.label} 
               href={item.href}
               className={`
-                w-full flex items-center gap-4 px-3 py-3 rounded-2xl transition-all relative group
+                w-full flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all relative group/item
                 ${isActive 
                   ? "bg-primary text-white glow-primary" 
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
                 }
               `}
-              title={isCollapsed ? item.label : ""}
             >
               {isActive && (
                 <motion.div 
                   layoutId="sidebarActive"
-                  className="absolute left-0 w-1 h-6 bg-white rounded-r-full"
+                  className="absolute left-0 w-1.5 h-6 bg-white rounded-r-full shadow-[0_0_10px_white]"
                 />
               )}
+              
               <div className="shrink-0 w-6 flex justify-center">
-                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
+                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 22 })}
               </div>
-              {!isCollapsed && (
-                <motion.span 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="font-bold text-[10px] uppercase tracking-[0.2em] whitespace-nowrap"
-                >
+
+              <AnimatePresence mode="wait">
+                {!isCollapsed && (
+                  <motion.span 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="font-black text-[10px] uppercase tracking-[0.25em] whitespace-nowrap"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+
+              {/* Enhanced Tooltip for Collapsed Mode */}
+              {isCollapsed && (
+                <div className="absolute left-full ml-4 px-3 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl">
                   {item.label}
-                </motion.span>
+                  <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 border-8 border-transparent border-right-primary" />
+                </div>
               )}
             </Link>
           );
         })}
       </nav>
 
-      <button className="mt-auto flex items-center gap-4 px-3 py-3 text-muted-foreground hover:text-destructive transition-colors overflow-hidden">
+      {/* Footer / Logout */}
+      <button className="mt-auto flex items-center gap-4 px-3 py-4 text-muted-foreground hover:text-destructive transition-all rounded-2xl hover:bg-destructive/5 group/logout relative">
         <div className="shrink-0 w-6 flex justify-center">
           <LucideLogOut size={20} />
         </div>
@@ -111,13 +132,20 @@ export function Sidebar() {
           <motion.span 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="font-bold text-[10px] uppercase tracking-[0.2em] whitespace-nowrap"
+            className="font-black text-[10px] uppercase tracking-[0.25em] whitespace-nowrap"
           >
-            Sair
+            Sair do Sistema
           </motion.span>
+        )}
+        
+        {isCollapsed && (
+          <div className="absolute left-full ml-4 px-3 py-2 bg-destructive text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 pointer-events-none group-hover/logout:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl">
+            Sair
+          </div>
         )}
       </button>
     </motion.aside>
   );
 }
+
 
