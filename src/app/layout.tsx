@@ -15,8 +15,7 @@ export const metadata: Metadata = {
   description: "Plataforma profissional de gestão e simulação de carteiras para o agronegócio.",
 };
 
-import { Sidebar } from "@/components/layout/Sidebar";
-import { SidebarProvider, useSidebar } from "@/providers/SidebarProvider";
+import { AppWrapper } from "@/components/layout/AppWrapper";
 
 export default function RootLayout({
   children,
@@ -28,12 +27,7 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased bg-background`}>
         <Suspense fallback={<div>Carregando...</div>}>
           <MeetingModeProvider>
-            <SidebarProvider>
-              <div className="flex">
-                <Sidebar />
-                <LayoutContent>{children}</LayoutContent>
-              </div>
-            </SidebarProvider>
+            <AppWrapper>{children}</AppWrapper>
           </MeetingModeProvider>
         </Suspense>
       </body>
@@ -41,13 +35,5 @@ export default function RootLayout({
   );
 }
 
-function LayoutContent({ children }: { children: React.ReactNode }) {
-  const { isCollapsed } = useSidebar();
-  return (
-    <main className={`flex-1 transition-all duration-300 ${isCollapsed ? "ml-20" : "ml-64"} min-h-screen`}>
-      {children}
-    </main>
-  );
-}
 
 
