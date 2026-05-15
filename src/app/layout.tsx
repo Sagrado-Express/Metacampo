@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 import { Sidebar } from "@/components/layout/Sidebar";
+import { SidebarProvider, useSidebar } from "@/providers/SidebarProvider";
 
 export default function RootLayout({
   children,
@@ -27,16 +28,26 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased bg-background`}>
         <Suspense fallback={<div>Carregando...</div>}>
           <MeetingModeProvider>
-            <div className="flex">
-              <Sidebar />
-              <main className="flex-1 ml-20 lg:ml-64 min-h-screen">
-                {children}
-              </main>
-            </div>
+            <SidebarProvider>
+              <div className="flex">
+                <Sidebar />
+                <LayoutContent>{children}</LayoutContent>
+              </div>
+            </SidebarProvider>
           </MeetingModeProvider>
         </Suspense>
       </body>
     </html>
   );
 }
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const { isCollapsed } = useSidebar();
+  return (
+    <main className={`flex-1 transition-all duration-300 ${isCollapsed ? "ml-20" : "ml-64"} min-h-screen`}>
+      {children}
+    </main>
+  );
+}
+
 

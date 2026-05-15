@@ -165,8 +165,9 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                         R$ {cliente.vpmTotal.toLocaleString('pt-BR')}
                       </p>
                       <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">
-                        DNA: {ITSE_TOTAL} /ha
+                        DNA: {ITSE_TOTAL.toLocaleString('pt-BR')} /ha
                       </p>
+
                     </td>
 
                     <td className="px-6 py-6">
@@ -210,9 +211,10 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                             <span className="text-[10px] font-black uppercase">Viável</span>
                           </div>
                         )}
-                        <p className="text-[9px] text-muted-foreground font-bold mt-1">Req: {cliente.areaNecessaria} ha</p>
+                        <p className="text-[9px] text-muted-foreground font-bold mt-1">Req: {cliente.areaNecessaria.toLocaleString('pt-BR')} ha</p>
                       </div>
                     </td>
+
 
                     <td className="px-6 py-6 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest shadow-lg ${getBandStyle(cliente.performanceBand)}`}>
