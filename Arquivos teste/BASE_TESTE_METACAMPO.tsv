@@ -1,0 +1,51 @@
+ID_DIRETOR	NOME_DIRETOR	ID_GERENTE	NOME_GERENTE	ID_CTV	NOME_CTV	DOCUMENTO	NOME_CLIENTE	COD_MUNICIPIO_IBGE	MUNICIPIO_IBGE	UF	HA_SOJA	HA_MILHO	HA_ALGODAO	HA_CANA	HA_CAFE	RATING_CREDITO	RELACIONAMENTO
+D01	Onório Dias	G01	Ricardo Oliveira	CTV01	Joao Silva	11122233301	Fazenda Esperanca	5107925	Sorriso	MT	1500	800	500	0	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV01	Joao Silva	11122233302	Fazenda Boa Vista	5107925	Sorriso	MT	2200	1200	0	0	0	B	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV01	Joao Silva	11122233303	Fazenda Progressiva	5107909	Sinop	MT	800	400	200	0	0	A	3
+D01	Onório Dias	G01	Ricardo Oliveira	CTV01	Joao Silva	11122233304	Fazenda Uniao	5105259	Lucas do Rio Verde	MT	3000	1500	1000	0	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV01	Joao Silva	11122233305	Fazenda Nova Era	5107909	Sinop	MT	1200	600	0	0	0	C	2
+D01	Onório Dias	G01	Ricardo Oliveira	CTV02	Beatriz Santos	11122233306	Fazenda Santa Maria	5218805	Rio Verde	GO	2500	1000	0	1500	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV02	Beatriz Santos	11122233307	Fazenda Sol Nascente	5211909	Jataí	GO	1800	900	0	2000	0	B	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV02	Beatriz Santos	11122233308	Fazenda Ouro Verde	5218805	Rio Verde	GO	1500	750	0	0	0	A	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV02	Beatriz Santos	11122233309	Fazenda Planalto	5206206	Cristalina	GO	1200	600	300	0	200	B	3
+D01	Onório Dias	G01	Ricardo Oliveira	CTV02	Beatriz Santos	11122233310	Fazenda Alvorada	5211909	Jataí	GO	900	450	0	1200	0	C	2
+D01	Onório Dias	G01	Ricardo Oliveira	CTV03	Carlos Gomes	11122233311	Fazenda Palmeiras	2919553	Luís Eduardo Magalhães	BA	4000	2000	1500	0	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV03	Carlos Gomes	11122233312	Fazenda Horizonte	2903201	Barreiras	BA	2800	1400	800	0	0	B	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV03	Carlos Gomes	11122233313	Fazenda Serrana	2919553	Luís Eduardo Magalhães	BA	1500	750	0	0	0	A	3
+D01	Onório Dias	G01	Ricardo Oliveira	CTV03	Carlos Gomes	11122233314	Fazenda Riacho Doce	2903201	Barreiras	BA	2000	1000	500	0	0	B	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV03	Carlos Gomes	11122233315	Fazenda Chapadao	2919553	Luís Eduardo Magalhães	BA	1000	500	0	0	0	C	2
+D01	Onório Dias	G01	Ricardo Oliveira	CTV04	Daniela Lima	11122233316	Fazenda Terra Rica	4104808	Cascavel	PR	1200	600	0	0	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV04	Daniela Lima	11122233317	Fazenda Parana	4127700	Toledo	PR	900	450	0	0	0	B	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV04	Daniela Lima	11122233318	Fazenda Pinheiros	4109401	Guarapuava	PR	1500	0	0	0	500	A	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV04	Daniela Lima	11122233319	Fazenda Vale Verde	4104808	Cascavel	PR	2000	1000	0	0	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV04	Daniela Lima	11122233320	Fazenda Sudoeste	4127700	Toledo	PR	800	400	0	0	0	C	3
+D01	Onório Dias	G01	Ricardo Oliveira	CTV05	Eduardo Rocha	11122233321	Fazenda Campo Aberto	5003702	Dourados	MS	2500	1500	0	0	0	A	5
+D01	Onório Dias	G01	Ricardo Oliveira	CTV05	Eduardo Rocha	11122233322	Fazenda Pantanal	5005400	Maracaju	MS	3000	1800	500	0	0	B	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV05	Eduardo Rocha	11122233323	Fazenda MS Agricola	5003702	Dourados	MS	1800	900	0	0	0	A	4
+D01	Onório Dias	G01	Ricardo Oliveira	CTV05	Eduardo Rocha	11122233324	Fazenda Bonito	5005400	Maracaju	MS	1200	600	0	0	0	B	3
+D01	Onório Dias	G01	Ricardo Oliveira	CTV05	Eduardo Rocha	11122233325	Fazenda Fronteira	5006606	Ponta Porã	MS	2200	1100	0	0	0	C	2
+D01	Onório Dias	G02	Ana Paula Costa	CTV06	Fernanda Melo	11122233326	Fazenda Cerrado	3170404	Unaí	MG	3500	1750	0	0	0	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV06	Fernanda Melo	11122233327	Fazenda Minas	3147006	Paracatu	MG	2000	1000	400	0	0	B	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV06	Fernanda Melo	11122233328	Fazenda Cafezal	3148103	Patrocínio	MG	0	0	0	0	800	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV06	Fernanda Melo	11122233329	Fazenda Montanhosa	3103504	Araguari	MG	500	250	0	0	400	A	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV06	Fernanda Melo	11122233330	Fazenda Triangulo	3170206	Uberlândia	MG	1500	750	0	1000	0	B	3
+D01	Onório Dias	G02	Ana Paula Costa	CTV07	Gabriel Neves	11122233331	Fazenda Sapezal	5107875	Sapezal	MT	5000	2500	2000	0	0	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV07	Gabriel Neves	11122233332	Fazenda Girassol	5102637	Campo Novo do Parecis	MT	3000	1500	1200	0	0	B	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV07	Gabriel Neves	11122233333	Fazenda Parecis	5107875	Sapezal	MT	2500	1250	1000	0	0	A	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV07	Gabriel Neves	11122233334	Fazenda Mato Grosso	5102637	Campo Novo do Parecis	MT	1800	900	500	0	0	B	3
+D01	Onório Dias	G02	Ana Paula Costa	CTV07	Gabriel Neves	11122233335	Fazenda Ouro Branco	5107875	Sapezal	MT	1200	600	400	0	0	C	2
+D01	Onório Dias	G02	Ana Paula Costa	CTV08	Helena Castro	11122233336	Fazenda Gaucha	4309803	Ibirubá	RS	1000	500	0	0	0	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV08	Helena Castro	11122233337	Fazenda Sulista	4314100	Passo Fundo	RS	800	400	0	0	0	B	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV08	Helena Castro	11122233338	Fazenda Pampeana	4306106	Cruz Alta	RS	1500	750	0	0	0	A	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV08	Helena Castro	11122233339	Fazenda Integrada	4309803	Ibirubá	RS	1200	600	0	0	0	B	3
+D01	Onório Dias	G02	Ana Paula Costa	CTV08	Helena Castro	11122233340	Fazenda Campestre	4307005	Erechim	RS	600	300	0	0	0	C	2
+D01	Onório Dias	G02	Ana Paula Costa	CTV09	Igor Santos	11122233341	Fazenda Canaã	3538709	Piracicaba	SP	0	0	0	5000	0	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV09	Igor Santos	11122233342	Fazenda Doce Mel	3543402	Ribeirão Preto	SP	0	0	0	3500	0	B	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV09	Igor Santos	11122233343	Fazenda Paulista	3503208	Araraquara	SP	500	250	0	2000	0	A	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV09	Igor Santos	11122233344	Fazenda Mogiana	3516200	Franca	SP	0	0	0	0	600	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV09	Igor Santos	11122233345	Fazenda Interior	3506003	Bauru	SP	1000	500	0	1500	0	B	3
+D01	Onório Dias	G02	Ana Paula Costa	CTV10	Juliana Prates	11122233346	Fazenda Coffee Love	3170701	Varginha	MG	0	0	0	0	450	A	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV10	Juliana Prates	11122233347	Fazenda Graos Finos	3128709	Guaxupé	MG	0	0	0	0	300	B	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV10	Juliana Prates	11122233348	Fazenda Arabica	3170701	Varginha	MG	200	100	0	0	250	A	4
+D01	Onório Dias	G02	Ana Paula Costa	CTV10	Juliana Prates	11122233349	Fazenda Aroma	3128709	Guaxupé	MG	0	0	0	0	500	B	5
+D01	Onório Dias	G02	Ana Paula Costa	CTV10	Juliana Prates	11122233350	Fazenda Montanhas	3139003	Machado	MG	0	0	0	0	400	C	2

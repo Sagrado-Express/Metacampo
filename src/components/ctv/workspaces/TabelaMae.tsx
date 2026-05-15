@@ -44,14 +44,30 @@ interface ClienteInterativo {
   performanceBand: PerformanceBand;
 }
 
+import { MOCK_TEST_DATA } from '@/data/mock_database'
+
 export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [clientes, setClientes] = useState<ClienteInterativo[]>([
-    { id: '1', name: 'Fazenda Boa Esperança', municipio: 'Passo Fundo/RS', areaHa: 1000, metaVenda: 450000, shareAlvo: 0.15, vpmTotal: 0, areaNecessaria: 0, areaInvalida: false, performanceBand: 'CINZA' },
-    { id: '2', name: 'Agropecuária Schneider', municipio: 'Carazinho/RS', areaHa: 2500, metaVenda: 1200000, shareAlvo: 0.20, vpmTotal: 0, areaNecessaria: 0, areaInvalida: false, performanceBand: 'CINZA' },
-    { id: '3', name: 'Sítio Novo Horizonte', municipio: 'Não-Me-Toque/RS', areaHa: 500, metaVenda: 100000, shareAlvo: 0.10, vpmTotal: 0, areaNecessaria: 0, areaInvalida: false, performanceBand: 'CINZA' },
-    { id: '4', name: 'Grupo Agrícola Werner', municipio: 'Ibirubá/RS', areaHa: 4200, metaVenda: 2500000, shareAlvo: 0.25, vpmTotal: 0, areaNecessaria: 0, areaInvalida: false, performanceBand: 'CINZA' },
-  ]);
+  
+  // Transform MOCK_TEST_DATA to ClienteInterativo format
+  const [clientes, setClientes] = useState<ClienteInterativo[]>(
+    MOCK_TEST_DATA.map(d => {
+      const totalArea = d.areas.soja + d.areas.milho + d.areas.algodao + d.areas.cana + d.areas.cafe;
+      return {
+        id: d.id,
+        name: d.name,
+        municipio: `${d.city}/${d.uf}`,
+        areaHa: totalArea,
+        metaVenda: totalArea * 450, // Initial mock meta for demo
+        shareAlvo: 0.20,
+        vpmTotal: 0,
+        areaNecessaria: 0,
+        areaInvalida: false,
+        performanceBand: 'CINZA'
+      };
+    })
+  );
+
 
   // Motor de Cálculo Dinâmico (Reativo a qualquer mudança na tabela)
   const clientesProcessados = useMemo(() => {

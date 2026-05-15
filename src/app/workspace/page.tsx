@@ -6,6 +6,7 @@ import { ReconciliationModal } from "@/components/ingestion/ReconciliationModal"
 import { PacingSpeedometer } from "@/components/dashboard/PacingSpeedometer";
 import { HuntingRadar } from "@/components/dashboard/HuntingRadar";
 import { IngestionMapper } from "@/domain/services/ingestionMapper";
+import { MOCK_TEST_DATA } from "@/data/mock_database";
 import { motion } from "framer-motion";
 import { LucideLayoutDashboard, LucideSettings, LucideUsers, LucideLogOut } from "lucide-react";
 
@@ -26,12 +27,19 @@ export default function WorkspacePage() {
     shadowTarget: 500000,
   };
 
-  const mockClients = [
-    { id: "1", name: "Fazenda Sol Nascente", city: "Rio Verde - GO", vpmTotal: 850000, realizedMonth: 0, toGoMonth: 850000, pareto: "AZUL" as const },
-    { id: "2", name: "Agropecuária Horizonte", city: "Jataí - GO", vpmTotal: 600000, realizedMonth: 150000, toGoMonth: 450000, pareto: "AZUL" as const },
-    { id: "3", name: "Sítio Primavera", city: "Cristalina - GO", vpmTotal: 300000, realizedMonth: 0, toGoMonth: 300000, pareto: "VERDE" as const },
-    { id: "4", name: "Fazenda Bela Vista", city: "Sorriso - MT", vpmTotal: 1200000, realizedMonth: 800000, toGoMonth: 400000, pareto: "AZUL" as const },
-  ];
+  const mockClients = MOCK_TEST_DATA.slice(0, 4).map(d => {
+    const vpmTotal = (d.areas.soja + d.areas.milho + d.areas.algodao) * 3500;
+    return {
+      id: d.id,
+      name: d.name,
+      city: `${d.city} - ${d.uf}`,
+      vpmTotal: vpmTotal,
+      realizedMonth: 0,
+      toGoMonth: vpmTotal,
+      pareto: "AZUL" as const
+    };
+  });
+
 
   const handleUpload = async (file: File) => {
     setIsProcessing(true);
