@@ -25,10 +25,14 @@ Este documento define o contexto, as restrições e as diretrizes para a atuaç�
 - O sucesso do cliente é medido por **VPM, Wallet Share, Rating de Crédito e Saldo "TO GO"**.
 
 ### 4. Rich Aesthetics (UX/UI)
-- Mantenha o padrão de **Glassmorphism**, **Dark Mode** e animações suaves via **Framer Motion**.
-- Evite componentes genéricos; utilize os tokens de design da Valora (definidos em `globals.css`).
+- Mantenha o padrão **Morning Dew**: Light Mode Premium, Glassmorphism suave (white/70), e tons de Verde Clorofila e Café.
+- Utilize os tokens de design definidos em `globals.css` (Premium Glass cards).
 
-### 5. Offline-First
+### 5. Segurança Financeira (Safe Math)
+- **Obrigatório**: Todo cálculo que envolva R$ (Reais) ou Hectares deve ser feito em **Centavos/Inteiros** para evitar erros de ponto flutuante.
+- Utilize `Math.round(val * 100) / 100` apenas na saída visual; o processamento interno deve ser rigoroso.
+
+### 6. Offline-First
 - Sempre que criar novos fluxos de dados de campo (check-ins, visitas), garanta que haja uma estratégia de cache via **TanStack Query**.
 
 ## 📂 Estrutura de Arquivos Relevantes

@@ -24,24 +24,33 @@ export default function WorkspacePage() {
   const [showReconciliation, setShowReconciliation] = useState(false);
   const [unmappedSegments, setUnmappedSegments] = useState<string[]>([]);
   
-  const mockClients = MOCK_TEST_DATA.slice(0, 4).map(d => {
-    const vpmTotal = (d.areas.soja + d.areas.milho + d.areas.algodao) * 3500;
-    return {
-      id: d.id,
-      name: d.name,
-      city: `${d.city} - ${d.uf}`,
-      vpmTotal: vpmTotal,
-      realizedMonth: 0,
-      toGoMonth: vpmTotal,
-      pareto: "AZUL" as const
-    };
-  });
+  // Real data mapping for the Hunting Radar (The "Map")
+  const radarClients = useMemo(() => {
+    return MOCK_TEST_DATA.map(d => {
+      // Calculate VPM based on standard ITAA factor (3500 R$/ha)
+      const vpmTotal = (d.areas.soja + d.areas.milho + d.areas.algodao + d.areas.cana + d.areas.cafe) * 3500;
+      
+      // Get realized from MONTHLY_MASTER_BASE for this client (using CTV as proxy for now)
+      const realized = MONTHLY_MASTER_BASE
+        .filter(m => m.ctvId === "CTV01" && m.mes === "05") // Simulation
+        .reduce((acc, curr) => acc + curr.realizado, 0) / 10; // Divided among clients
+
+      return {
+        id: d.id,
+        name: d.name,
+        city: `${d.city} - ${d.uf}`,
+        vpmTotal: vpmTotal,
+        realizedMonth: realized,
+        toGoMonth: Math.max(0, vpmTotal - realized),
+        pareto: d.rating === 'A' ? "AZUL" as const : "VERDE" as const
+      };
+    });
+  }, []);
 
   const handleUpload = async (file: File) => {
     setIsProcessing(true);
     setProgress(0);
     
-    // Simulate processing steps
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
@@ -52,7 +61,6 @@ export default function WorkspacePage() {
       });
     }, 200);
 
-    // Read file and check for anomalies
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = e.target?.result as string;
@@ -75,13 +83,21 @@ export default function WorkspacePage() {
       {/* Executive Cockpit (RLS Simulation) */}
       <ExecutiveCockpit />
 
-      <div className="p-8 lg:p-12 space-y-12">
+      <div className="p-8 lg:p-12 space-y-16">
+        {/* Hunting Radar Section (The "Map" of Opportunities) */}
+        <section>
+          <HuntingRadar clients={radarClients} />
+        </section>
+
         {/* Ingestion & Pipeline Section */}
         <section className="grid grid-cols-1 gap-10">
           <div className="glass-card-premium p-10 h-full flex flex-col justify-center border-primary/5">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black tracking-tight">Câmara de Ingestão</h3>
-              <div className="px-4 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full">Automated Pipeline</div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black tracking-tight">Câmara de Ingestão</h3>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Processamento Memory-First • Edge Runtime</p>
+              </div>
+              <div className="px-4 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full glow-primary">Automated Pipeline</div>
             </div>
             <IngestionCenter 
               onUpload={handleUpload}
@@ -89,11 +105,6 @@ export default function WorkspacePage() {
               progress={progress}
             />
           </div>
-        </section>
-
-        {/* Hunting Radar Section */}
-        <section>
-          <HuntingRadar clients={mockClients} />
         </section>
 
         {/* Reconciliation Modal */}
@@ -108,5 +119,6 @@ export default function WorkspacePage() {
     </div>
   );
 }
+
 
 

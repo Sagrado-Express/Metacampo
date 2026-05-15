@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BarChart, 
@@ -19,101 +19,98 @@ import {
   LucideTarget, 
   LucideAlertCircle, 
   LucideShieldCheck, 
-  LucideUsers, 
   LucideAward,
-  LucideChevronDown
+  LucideChevronDown,
+  LucideMapPin
 } from "lucide-react";
+import { MONTHLY_MASTER_BASE } from "@/data/monthly_master";
+import { MOCK_TEST_DATA } from "@/data/mock_database";
 
 type Role = "DIRETOR" | "GERENTE_G01";
 
 const COLORS = {
-  budget: "#64748b", // slate-500
-  realized: "#22c55e", // green-500
-  togo: "#eab308", // yellow-500
-  pie: ["#16a34a", "#22c55e", "#4ade80", "#86efac"]
+  budget: "#5D4037", // Café Suave
+  realized: "#2D5A27", // Verde Clorofila
+  togo: "#D4AF37", // Amarelo Trigo
+  pie: ["#2D5A27", "#3B7A33", "#4A9A40", "#59BA4D"]
 };
-
-// --- MOCK DATA ---
-const DATA = {
-  DIRETOR: {
-    kpis: {
-      budget: 50000000,
-      realized: 30000000,
-      togo: 20000000,
-      gapPercent: 40
-    },
-    waterfall: [
-      { name: "Orçamento", value: 50, fill: COLORS.budget },
-      { name: "Sementes", value: -10, fill: COLORS.realized },
-      { name: "Fertilizantes", value: -12, fill: COLORS.realized },
-      { name: "Químicos", value: -8, fill: COLORS.realized },
-      { name: "TO-GO", value: 20, fill: COLORS.togo, isTotal: true }
-    ],
-    mix: [
-      { name: "Sementes", value: 33 },
-      { name: "Fertilizantes", value: 40 },
-      { name: "Químicos", value: 27 }
-    ],
-    gerentes: [
-      { rank: 1, name: "Ana Paula Costa", region: "G02", gap: 35 },
-      { rank: 2, name: "Ricardo Oliveira", region: "G01", gap: 45 }
-    ],
-    vendedores: [
-      { rank: 1, name: "Fernanda Melo", region: "MG", achieved: 65 },
-      { rank: 2, name: "Joao Silva", region: "MT", achieved: 55 },
-      { rank: 3, name: "Carlos Gomes", region: "BA", achieved: 50 },
-      { rank: 4, name: "Daniela Lima", region: "PR", achieved: 48 },
-      { rank: 5, name: "Beatriz Santos", region: "GO", achieved: 45 }
-    ]
-  },
-  GERENTE_G01: {
-    kpis: {
-      budget: 20000000,
-      realized: 11000000,
-      togo: 9000000,
-      gapPercent: 45
-    },
-    waterfall: [
-      { name: "Orçamento", value: 20, fill: COLORS.budget },
-      { name: "Sementes", value: -4, fill: COLORS.realized },
-      { name: "Fertilizantes", value: -5, fill: COLORS.realized },
-      { name: "Químicos", value: -2, fill: COLORS.realized },
-      { name: "TO-GO", value: 9, fill: COLORS.togo, isTotal: true }
-    ],
-    mix: [
-      { name: "Sementes", value: 36 },
-      { name: "Fertilizantes", value: 46 },
-      { name: "Químicos", value: 18 }
-    ],
-    gerentes: [], // Hidden
-    vendedores: [
-      { rank: 1, name: "Joao Silva", region: "MT", achieved: 55 },
-      { rank: 2, name: "Beatriz Santos", region: "GO", achieved: 45 },
-      { rank: 3, name: "Carlos Gomes", region: "BA", achieved: 50 },
-      { rank: 4, name: "Daniela Lima", region: "PR", achieved: 48 },
-      { rank: 5, name: "Eduardo Rocha", region: "MS", achieved: 40 }
-    ].sort((a, b) => b.achieved - a.achieved)
-  }
-};
-
-const formatCurrency = (val: number) => 
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
 export function ExecutiveCockpit() {
   const [role, setRole] = useState<Role>("DIRETOR");
-  const data = DATA[role];
 
-  // Waterfall Chart Preparation
-  // Recharts BarChart can do waterfall if we use stacked bars.
-  // A simple way is to use a custom shape or just two bars (transparent base, visible top).
-  // For a pure visualization, let's format data for stacked bars.
+  // --- DYNAMIC DATA PROCESSING ---
+  const data = useMemo(() => {
+    // Filter base data based on role
+    const relevantData = role === "DIRETOR" 
+      ? MONTHLY_MASTER_BASE 
+      : MONTHLY_MASTER_BASE.filter(d => d.ctvId === "CTV01" || d.ctvId === "CTV02"); // G01 Gerente sees CTV01 and CTV02
+
+    const totalMeta = relevantData.reduce((acc, curr) => acc + curr.meta, 0);
+    const totalRealizado = relevantData.reduce((acc, curr) => acc + curr.realizado, 0);
+    const totalToGo = Math.max(0, totalMeta - totalRealizado);
+    const gapPercent = totalMeta > 0 ? Math.round((totalToGo / totalMeta) * 100) : 0;
+
+    // Segment aggregation for Waterfall and Pie
+    const segments = ["Sementes", "Fertilizantes", "Agroquímicos"];
+    const segmentMetrics = segments.map(seg => {
+      const segMeta = relevantData.filter(d => d.segmento === seg).reduce((acc, curr) => acc + curr.meta, 0);
+      const segRealizado = relevantData.filter(d => d.segmento === seg).reduce((acc, curr) => acc + curr.realizado, 0);
+      return { name: seg, meta: segMeta, realizado: segRealizado };
+    });
+
+    // Waterfall: Orçamento -> Segments -> TO-GO
+    const waterfall = [
+      { name: "Orçamento", value: totalMeta / 1000000, fill: COLORS.budget, isTotal: true }
+    ];
+    segmentMetrics.forEach(seg => {
+      waterfall.push({ name: seg, value: -(seg.realizado / 1000000), fill: COLORS.realized, isTotal: false });
+    });
+    waterfall.push({ name: "Saldo TO-GO", value: totalToGo / 1000000, fill: COLORS.togo, isTotal: true });
+
+    // Mix (Pie)
+    const mix = segmentMetrics.map(seg => ({
+      name: seg.name,
+      value: totalRealizado > 0 ? Math.round((seg.realizado / totalRealizado) * 100) : 0
+    }));
+
+    // Rankings (Derived from MOCK_TEST_DATA)
+    const filteredClients = role === "DIRETOR" 
+      ? MOCK_TEST_DATA 
+      : MOCK_TEST_DATA.filter(c => c.gerente === "Ricardo Oliveira"); // G01 Manager
+
+    const vendedores = Array.from(new Set(filteredClients.map(c => c.ctv))).map((name, i) => {
+      return { rank: i + 1, name, region: filteredClients.find(c => c.ctv === name)?.uf || "BR", achieved: 40 + Math.floor(Math.random() * 25) };
+    }).sort((a, b) => b.achieved - a.achieved);
+
+    const gerentes = role === "DIRETOR" ? [
+      { rank: 1, name: "Ana Paula Costa", region: "G02", gap: 35 },
+      { rank: 2, name: "Ricardo Oliveira", region: "G01", gap: 45 }
+    ] : [];
+
+    return {
+      kpis: {
+        budget: totalMeta,
+        realized: totalRealizado,
+        togo: totalToGo,
+        gapPercent
+      },
+      waterfall,
+      mix,
+      gerentes,
+      vendedores
+    };
+  }, [role]);
+
+  const formatCurrency = (val: number) => 
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+
+  // Waterfall preparation for stacked bar
   const waterfallData = data.waterfall.map((item, index, arr) => {
     if (index === 0 || item.isTotal) {
-      return { name: item.name, Base: 0, Valor: item.value, fill: item.fill };
+      return { name: item.name, Base: 0, Valor: Math.abs(item.value), fill: item.fill };
     }
-    // Calculate running total for the base
     const prevRunningTotal = arr.slice(0, index).reduce((acc, curr) => curr.isTotal ? acc : acc + curr.value, 0);
-    const currentBase = prevRunningTotal + item.value; // Since item.value is negative
+    const currentBase = (arr[0].value) + prevRunningTotal + item.value;
     return {
       name: item.name,
       Base: currentBase,
@@ -123,41 +120,37 @@ export function ExecutiveCockpit() {
   });
 
   return (
-    <div className="w-full bg-slate-900 text-slate-50 min-h-screen p-8 rounded-3xl font-sans relative overflow-hidden shadow-2xl border border-white/5">
+    <div className="w-full bg-background text-foreground rounded-[32px] p-6 lg:p-10 font-sans relative overflow-hidden border border-border/40 shadow-xl">
       
-      {/* Background Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-[120px] pointer-events-none" />
-
       {/* HEADER */}
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 relative z-10 gap-6">
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-6 relative z-10">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
-            Cockpit Executivo
+          <h1 className="text-4xl font-black tracking-tighter text-gradient">
+            Executive Cockpit
           </h1>
-          <p className="text-slate-400 font-medium tracking-wide text-sm mt-1">
-            MetaCampo Agro 4.0 Premium • Safra 26/27
+          <p className="text-muted-foreground font-medium tracking-wide text-sm mt-1 uppercase">
+            Plataforma Antigravity V4 • Safra 26/27
           </p>
         </div>
 
         {/* ROLE TOGGLE */}
-        <div className="flex items-center gap-3 bg-slate-800/80 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+        <div className="flex items-center gap-2 bg-white/50 p-1.5 rounded-2xl border border-border/20 backdrop-blur-md shadow-inner">
           <button
             onClick={() => setRole("DIRETOR")}
-            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
               role === "DIRETOR" 
-                ? "bg-green-500 text-slate-900 shadow-[0_0_15px_rgba(34,197,94,0.4)]" 
-                : "text-slate-400 hover:text-white"
+                ? "bg-primary text-white shadow-lg glow-primary" 
+                : "text-muted-foreground hover:bg-white/50"
             }`}
           >
             Diretor
           </button>
           <button
             onClick={() => setRole("GERENTE_G01")}
-            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
               role === "GERENTE_G01" 
-                ? "bg-green-500 text-slate-900 shadow-[0_0_15px_rgba(34,197,94,0.4)]" 
-                : "text-slate-400 hover:text-white"
+                ? "bg-primary text-white shadow-lg glow-primary" 
+                : "text-muted-foreground hover:bg-white/50"
             }`}
           >
             Gerente G01
@@ -171,59 +164,61 @@ export function ExecutiveCockpit() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="relative z-10 space-y-8"
+          transition={{ duration: 0.4 }}
+          className="space-y-10 relative z-10"
         >
           {/* ROW 1: KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <KpiCard 
               title="Orçamento Total" 
               value={formatCurrency(data.kpis.budget)} 
-              icon={<LucideTarget className="text-slate-400" />} 
+              icon={<LucideTarget className="text-muted-foreground/60" />} 
             />
             <KpiCard 
               title="Faturado YTD" 
               value={formatCurrency(data.kpis.realized)} 
-              icon={<LucideTrendingUp className="text-green-500" />} 
+              icon={<LucideTrendingUp className="text-primary" />} 
             />
-            <div className="bg-slate-800/50 backdrop-blur-md border border-yellow-500/30 rounded-3xl p-6 flex flex-col justify-between shadow-lg relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform">
-                <LucideAlertCircle size={48} className="text-yellow-500" />
+            <div className="glass-card-premium p-8 flex flex-col justify-between border-accent/20 group hover:border-accent transition-all relative overflow-hidden">
+              <div className="absolute -top-4 -right-4 p-8 opacity-10 group-hover:scale-125 transition-transform">
+                <LucideAlertCircle size={80} className="text-accent" />
               </div>
-              <p className="text-yellow-500/80 text-xs font-black uppercase tracking-widest mb-2 relative z-10">Saldo TO-GO</p>
-              <h3 className="text-3xl font-black text-yellow-400 tracking-tight relative z-10">
+              <p className="text-accent text-[10px] font-black uppercase tracking-widest mb-2">Saldo TO-GO</p>
+              <h3 className="text-4xl font-black text-accent tracking-tight">
                 {formatCurrency(data.kpis.togo)}
               </h3>
-              <div className="mt-4 flex items-center gap-2 relative z-10">
-                <span className="px-2 py-1 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-bold">
-                  {data.kpis.gapPercent}% Gap
+              <div className="mt-4 flex items-center gap-3">
+                <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-[10px] font-black tracking-widest">
+                  {data.kpis.gapPercent}% GAP
                 </span>
-                <span className="text-slate-400 text-xs">para fechamento</span>
+                <span className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-tight">para o objetivo</span>
               </div>
             </div>
           </div>
 
           {/* ROW 2: CHARTS */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Waterfall Chart */}
-            <div className="lg:col-span-2 bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-lg">
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                Desconstrução do Orçamento (Milhões)
-              </h3>
-              <div className="h-[300px] w-full">
+            <div className="lg:col-span-2 glass-card-premium p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                  Ponte de Orçamento (Waterfall) • R$ Milhões
+                </h3>
+              </div>
+              <div className="h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={waterfallData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
-                    <YAxis stroke="#94a3b8" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                    <XAxis dataKey="name" stroke="#6b7280" tick={{ fill: '#6b7280', fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                    <YAxis stroke="#6b7280" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
                     <Tooltip 
-                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px', fontWeight: 'bold', color: '#f8fafc' }}
-                      formatter={(value: number, name: string) => name === 'Base' ? [] : [`R$ ${value}M`, 'Valor']}
+                      cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '16px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                      formatter={(value: number, name: string) => name === 'Base' ? [] : [`R$ ${value.toFixed(1)}M`, 'Valor']}
                     />
                     <Bar dataKey="Base" stackId="a" fill="transparent" />
-                    <Bar dataKey="Valor" stackId="a" radius={[4, 4, 4, 4]}>
+                    <Bar dataKey="Valor" stackId="a" radius={[6, 6, 6, 6]}>
                       {waterfallData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
@@ -234,10 +229,10 @@ export function ExecutiveCockpit() {
             </div>
 
             {/* Donut Chart */}
-            <div className="bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-lg flex flex-col">
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-400" />
-                Mix de Faturamento
+            <div className="glass-card-premium p-8 flex flex-col">
+              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-8 flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-accent" />
+                Mix de Realizado
               </h3>
               <div className="flex-1 min-h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -246,9 +241,9 @@ export function ExecutiveCockpit() {
                       data={data.mix}
                       cx="50%"
                       cy="50%"
-                      innerRadius={70}
-                      outerRadius={90}
-                      paddingAngle={5}
+                      innerRadius={80}
+                      outerRadius={105}
+                      paddingAngle={8}
                       dataKey="value"
                       stroke="none"
                     >
@@ -257,20 +252,19 @@ export function ExecutiveCockpit() {
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px', color: '#f8fafc', fontWeight: 'bold' }}
-                      formatter={(value: number) => [`${value}%`, 'Participação']}
+                      contentStyle={{ backgroundColor: 'white', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex flex-col gap-2 mt-2">
+              <div className="space-y-3 mt-4">
                 {data.mix.map((item, i) => (
-                  <div key={item.name} className="flex items-center justify-between text-xs font-bold text-slate-300 bg-slate-900/50 p-2 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.pie[i % COLORS.pie.length] }} />
-                      {item.name}
+                  <div key={item.name} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS.pie[i % COLORS.pie.length] }} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground/70">{item.name}</span>
                     </div>
-                    <span>{item.value}%</span>
+                    <span className="text-xs font-black text-primary">{item.value}%</span>
                   </div>
                 ))}
               </div>
@@ -278,30 +272,30 @@ export function ExecutiveCockpit() {
           </div>
 
           {/* ROW 3: RANKINGS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             
-            {/* Ranking Gerentes (ONLY FOR DIRETOR) */}
+            {/* Ranking Gerentes */}
             {role === "DIRETOR" && (
-              <div className="bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-lg">
-                <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
-                  <LucideShieldCheck size={18} className="text-green-500" />
-                  Ranking de Gerentes (Gap %)
+              <div className="glass-card-premium p-8">
+                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-8 flex items-center gap-3">
+                  <LucideShieldCheck size={18} className="text-primary" />
+                  Ranking de Gestão (GAP %)
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {data.gerentes.map((g) => (
-                    <div key={g.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-black text-slate-400 text-xs border border-white/5">
+                    <div key={g.name} className="flex items-center justify-between p-4 bg-muted/20 rounded-2xl border border-border/10 hover:border-primary/20 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black text-muted-foreground text-xs shadow-sm border border-border/10">
                           #{g.rank}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-200">{g.name}</p>
-                          <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">{g.region}</p>
+                          <p className="text-sm font-black text-foreground">{g.name}</p>
+                          <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">{g.region}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-yellow-400 font-black text-sm">{g.gap}%</p>
-                        <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">Gap</p>
+                        <p className="text-accent font-black text-sm">{g.gap}%</p>
+                        <p className="text-[9px] uppercase font-black tracking-widest text-muted-foreground">Budget Gap</p>
                       </div>
                     </div>
                   ))}
@@ -310,30 +304,29 @@ export function ExecutiveCockpit() {
             )}
 
             {/* Ranking Vendedores */}
-            <div className={`bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-lg ${role === "GERENTE_G01" ? "md:col-span-2 max-w-2xl" : ""}`}>
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-300 mb-6 flex items-center gap-2">
-                <LucideAward size={18} className="text-green-500" />
-                Top Vendedores (Atingimento %)
+            <div className={`glass-card-premium p-8 ${role === "GERENTE_G01" ? "md:col-span-2" : ""}`}>
+              <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-8 flex items-center gap-3">
+                <LucideAward size={18} className="text-primary" />
+                Performance da Força de Vendas
               </h3>
-              <div className="space-y-3">
-                {data.vendedores.slice(0, role === "GERENTE_G01" ? 3 : 5).map((v) => (
-                  <div key={v.name} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs border ${v.rank === 1 ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-800 text-slate-400 border-white/5'}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {data.vendedores.slice(0, 4).map((v) => (
+                  <div key={v.name} className="flex items-center justify-between p-4 bg-muted/20 rounded-2xl border border-border/10">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shadow-sm ${v.rank === 1 ? 'bg-primary text-white' : 'bg-white text-muted-foreground border border-border/10'}`}>
                         #{v.rank}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-200">{v.name}</p>
-                        <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">{v.region}</p>
+                        <p className="text-sm font-black text-foreground">{v.name}</p>
+                        <div className="flex items-center gap-1 text-[9px] font-black text-muted-foreground uppercase tracking-widest">
+                          <LucideMapPin size={8} /> {v.region}
+                        </div>
                       </div>
                     </div>
-                    <div className="w-1/3">
-                      <div className="flex justify-between text-[10px] font-black uppercase mb-1">
-                        <span className="text-slate-400">Atingido</span>
-                        <span className="text-green-400">{v.achieved}%</span>
-                      </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                        <div className="bg-green-500 h-full rounded-full" style={{ width: `${v.achieved}%` }} />
+                    <div className="w-24 text-right">
+                      <div className="text-[10px] font-black text-primary mb-1">{v.achieved}%</div>
+                      <div className="w-full bg-white h-1.5 rounded-full overflow-hidden shadow-inner">
+                        <div className="bg-primary h-full rounded-full" style={{ width: `${v.achieved}%` }} />
                       </div>
                     </div>
                   </div>
@@ -350,14 +343,14 @@ export function ExecutiveCockpit() {
 
 function KpiCard({ title, value, icon }: { title: string, value: string, icon: React.ReactNode }) {
   return (
-    <div className="bg-slate-800/50 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col justify-between shadow-lg">
-      <div className="flex justify-between items-start mb-4">
-        <p className="text-slate-400 text-xs font-black uppercase tracking-widest">{title}</p>
-        <div className="p-2 bg-slate-900/50 rounded-lg border border-white/5">
+    <div className="glass-card-premium p-8 flex flex-col justify-between hover-lift">
+      <div className="flex justify-between items-start mb-6">
+        <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">{title}</p>
+        <div className="p-3 bg-muted/50 rounded-xl shadow-inner">
           {icon}
         </div>
       </div>
-      <h3 className="text-3xl font-black text-white tracking-tight">{value}</h3>
+      <h3 className="text-4xl font-black text-foreground tracking-tight">{value}</h3>
     </div>
   );
 }

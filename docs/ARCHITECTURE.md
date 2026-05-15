@@ -44,16 +44,23 @@ Ficheiro de extração de rotina (ERP). Processado em memória e descartado.
 
 ## ⚙️ Computational Engines
 
+### Executive_Cockpit_Engine
+- **Role**: Dashboard principal de visualização estratégica.
+- **Features**: 
+    - **Simulação de RLS**: Toggle dinâmico entre visão Diretor (Nacional) e Gerente (Regional).
+    - **Waterfall Chart**: Decomposição visual do orçamento vs realizado por segmento.
+    - **Dynamic Mix**: Análise de participação de sementes, químicos e fertilizantes em tempo real.
+
 ### VPM_Engine
 - **Trigger**: Após ingestão da Tabela 1 e ITAA estático.
-- **Calculation**: Soma(HA_CULTURA * ITAA_CULTURA).
+- **Calculation**: `Soma(HA_CULTURA * ITAA_CULTURA)`.
 - **Output**: Atualiza o potencial do cliente no Radar de Caça.
 
 ### Saldo_TO_GO_Engine
 - **Trigger**: Durante a ingestão transiente da Tabela 3.
 - **Join Logic**: `Month(DATA_NOTA) == Budget.Month` AND `Segment == Budget.Segment`.
 - **Calculation**: `TO_GO = (Target_Value) - (SUM(Realized_Value))`.
-- **Output**: Velocímetro de Pacing Mensal no Cockpit.
+- **Performance**: O(M + N) usando Hash Maps para busca instantânea de metas.
 
 ### Pareto_Color_Engine
 - **Trigger**: Após cálculo do Saldo TO-GO.
@@ -61,8 +68,13 @@ Ficheiro de extração de rotina (ERP). Processado em memória e descartado.
     - Top 80% VPM = Estratégicos.
     - Se `(Faturado / VPM) > threshold` E `RATING == A|B` -> **AZUL**.
     - Se gap alto -> **VERMELHO**.
-- **Output**: Card Color Tag no Workspace.
+    - **Tie-breaker**: Desempate por Rating de Crédito (A > B > C).
+
+## ⚡ Performance & Precision (Safe Math)
+- **Floating Point Security**: Todos os cálculos financeiros são processados em centavos (Inteiros) para evitar erros de ponto flutuante do JavaScript.
+- **Edge Efficiency**: Algoritmos de passagem única (Single-Pass) e uso de `Map` para evitar processamento $O(N^2)$ em faturas massivas.
 
 ## 🚨 Error Handling
 - **Unmapped Client**: Alerta e redirecionamento para Handshake.
 - **Unmapped Segment**: Suspender ingestão e abrir Modal de Conciliação.
+

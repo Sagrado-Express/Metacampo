@@ -15,3 +15,8 @@
 - **Zero-Footprint Ingestion**: Raw data from CSV or external ERP APIs is processed exclusively in **volatile memory** (Vercel Edge Functions).
 - **No Persistent Trace**: Raw billing data never touches the database. Only consolidated VPM results and strategic indicators are saved.
 - **Immediate Discard**: Memory is purged immediately after the consolidation request, ensuring high security and cost reduction in encryption/decryption at rest.
+
+## Data Integrity & Financial Security
+- **Safe Math Protocol**: All financial aggregations use cent-based integer arithmetic (Safe Math) to prevent floating-point inaccuracy.
+- **Atomic Operations**: All state transitions for Budgets and Potentials are idempotent, preventing duplication of realized values during ingestion retries.
+
