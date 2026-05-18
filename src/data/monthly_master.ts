@@ -1,14 +1,72 @@
 /**
-  * MetaCampo_Base_Master_Mensal(Mock)
-  * Combined Budget and Realized data for Pacing and TO - GO analysis.
+ * MetaCampo — Base Master Mensal (Faturamento YTD + Budget + Clientes)
+ * Structured for GTM-GC "Macro to Micro" hierarchical filtering.
+ * Fields: mes, ctvId, ctvName, gerenteId, gerenteName, documento, clientName, segmento, meta, realizado
  */
 
 export const MONTHLY_MASTER_BASE = [
-  { mes: "05", ctvId: "CTV01", segmento: "Sementes", meta: 500000, realizado: 320000 },
-  { mes: "05", ctvId: "CTV01", segmento: "Fertilizantes", meta: 800000, realizado: 450000 },
-  { mes: "05", ctvId: "CTV01", segmento: "Agroquímicos", meta: 600000, realizado: 580000 },
-  { mes: "05", ctvId: "CTV02", segmento: "Sementes", meta: 400000, realizado: 150000 },
-  { mes: "05", ctvId: "CTV02", segmento: "Fertilizantes", meta: 700000, realizado: 680000 },
-  { mes: "05", ctvId: "CTV03", segmento: "Agroquímicos", meta: 900000, realizado: 200000 },
-  { mes: "06", ctvId: "CTV01", segmento: "Sementes", meta: 600000, realizado: 0 }, // Future month
+  // ─── MÊS 04 — ABRIL ───────────────────────────────────
+  // Gerente: Ricardo Oliveira (G01) | CTV: Joao Silva
+  { mes: "04", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233301", clientName: "Fazenda Esperança",   segmento: "Sementes",      meta: 480000, realizado: 360000 },
+  { mes: "04", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233302", clientName: "Fazenda Boa Vista",   segmento: "Fertilizantes", meta: 750000, realizado: 600000 },
+  { mes: "04", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233303", clientName: "Fazenda Progressiva", segmento: "Agroquímicos",  meta: 560000, realizado: 520000 },
+  // Gerente: Ricardo Oliveira (G01) | CTV: Beatriz Santos
+  { mes: "04", ctvId: "CTV02", ctvName: "Beatriz Santos",     gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233306", clientName: "Fazenda Santa Maria", segmento: "Sementes",      meta: 380000, realizado: 200000 },
+  { mes: "04", ctvId: "CTV02", ctvName: "Beatriz Santos",     gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233307", clientName: "Fazenda Sol Nascente",segmento: "Fertilizantes", meta: 660000, realizado: 620000 },
+  // Gerente: Ricardo Oliveira (G01) | CTV: Carlos Gomes
+  { mes: "04", ctvId: "CTV03", ctvName: "Carlos Gomes",       gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233311", clientName: "Fazenda Palmeiras",   segmento: "Agroquímicos",  meta: 860000, realizado: 220000 },
+  // Gerente: Ana Paula Costa (G02) | CTV: Fernanda Melo
+  { mes: "04", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233326", clientName: "Fazenda Cerrado",     segmento: "Sementes",      meta: 920000, realizado: 800000 },
+  { mes: "04", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233326", clientName: "Fazenda Cerrado",     segmento: "Fertilizantes", meta: 480000, realizado: 460000 },
+  // Gerente: Ana Paula Costa (G02) | CTV: Gabriel Neves
+  { mes: "04", ctvId: "CTV05", ctvName: "Gabriel Neves",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233331", clientName: "Fazenda Sapezal",    segmento: "Sementes",      meta: 1100000,realizado: 980000 },
+  { mes: "04", ctvId: "CTV05", ctvName: "Gabriel Neves",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233331", clientName: "Fazenda Sapezal",    segmento: "Agroquímicos",  meta: 750000, realizado: 710000 },
+  // Gerente: Ricardo Oliveira (G01) | CTV: Daniela Lima
+  { mes: "04", ctvId: "CTV06", ctvName: "Daniela Lima",       gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233316", clientName: "Fazenda Terra Rica",  segmento: "Sementes",      meta: 410000, realizado: 390000 },
+  { mes: "04", ctvId: "CTV06", ctvName: "Daniela Lima",       gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233316", clientName: "Fazenda Terra Rica",  segmento: "Fertilizantes", meta: 320000, realizado: 280000 },
+  // Gerente: Ana Paula Costa (G02) | CTV: Fernanda Melo (second client)
+  { mes: "04", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233321", clientName: "Fazenda Jatobá",     segmento: "Agroquímicos",  meta: 500000, realizado: 330000 },
+
+  // ─── MÊS 05 — MAIO ────────────────────────────────────
+  // G01 — CTV01: Joao Silva
+  { mes: "05", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233301", clientName: "Fazenda Esperança",   segmento: "Sementes",      meta: 500000, realizado: 320000 },
+  { mes: "05", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233302", clientName: "Fazenda Boa Vista",   segmento: "Fertilizantes", meta: 800000, realizado: 450000 },
+  { mes: "05", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233303", clientName: "Fazenda Progressiva", segmento: "Agroquímicos",  meta: 600000, realizado: 580000 },
+  // G01 — CTV02: Beatriz Santos
+  { mes: "05", ctvId: "CTV02", ctvName: "Beatriz Santos",     gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233306", clientName: "Fazenda Santa Maria", segmento: "Sementes",      meta: 400000, realizado: 150000 },
+  { mes: "05", ctvId: "CTV02", ctvName: "Beatriz Santos",     gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233307", clientName: "Fazenda Sol Nascente",segmento: "Fertilizantes", meta: 700000, realizado: 680000 },
+  // G01 — CTV03: Carlos Gomes
+  { mes: "05", ctvId: "CTV03", ctvName: "Carlos Gomes",       gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233311", clientName: "Fazenda Palmeiras",   segmento: "Agroquímicos",  meta: 900000, realizado: 200000 },
+  // G01 — CTV06: Daniela Lima
+  { mes: "05", ctvId: "CTV06", ctvName: "Daniela Lima",       gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233316", clientName: "Fazenda Terra Rica",  segmento: "Sementes",      meta: 420000, realizado: 410000 },
+  { mes: "05", ctvId: "CTV06", ctvName: "Daniela Lima",       gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233316", clientName: "Fazenda Terra Rica",  segmento: "Fertilizantes", meta: 330000, realizado: 300000 },
+  // G02 — CTV04: Fernanda Melo
+  { mes: "05", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233326", clientName: "Fazenda Cerrado",     segmento: "Sementes",      meta: 950000, realizado: 870000 },
+  { mes: "05", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233326", clientName: "Fazenda Cerrado",     segmento: "Fertilizantes", meta: 500000, realizado: 480000 },
+  { mes: "05", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233321", clientName: "Fazenda Jatobá",     segmento: "Agroquímicos",  meta: 510000, realizado: 350000 },
+  // G02 — CTV05: Gabriel Neves
+  { mes: "05", ctvId: "CTV05", ctvName: "Gabriel Neves",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233331", clientName: "Fazenda Sapezal",    segmento: "Sementes",      meta: 1150000,realizado: 1050000 },
+  { mes: "05", ctvId: "CTV05", ctvName: "Gabriel Neves",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233331", clientName: "Fazenda Sapezal",    segmento: "Agroquímicos",  meta: 780000, realizado: 740000 },
+
+  // ─── MÊS 06 — JUNHO (Parcial) ─────────────────────────
+  { mes: "06", ctvId: "CTV01", ctvName: "Joao Silva",         gerenteId: "G01", gerenteName: "Ricardo Oliveira", documento: "11122233301", clientName: "Fazenda Esperança",   segmento: "Sementes",      meta: 600000, realizado: 0 },
+  { mes: "06", ctvId: "CTV04", ctvName: "Fernanda Melo",      gerenteId: "G02", gerenteName: "Ana Paula Costa",  documento: "11122233326", clientName: "Fazenda Cerrado",     segmento: "Sementes",      meta: 980000, realizado: 0 },
 ];
+
+// Available filters derived from the master base
+export const MONTHS_AVAILABLE = ["04", "05", "06"];
+export const MONTH_LABELS: Record<string, string> = {
+  "04": "Abril", "05": "Maio", "06": "Junho"
+};
+
+export const TERRITORY_COORDINATES: Record<string, { x: number; y: number; uf: string }> = {
+  "Sorriso":                  { x: 38, y: 32, uf: "MT" },
+  "Sinop":                    { x: 40, y: 25, uf: "MT" },
+  "Lucas do Rio Verde":       { x: 37, y: 39, uf: "MT" },
+  "Sapezal":                  { x: 25, y: 42, uf: "MT" },
+  "Rio Verde":                { x: 54, y: 58, uf: "GO" },
+  "Jataí":                    { x: 49, y: 63, uf: "GO" },
+  "Unaí":                     { x: 68, y: 53, uf: "MG" },
+  "Luís Eduardo Magalhães":   { x: 78, y: 38, uf: "BA" },
+  "Cascavel":                 { x: 44, y: 82, uf: "PR" },
+};

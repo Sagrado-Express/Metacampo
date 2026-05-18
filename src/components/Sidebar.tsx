@@ -11,13 +11,15 @@ import {
   Settings, 
   ChevronRight,
   Leaf,
-  Network
+  Network,
+  Radar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Cockpit do Gestor", href: "/", icon: LayoutDashboard },
   { name: "Estrutura Comercial", href: "/ctv/estrutura", icon: Network },
+  { name: "Radar de Caça (CTV)", href: "/ctv/radar", icon: Radar },
   { name: "Tabela Mãe (Inventário)", href: "/ctv/tabela-mae", icon: Users },
   { name: "Segmentação (Pareto)", href: "/ctv/planejamento", icon: Target },
   { name: "Configurações", href: "/admin", icon: Settings },

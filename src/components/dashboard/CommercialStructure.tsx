@@ -181,13 +181,13 @@ export function CommercialStructure() {
   // 3. Consolidated Statistics & Metrics for Director/Manager Cockpit
   const stats = useMemo(() => {
     const totalCtvs = Object.keys(processedData.ctvData).length;
-    const activeStates = new Set(filteredTerritories.map(t => t.uf)).size;
-    const totalPotential = filteredTerritories.reduce((acc, curr) => acc + curr.totalVpm, 0);
-    const totalClients = filteredTerritories.reduce((acc, curr) => acc + curr.clientCount, 0);
+    const activeStates = new Set(filteredTerritories.map((t: TerritoryNode) => t.uf)).size;
+    const totalPotential = filteredTerritories.reduce((acc: number, curr: TerritoryNode) => acc + curr.totalVpm, 0);
+    const totalClients = filteredTerritories.reduce((acc: number, curr: TerritoryNode) => acc + curr.clientCount, 0);
     
     // Sum areas for the selected filter
     const currentAreas = { soja: 0, milho: 0, algodao: 0, cana: 0, cafe: 0 };
-    filteredTerritories.forEach(t => {
+    filteredTerritories.forEach((t: TerritoryNode) => {
       currentAreas.soja += t.areas.soja;
       currentAreas.milho += t.areas.milho;
       currentAreas.algodao += t.areas.algodao;
@@ -200,9 +200,9 @@ export function CommercialStructure() {
     if (selectedCtv) {
       realizedValue = processedData.ctvData[selectedCtv]?.realized || 0;
     } else if (selectedManager) {
-      realizedValue = processedData.managers.find(m => m.name === selectedManager)?.realized || 0;
+      realizedValue = processedData.managers.find((m: { name: string }) => m.name === selectedManager)?.realized || 0;
     } else {
-      realizedValue = processedData.managers.reduce((acc, curr) => acc + curr.realized, 0);
+      realizedValue = processedData.managers.reduce((acc: number, curr: { realized: number }) => acc + curr.realized, 0);
     }
 
     const walletShare = totalPotential > 0 ? (realizedValue / totalPotential) * 100 : 0;
