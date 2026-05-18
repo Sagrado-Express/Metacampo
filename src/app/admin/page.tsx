@@ -55,7 +55,7 @@ export default function AdminPage() {
 
       <footer className="pt-12 border-t border-white/10 text-center">
         <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em]">
-          Executive Insight Engine • Valora Design System
+          MetaCampo SaaS • ITAA Matrix Engine • GTM-GC Methodology
         </p>
       </footer>
     </div>

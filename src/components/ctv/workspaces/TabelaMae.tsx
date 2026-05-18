@@ -18,8 +18,8 @@ import {
 import { VpmService } from '@/domain/services/vpm.service'
 import { PerformanceBand, ITSEConfig } from '@/types/schema'
 
-// Mock IT-SE Reference for calculation (DNA Financeiro)
-const MOCK_ITSE_CONFIGS: ITSEConfig[] = [
+// Mock ITAA Matrix Reference for calculation (DNA Financeiro)
+const MOCK_ITAA_CONFIGS: ITSEConfig[] = [
   { id: '1', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Semente', valuePerHectare: 800 },
   { id: '2', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Fertilizante', valuePerHectare: 1200 },
   { id: '3', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Agroquímicos', valuePerHectare: 900 },
@@ -28,7 +28,7 @@ const MOCK_ITSE_CONFIGS: ITSEConfig[] = [
   { id: '6', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Regulador de Crescimento', valuePerHectare: 150 },
 ];
 
-const ITSE_TOTAL = MOCK_ITSE_CONFIGS.reduce((acc, c) => acc + c.valuePerHectare, 0); // 3550
+const ITAA_TOTAL = MOCK_ITAA_CONFIGS.reduce((acc, c) => acc + c.valuePerHectare, 0); // 3550
 
 interface ClienteInterativo {
   id: string;

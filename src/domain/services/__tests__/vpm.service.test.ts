@@ -5,10 +5,10 @@ describe('VpmService', () => {
   it('should calculate Required Area correctly (Agr-1)', () => {
     const metaVenda = 100000;
     const shareAlvo = 0.2; // 20%
-    const itseTotal = 5000;
+    const itaaTotal = 5000;
     const areaReal = 150;
 
-    const result = VpmService.calculateRequiredArea(metaVenda, shareAlvo, itseTotal, areaReal);
+    const result = VpmService.calculateRequiredArea(metaVenda, shareAlvo, itaaTotal, areaReal);
     
     // 100,000 / (0.2 * 5000) = 100,000 / 1000 = 100
     expect(result.areaNecessaria).toBe(100);

@@ -104,15 +104,17 @@ export default function ITAAConfig() {
       >
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10 bg-white/90 backdrop-blur-md">
               <tr className="border-b border-border/50 bg-primary/[0.02]">
-                <th className="p-8 text-left label-finance min-w-[200px] text-primary">Cultura</th>
+                <th className="px-6 py-4 text-left label-finance min-w-[200px] text-[#3E2723]">
+                  Cultura / Safra
+                </th>
                 {SEGMENTOS.map((seg) => (
-                  <th key={seg} className="p-8 text-center label-finance min-w-[140px] text-primary/70">
+                  <th key={seg} className="px-6 py-4 text-center label-finance min-w-[140px] text-[#3E2723]/60">
                     {seg}
                   </th>
                 ))}
-                <th className="p-8 text-right label-finance min-w-[160px] bg-primary/5 text-primary">ITAA TOTAL</th>
+                <th className="px-6 py-4 text-right label-finance min-w-[160px] bg-primary/5 text-[#3E2723]">ITAA Matrix Total</th>
               </tr>
             </thead>
             <tbody>
@@ -125,7 +127,7 @@ export default function ITAAConfig() {
                     exit={{ opacity: 0, x: -20 }}
                     className="border-b border-border/30 hover:bg-white/60 transition-all group hover-lift"
                   >
-                    <td className="p-8">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <button 
                           onClick={() => removeCulture(cultura)}
@@ -150,12 +152,13 @@ export default function ITAAConfig() {
                         <td key={seg} className="p-6 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <div className="relative group/input">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-bold">R$</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground/60 font-bold">R$</span>
                               <input 
                                 type="number"
+                                min={0}
                                 value={value}
                                 onChange={(e) => handleValueChange(cultura, seg as Segmento, Number(e.target.value))}
-                                className="w-28 bg-white/50 border border-border/50 rounded-2xl py-3 pl-8 pr-3 text-center text-sm font-black font-tabular focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all shadow-sm"
+                                className="w-28 bg-white/50 border border-border/50 rounded-2xl py-3 pl-8 pr-3 text-center text-sm font-black font-tabular text-[#3E2723] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm"
                               />
                             </div>
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 rounded-full">
@@ -167,12 +170,12 @@ export default function ITAAConfig() {
                       );
                     })}
 
-                    <td className="p-8 text-right bg-primary/[0.03]">
-                      <div className="flex flex-col">
+                    <td className="px-6 py-4 text-right bg-primary/[0.03]">
+                       <div className="flex flex-col">
                         <span className="text-2xl font-black text-primary font-tabular tracking-tighter">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(config.total)}
                         </span>
-                        <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] mt-1">Summation Correct</span>
+                        <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] mt-1">ITAA Matrix / ha</span>
                       </div>
                     </td>
                   </motion.tr>

@@ -32,19 +32,19 @@ export class VpmService {
 
   /**
    * Calculates the Required Area (Simulação) based on Sales Goal and Target Share.
-   * Formula: Área Necessária = Meta de Venda ÷ (Share Alvo × IT-SE Total)
+   * Formula: Área Necessária = Meta de Venda ÷ (Share Alvo × ITAA Matrix Total)
    * Uses Safe Math to avoid float division issues.
    */
   static calculateRequiredArea(
     metaVenda: number,
     shareAlvoDecimal: number,
-    itseTotal: number,
+    itaaTotal: number,
     areaCadastrada: number
   ): { areaNecessaria: number; areaInvalida: boolean; alert?: string } {
-    if (shareAlvoDecimal <= 0 || itseTotal <= 0) return { areaNecessaria: 0, areaInvalida: false };
+    if (shareAlvoDecimal <= 0 || itaaTotal <= 0) return { areaNecessaria: 0, areaInvalida: false };
 
     // Safe Math: Calculate area and round to 2 decimal places properly
-    const rawArea = metaVenda / (shareAlvoDecimal * itseTotal);
+    const rawArea = metaVenda / (shareAlvoDecimal * itaaTotal);
     const areaNecessaria = Math.round(rawArea * 100) / 100;
     
     // Safe comparison using small epsilon to avoid float inconsistencies like 100.0000000001 > 100
