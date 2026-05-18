@@ -10,12 +10,14 @@ import {
   Users, 
   Settings, 
   ChevronRight,
-  Leaf
+  Leaf,
+  Network
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Cockpit do Gestor", href: "/", icon: LayoutDashboard },
+  { name: "Estrutura Comercial", href: "/ctv/estrutura", icon: Network },
   { name: "Tabela Mãe (Inventário)", href: "/ctv/tabela-mae", icon: Users },
   { name: "Segmentação (Pareto)", href: "/ctv/planejamento", icon: Target },
   { name: "Configurações", href: "/admin", icon: Settings },
