@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LucideUploadCloud, LucideCheckCircle2, LucideAlertCircle, LucideX } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle, LucideX } from "lucide-react";
 
 interface IngestionCenterProps {
   onUpload: (file: File) => Promise<void>;
@@ -56,7 +56,7 @@ export function IngestionCenter({ onUpload, isProcessing, progress, error }: Ing
         </div>
 
         <div className="mb-6 p-4 rounded-full bg-primary/10 text-primary">
-          <LucideUploadCloud size={48} />
+          <UploadCloud size={48} />
         </div>
 
         <h3 className="text-xl font-semibold mb-2">Câmara de Ingestão</h3>
@@ -111,7 +111,7 @@ export function IngestionCenter({ onUpload, isProcessing, progress, error }: Ing
             animate={{ opacity: 1 }}
             className="mt-6 flex items-center gap-2 text-destructive text-sm"
           >
-            <LucideAlertCircle size={16} />
+            <AlertCircle size={16} />
             <span>{error}</span>
           </motion.div>
         )}

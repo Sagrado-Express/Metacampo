@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { LucideTrendingUp, LucideTrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface PacingSpeedometerProps {
   realized: number;
@@ -84,12 +84,12 @@ export function PacingSpeedometer({ realized, target, shadowTarget, label }: Pac
       <div className="mt-4 flex items-center gap-2">
         {isAhead ? (
           <div className="flex items-center gap-1 text-primary text-xs font-semibold">
-            <LucideTrendingUp size={14} />
+            <TrendingUp size={14} />
             <span>ACIMA DO PACING</span>
           </div>
         ) : (
           <div className="flex items-center gap-1 text-warning text-xs font-semibold">
-            <LucideTrendingDown size={14} />
+            <TrendingDown size={14} />
             <span>ATRASO COMERCIAL</span>
           </div>
         )}

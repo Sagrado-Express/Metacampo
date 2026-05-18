@@ -8,7 +8,7 @@ import { HuntingRadar } from "@/components/dashboard/HuntingRadar";
 import { IngestionMapper } from "@/domain/services/ingestionMapper";
 import { MOCK_TEST_DATA } from "@/data/mock_database";
 import { motion } from "framer-motion";
-import { LucideLayoutDashboard, LucideSettings, LucideUsers, LucideLogOut } from "lucide-react";
+import { LayoutDashboard, Settings, Users, LogOut } from "lucide-react";
 
 /**
  * METACAMPO SaaS (Premium Edition) - Main Workspace

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LucideShieldAlert, LucideCheckCircle2, LucideChevronRight } from "lucide-react";
+import { ShieldAlert, CheckCircle2, ChevronRight } from "lucide-react";
 
 interface ReconciliationModalProps {
   isOpen: boolean;
@@ -47,7 +47,7 @@ export function ReconciliationModal({
           <div className="p-8 pb-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-xl bg-accent/20 text-accent">
-                <LucideShieldAlert size={24} />
+                <ShieldAlert size={24} />
               </div>
               <h2 className="text-xl font-bold">Conciliação Inteligente</h2>
             </div>
@@ -90,7 +90,7 @@ export function ReconciliationModal({
               className="px-6 py-2 rounded-full bg-foreground text-white text-xs font-bold flex items-center gap-2"
             >
               <span>CONCLUIR</span>
-              <LucideCheckCircle2 size={14} />
+              <CheckCircle2 size={14} />
             </button>
           </div>
         </motion.div>

@@ -6,15 +6,15 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/providers/SidebarProvider";
 import { 
-  LucideLayoutDashboard, 
-  LucideUsers, 
-  LucideSettings, 
-  LucideLogOut, 
-  LucideShieldCheck,
-  LucideTrendingUp,
-  LucideFileUp,
-  LucideChevronLeft,
-  LucideMenu
+  LayoutDashboard, 
+  Users, 
+  Settings, 
+  LogOut, 
+  ShieldCheck,
+  TrendingUp,
+  FileUp,
+  ChevronLeft,
+  Menu
 } from "lucide-react";
 
 /**
@@ -26,11 +26,11 @@ export function Sidebar() {
   const { isCollapsed, toggleSidebar } = useSidebar();
 
   const menuItems = [
-    { icon: <LucideLayoutDashboard />, label: "Cockpit", href: "/workspace" },
-    { icon: <LucideShieldCheck />, label: "Admin", href: "/admin" },
-    { icon: <LucideUsers />, label: "Plano de Negócios", href: "/ctv/tabela-mae" },
-    { icon: <LucideTrendingUp />, label: "ITAA Matrix", href: "/admin" }, 
-    { icon: <LucideFileUp />, label: "Ingestão", href: "/workspace" },
+    { icon: <LayoutDashboard />, label: "Cockpit", href: "/workspace" },
+    { icon: <ShieldCheck />, label: "Admin", href: "/admin" },
+    { icon: <Users />, label: "Plano de Negócios", href: "/ctv/tabela-mae" },
+    { icon: <TrendingUp />, label: "ITAA Matrix", href: "/admin" }, 
+    { icon: <FileUp />, label: "Ingestão", href: "/workspace" },
   ];
 
   return (
@@ -67,7 +67,7 @@ export function Sidebar() {
           className="p-2 hover:bg-primary/10 rounded-xl transition-all text-primary/60 hover:text-primary"
           title={isCollapsed ? "Expandir" : "Recolher"}
         >
-          {isCollapsed ? <LucideMenu size={20} /> : <LucideChevronLeft size={20} />}
+          {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
       
@@ -126,7 +126,7 @@ export function Sidebar() {
       {/* Footer / Logout */}
       <button className="mt-auto flex items-center gap-4 px-3 py-4 text-muted-foreground hover:text-destructive transition-all rounded-2xl hover:bg-destructive/5 group/logout relative">
         <div className="shrink-0 w-6 flex justify-center">
-          <LucideLogOut size={20} />
+          <LogOut size={20} />
         </div>
         {!isCollapsed && (
           <motion.span 

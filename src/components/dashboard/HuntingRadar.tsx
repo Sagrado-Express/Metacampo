@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { LucideTarget, LucideArrowUpRight, LucideCompass, LucideMapPin } from "lucide-react";
+import { Target, ArrowUpRight, Compass, MapPin } from "lucide-react";
 
 interface ClientRadarData {
   id: string;
@@ -51,7 +51,7 @@ export function HuntingRadar({ clients }: HuntingRadarProps) {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
         <div>
           <h2 className="text-3xl font-black tracking-tighter flex items-center gap-3 text-foreground">
-            <LucideCompass className="text-primary" />
+            <Compass className="text-primary" />
             Radar de Caça
           </h2>
           <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest mt-1">Inteligência Territorial • Priorização por Saldo TO-GO</p>
@@ -86,12 +86,12 @@ export function HuntingRadar({ clients }: HuntingRadarProps) {
                   {client.name}
                 </h3>
                 <div className="flex items-center gap-1.5 text-primary/70">
-                  <LucideMapPin size={12} strokeWidth={3} />
+                  <MapPin size={12} strokeWidth={3} />
                   <p className="text-[10px] font-black uppercase tracking-widest">{client.city}</p>
                 </div>
               </div>
               <div className="h-12 w-12 rounded-2xl bg-muted/30 flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-all shadow-inner border border-border/10">
-                <LucideTarget size={24} />
+                <Target size={24} />
               </div>
             </div>
 
@@ -130,7 +130,7 @@ export function HuntingRadar({ clients }: HuntingRadarProps) {
             {/* Footer Action */}
             <button className="w-full mt-8 flex items-center justify-center gap-3 py-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-all border-t border-border/40 pt-6">
               <span>Manejo Técnico (Passo 5)</span>
-              <LucideArrowUpRight size={16} />
+              <ArrowUpRight size={16} />
             </button>
           </motion.div>
         ))}

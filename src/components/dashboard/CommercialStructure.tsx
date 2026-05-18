@@ -3,19 +3,19 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  LucideNetwork, 
-  LucideMapPin, 
-  LucideUserCheck, 
-  LucideDollarSign, 
-  LucideBuilding, 
-  LucideChevronRight,
-  LucideFilter,
-  LucideShield,
-  LucideUsers,
-  LucideTrendingUp,
-  LucideGauge,
-  LucideFileSpreadsheet,
-  LucideActivity
+  Network, 
+  MapPin, 
+  UserCheck, 
+  DollarSign, 
+  Building, 
+  ChevronRight,
+  Filter,
+  Shield,
+  Users,
+  TrendingUp,
+  Gauge,
+  FileSpreadsheet,
+  Activity
 } from "lucide-react";
 import { MOCK_TEST_DATA } from "@/data/mock_database";
 import { MONTHLY_MASTER_BASE } from "@/data/monthly_master";
@@ -247,7 +247,7 @@ export function CommercialStructure() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border/60">
         <div>
           <h1 className="text-4xl font-black tracking-tight text-foreground flex items-center gap-3">
-            <LucideNetwork className="text-primary h-9 w-9" />
+            <Network className="text-primary h-9 w-9" />
             Estrutura Comercial & Territórios
           </h1>
           <p className="text-muted-foreground mt-2 text-sm font-medium">
@@ -260,7 +260,7 @@ export function CommercialStructure() {
             onClick={handleResetFilters}
             className="flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-widest text-primary bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all cursor-pointer shadow-sm"
           >
-            <LucideFilter size={14} />
+            <Filter size={14} />
             Limpar Filtros
           </button>
         )}
@@ -271,7 +271,7 @@ export function CommercialStructure() {
         <div className="glass-card-premium p-6 flex flex-col justify-between">
           <div className="flex justify-between items-center text-muted-foreground">
             <span className="text-[10px] font-black uppercase tracking-widest">Estados Ativos</span>
-            <LucideMapPin className="text-primary h-5 w-5" />
+            <MapPin className="text-primary h-5 w-5" />
           </div>
           <div className="mt-4">
             <span className="text-4xl font-black text-foreground">{stats.activeStates}</span>
@@ -282,7 +282,7 @@ export function CommercialStructure() {
         <div className="glass-card-premium p-6 flex flex-col justify-between">
           <div className="flex justify-between items-center text-muted-foreground">
             <span className="text-[10px] font-black uppercase tracking-widest">Wallet Share</span>
-            <LucideGauge className="text-primary h-5 w-5" />
+            <Gauge className="text-primary h-5 w-5" />
           </div>
           <div className="mt-4">
             <span className="text-4xl font-black text-foreground">{stats.walletShare.toFixed(1)}%</span>
@@ -293,7 +293,7 @@ export function CommercialStructure() {
         <div className="glass-card-premium p-6 flex flex-col justify-between">
           <div className="flex justify-between items-center text-muted-foreground">
             <span className="text-[10px] font-black uppercase tracking-widest">Área Coberta</span>
-            <LucideActivity className="text-primary h-5 w-5" />
+            <Activity className="text-primary h-5 w-5" />
           </div>
           <div className="mt-4">
             <span className="text-3xl font-black text-foreground font-tabular">
@@ -306,7 +306,7 @@ export function CommercialStructure() {
         <div className="glass-card-premium p-6 flex flex-col justify-between">
           <div className="flex justify-between items-center text-muted-foreground">
             <span className="text-[10px] font-black uppercase tracking-widest">Potencial (VPM)</span>
-            <LucideDollarSign className="text-primary h-5 w-5" />
+            <DollarSign className="text-primary h-5 w-5" />
           </div>
           <div className="mt-4">
             <span className="text-2xl font-black text-foreground font-tabular">
@@ -326,7 +326,7 @@ export function CommercialStructure() {
           {/* Org Tree */}
           <div className="glass-card-premium p-8">
             <div className="flex items-center gap-3 mb-6 border-b border-border/40 pb-4">
-              <LucideShield className="text-primary" />
+              <Shield className="text-primary" />
               <h3 className="text-lg font-black text-foreground uppercase tracking-wider">Organograma Comercial</h3>
             </div>
 
@@ -369,7 +369,7 @@ export function CommercialStructure() {
                               {manager.ctvs.length} CTVs • {manager.clients} Contas
                             </span>
                           </div>
-                          <LucideChevronRight 
+                          <ChevronRight 
                             size={16} 
                             className={`text-muted-foreground transition-transform ${isManagerSelected ? "rotate-90 text-primary" : ""}`} 
                           />
@@ -423,7 +423,7 @@ export function CommercialStructure() {
           {/* Culture Footprint Insights for Director */}
           <div className="glass-card-premium p-8">
             <div className="flex items-center gap-3 mb-6 border-b border-border/40 pb-4">
-              <LucideFileSpreadsheet className="text-primary" />
+              <FileSpreadsheet className="text-primary" />
               <h3 className="text-lg font-black text-foreground uppercase tracking-wider">Matriz de Cultivo Mapeada</h3>
             </div>
             
@@ -457,7 +457,7 @@ export function CommercialStructure() {
             <div className="flex justify-between items-start relative z-10">
               <div>
                 <h3 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                  <LucideMapPin size={18} className="text-primary" />
+                  <MapPin size={18} className="text-primary" />
                   Mapeamento de Cobertura Comercial
                 </h3>
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-wider mt-1">
@@ -475,7 +475,7 @@ export function CommercialStructure() {
               
               {/* Background Network sketch */}
               <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none select-none text-primary/30">
-                <LucideNetwork size={300} strokeWidth={0.5} />
+                <Network size={300} strokeWidth={0.5} />
               </div>
 
               {/* Active Cities pins */}
@@ -535,7 +535,7 @@ export function CommercialStructure() {
                           <div className="flex justify-between items-start border-b border-border/50 pb-2">
                             <div>
                               <h4 className="text-sm font-black text-foreground flex items-center gap-1.5">
-                                <LucideMapPin size={14} className="text-primary" />
+                                <MapPin size={14} className="text-primary" />
                                 {territory.city} - {coords.state}
                               </h4>
                               <p className="text-[8px] font-black uppercase text-primary/80 tracking-widest mt-0.5">Território Ativo</p>
@@ -574,7 +574,7 @@ export function CommercialStructure() {
           <div className="glass-card-premium p-8">
             <div className="flex items-center justify-between border-b border-border/40 pb-4 mb-6">
               <div className="flex items-center gap-3">
-                <LucideGauge className="text-primary" />
+                <Gauge className="text-primary" />
                 <h3 className="text-lg font-black text-foreground uppercase tracking-wider">Governança de Manejo Técnico</h3>
               </div>
               <span className="px-3 py-1 bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-black uppercase rounded-full glow-primary">

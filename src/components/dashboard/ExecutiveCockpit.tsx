@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
   PieChart, Pie
 } from "recharts";
-import { LucideTrendingUp, LucideAlertTriangle, LucideUsers, LucideMapPin, LucideAward } from "lucide-react";
+import { TrendingUp, AlertTriangle, Users, MapPin, Award } from "lucide-react";
 import { MONTHLY_MASTER_BASE, MONTH_LABELS, TERRITORY_COORDINATES } from "@/data/monthly_master";
 import { MOCK_TEST_DATA } from "@/data/mock_database";
 
@@ -196,7 +196,7 @@ export function ExecutiveCockpit() {
         </div>
 
         <div className="flex items-center gap-3">
-          <LucideUsers size={14} className="text-primary" />
+          <Users size={14} className="text-primary" />
           <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Gerente</span>
           <select
             value={selectedGerenteId}
@@ -209,7 +209,7 @@ export function ExecutiveCockpit() {
         </div>
 
         <div className="flex items-center gap-3">
-          <LucideAward size={14} className="text-primary" />
+          <Award size={14} className="text-primary" />
           <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">CTV</span>
           <select
             value={selectedCtvId}
@@ -382,7 +382,7 @@ export function ExecutiveCockpit() {
           <div className="glass-card-premium p-8 relative overflow-hidden bg-gradient-to-br from-[#FDFDFD] to-[#F5F4F0] min-h-[400px] flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <LucideMapPin size={14} className="text-primary" />
+                <MapPin size={14} className="text-primary" />
                 Heatmap de Cobertura — VPM &amp; Saúde TO-GO por Município
               </span>
               <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground">

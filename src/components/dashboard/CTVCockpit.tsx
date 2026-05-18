@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { LucideRadar, LucideMapPin, LucideTarget, LucideTrendingUp, LucideAlertTriangle } from "lucide-react";
+import { Radar, MapPin, Target, TrendingUp, AlertTriangle } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ClienteMix {
@@ -130,7 +130,7 @@ export function CTVCockpit() {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-green-900/50 border border-green-700/40">
-            <LucideRadar size={20} className="text-green-400" />
+            <Radar size={20} className="text-green-400" />
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tighter text-white">Radar de Caça</h1>
@@ -141,11 +141,11 @@ export function CTVCockpit() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           <DarkKpiCard label="Minha Meta" value={fmt(CTV_INFO.meta)}
-            icon={<LucideTarget size={16} />} />
+            icon={<Target size={16} />} />
           <DarkKpiCard label="Meu Faturamento" value={`${fmt(CTV_INFO.faturado)} (${pct}%)`}
-            icon={<LucideTrendingUp size={16} />} />
+            icon={<TrendingUp size={16} />} />
           <DarkKpiCard label="Saldo TO-GO" value={fmt(toGo)} amber
-            icon={<LucideAlertTriangle size={16} className="text-yellow-400" />} />
+            icon={<AlertTriangle size={16} className="text-yellow-400" />} />
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export function CTVCockpit() {
         {/* Heatmap (Abstract) */}
         <div className="lg:col-span-3 rounded-2xl bg-slate-800/70 border border-white/10 backdrop-blur-md p-6 relative overflow-hidden" style={{ minHeight: 340 }}>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2 mb-4">
-            <LucideMapPin size={12} className="text-green-400" /> Mapa de Calor — Território
+            <MapPin size={12} className="text-green-400" /> Mapa de Calor — Território
           </span>
 
           {/* Topographic SVG background */}
@@ -268,7 +268,7 @@ export function CTVCockpit() {
                       <div>
                         <p className="font-black text-white">{c.nome}</p>
                         <p className="text-[9px] text-slate-500 font-bold flex items-center gap-1">
-                          <LucideMapPin size={8} />{c.cidade} - {c.uf}
+                          <MapPin size={8} />{c.cidade} - {c.uf}
                         </p>
                       </div>
                     </td>
