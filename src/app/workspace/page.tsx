@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { IngestionCenter } from "@/components/ingestion/IngestionCenter";
 import { ReconciliationModal } from "@/components/ingestion/ReconciliationModal";
 import { PacingSpeedometer } from "@/components/dashboard/PacingSpeedometer";
