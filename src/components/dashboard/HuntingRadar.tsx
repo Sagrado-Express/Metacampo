@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { motion } from "framer-motion";
-import { LucideTarget, LucideArrowUpRight, LucideCompass } from "lucide-react";
+import { LucideTarget, LucideArrowUpRight, LucideCompass, LucideMapPin } from "lucide-react";
 
 interface ClientRadarData {
   id: string;

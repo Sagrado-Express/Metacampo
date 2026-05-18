@@ -51,5 +51,3 @@ describe('VpmService', () => {
     expect(VpmService.calculateToGo(500, 600, 0)).toBe(0);
   });
 });
-
-});
