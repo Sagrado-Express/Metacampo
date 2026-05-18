@@ -63,7 +63,7 @@ export function ExecutiveCockpit() {
       { name: "Orçamento", value: totalMeta / 1000000, fill: COLORS.budget, isTotal: true }
     ];
     segmentMetrics.forEach(seg => {
-      waterfall.push({ name: seg, value: -(seg.realizado / 1000000), fill: COLORS.realized, isTotal: false });
+      waterfall.push({ name: seg.name, value: -(seg.realizado / 1000000), fill: COLORS.realized, isTotal: false });
     });
     waterfall.push({ name: "Saldo TO-GO", value: totalToGo / 1000000, fill: COLORS.togo, isTotal: true });
 
