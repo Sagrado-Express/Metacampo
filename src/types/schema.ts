@@ -58,10 +58,10 @@ export interface ProductSegment {
 }
 
 /**
- * ITSEConfig: The "Truth Table" for VPM calculation
+ * ITAAConfig: The "Truth Table" for VPM calculation
  * Value per hectare for a specific crop and product segment
  */
-export interface ITSEConfig {
+export interface ITAAConfig {
   id: string;
   empresaId: string;
   safraId: string;

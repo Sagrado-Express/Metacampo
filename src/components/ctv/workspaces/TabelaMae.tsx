@@ -16,10 +16,10 @@ import {
   Target
 } from 'lucide-react'
 import { VpmService } from '@/domain/services/vpm.service'
-import { PerformanceBand, ITSEConfig } from '@/types/schema'
+import { PerformanceBand, ITAAConfig } from '@/types/schema'
 
 // Mock ITAA Matrix Reference for calculation (DNA Financeiro)
-const MOCK_ITAA_CONFIGS: ITSEConfig[] = [
+const MOCK_ITAA_CONFIGS: ITAAConfig[] = [
   { id: '1', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Semente', valuePerHectare: 800 },
   { id: '2', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Fertilizante', valuePerHectare: 1200 },
   { id: '3', empresaId: 'e1', safraId: 's1', cultivoId: 'Soja', productSegmentId: 'Agroquímicos', valuePerHectare: 900 },
@@ -75,11 +75,11 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
   const clientesProcessados = useMemo(() => {
     // 1. Calcular VPM e Viabilidade Individual para cada cliente
     let processed = clientes.map(c => {
-      const vpmTotal = c.areaHa * ITSE_TOTAL;
+      const vpmTotal = c.areaHa * ITAA_TOTAL;
       const { areaNecessaria, areaInvalida } = VpmService.calculateRequiredArea(
         c.metaVenda, 
         c.shareAlvo, 
-        ITSE_TOTAL, 
+        ITAA_TOTAL, 
         c.areaHa
       );
 
@@ -191,7 +191,7 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                         R$ {cliente.vpmTotal.toLocaleString('pt-BR')}
                       </p>
                       <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">
-                        DNA: {ITSE_TOTAL.toLocaleString('pt-BR')} /ha
+                        DNA: {ITAA_TOTAL.toLocaleString('pt-BR')} /ha
                       </p>
 
                     </td>

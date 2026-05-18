@@ -1,4 +1,4 @@
-import { ITSEConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cliente, IBGEBenchmark } from '@/types/schema';
+import { ITAAConfig, VPMResult, PerformanceBand, AgriculturalWindow, Cliente, IBGEBenchmark } from '@/types/schema';
 
 export interface ParetoResult {
   clientId: string;

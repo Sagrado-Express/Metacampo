@@ -1,4 +1,4 @@
-import { Cliente, VPMResult, ITSEConfig } from '@/types/schema';
+import { Cliente, VPMResult, ITAAConfig } from '@/types/schema';
 import { VpmService } from './vpm.service';
 
 /**
@@ -83,7 +83,7 @@ export class MiddlewareService {
    */
   static processStrategicConsolidation(
     billingData: any[],
-    itseConfigs: ITSEConfig[]
+    itaaConfigs: ITAAConfig[]
   ): Record<string, { totalRevenue: number; vpmPotential: number }> {
     const consolidation: Record<string, { totalRevenue: number; vpmPotential: number }> = {};
 
