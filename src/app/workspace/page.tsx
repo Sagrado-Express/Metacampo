@@ -35,6 +35,16 @@ export default function WorkspacePage() {
         .filter(m => m.ctvId === "CTV01" && m.mes === "05") // Simulation
         .reduce((acc, curr) => acc + curr.realizado, 0) / 10; // Divided among clients
 
+      // Calculate Technical Input Recommendation (Passo 5)
+      const recommendedInputs = 
+        (d.areas.soja * 1800) + 
+        (d.areas.milho * 1200) + 
+        (d.areas.algodao * 3500) + 
+        (d.areas.cana * 2000) + 
+        (d.areas.cafe * 2500);
+      
+      const deficitTecnico = Math.max(0, recommendedInputs - realized);
+
       return {
         id: d.id,
         name: d.name,
@@ -42,7 +52,8 @@ export default function WorkspacePage() {
         vpmTotal: vpmTotal,
         realizedMonth: realized,
         toGoMonth: Math.max(0, vpmTotal - realized),
-        pareto: d.rating === 'A' ? "AZUL" as const : "VERDE" as const
+        pareto: d.rating === 'A' ? "AZUL" as const : "VERDE" as const,
+        deficitTecnico
       };
     });
   }, []);
