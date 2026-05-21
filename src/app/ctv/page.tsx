@@ -20,6 +20,7 @@ import TabelaMae from '@/components/ctv/workspaces/TabelaMae'
 import ExecutionWorkspace from '@/components/ctv/workspaces/ExecutionWorkspace'
 import TacticalAgendaWorkspace from '@/components/ctv/workspaces/TacticalAgendaWorkspace'
 import ParetoPlanning from '@/components/ctv/workspaces/ParetoPlanning'
+import { MagicCubeWorkspace } from '@/components/ctv/workspaces/MagicCubeWorkspace'
 
 type Workspace = 'DIAGNOSIS' | 'PORTFOLIO' | 'PLANNING' | 'EXECUTION' | 'AGENDA'
 
@@ -110,7 +111,7 @@ export default function CTVPlanningPage() {
             )}
 
             {activeWorkspace === 'PLANNING' && (
-              <ParetoPlanning />
+              <MagicCubeWorkspace />
             )}
 
             {activeWorkspace === 'EXECUTION' && (

@@ -1,6 +1,6 @@
 'use client'
 
-import ParetoPlanning from '@/components/ctv/workspaces/ParetoPlanning'
+import { MagicCubeWorkspace } from '@/components/ctv/workspaces/MagicCubeWorkspace'
 
 export default function PlanejamentoPareto() {
   return (
@@ -9,7 +9,7 @@ export default function PlanejamentoPareto() {
         <h1 className="text-3xl font-black tracking-tight text-foreground">Segmentação de Pareto</h1>
         <p className="text-muted-foreground mt-2 font-medium">Passo 15: Análise de Concentração de Potencial (80/20)</p>
       </div>
-      <ParetoPlanning />
+      <MagicCubeWorkspace />
     </div>
   )
 }
