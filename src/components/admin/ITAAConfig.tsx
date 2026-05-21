@@ -1,16 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings2, Save, Info, TrendingUp, Plus, Trash2, X } from 'lucide-react'
+import { Settings2, Save, Info, TrendingUp, Plus, Trash2, X, AlertCircle } from 'lucide-react'
 import { ITAAEngine, SEGMENTOS } from '@/domain/services/itAAEngine'
 import { Segmento, ITAAConfig as ITAAConfigType } from '@/types/blueprint'
 
-/**
- * ITAAConfig (The Master UI/UX Perspective)
- * Dynamic Matrix Layout: Includes Add/Remove cultures functionality.
- */
 export default function ITAAConfig() {
+  const [isFrozen, setIsFrozen] = useState(false)
+  
+  // Detect freeze status on mount
+  useEffect(() => {
+    const status = localStorage.getItem('metacampo_handshake_status')
+    if (status === 'FREEZE') {
+      setIsFrozen(true)
+    }
+  }, [])
+
   const [configs, setConfigs] = useState<Record<string, ITAAConfigType>>({
     'Soja': ITAAEngine.calculateITAA('Soja', {
       'Semente': 800,
@@ -85,16 +91,33 @@ export default function ITAAConfig() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setShowAddRow(true)}
-            className="px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-primary text-primary hover:bg-primary/5 transition-all"
+            disabled={isFrozen}
+            className={`px-6 py-3 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-primary text-primary hover:bg-primary/5 transition-all ${isFrozen ? 'opacity-40 cursor-not-allowed' : ''}`}
           >
             <Plus size={16} /> Incluir Cultura
           </button>
           
-          <button className="bg-primary text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary/90 transition-all shadow-xl shadow-primary/20">
+          <button 
+            disabled={isFrozen}
+            className={`bg-primary text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 ${isFrozen ? 'opacity-40 cursor-not-allowed' : ''}`}
+          >
             <Save size={16} /> Salvar Padrão Global
           </button>
         </div>
       </div>
+
+      {/* Handshake Freeze Banner */}
+      {isFrozen && (
+        <div className="p-4 bg-destructive/15 border-2 border-destructive/30 rounded-2xl flex items-center gap-3 text-destructive animate-pulse">
+          <AlertCircle size={24} className="flex-shrink-0" />
+          <div className="text-left">
+            <h4 className="text-xs font-black uppercase tracking-widest">DNA Financeiro Congelado</h4>
+            <p className="text-[10px] font-bold uppercase mt-0.5 opacity-80">
+              O Handshake comercial foi oficializado comercialmente. Alterações na matriz ITAA estão bloqueadas administrativamente!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Matrix Section */}
       <motion.div 
@@ -131,7 +154,8 @@ export default function ITAAConfig() {
                       <div className="flex items-center gap-4">
                         <button 
                           onClick={() => removeCulture(cultura)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+                          disabled={isFrozen}
+                          className={`opacity-0 group-hover:opacity-100 p-2 text-destructive hover:bg-destructive/10 rounded-xl transition-all ${isFrozen ? 'hidden' : ''}`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -157,8 +181,9 @@ export default function ITAAConfig() {
                                 type="number"
                                 min={0}
                                 value={value}
+                                disabled={isFrozen}
                                 onChange={(e) => handleValueChange(cultura, seg as Segmento, Number(e.target.value))}
-                                className="w-28 bg-white/50 border border-border/50 rounded-2xl py-3 pl-8 pr-3 text-center text-sm font-black font-tabular text-[#3E2723] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm"
+                                className={`w-28 bg-white/50 border border-border/50 rounded-2xl py-3 pl-8 pr-3 text-center text-sm font-black font-tabular text-[#3E2723] focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm ${isFrozen ? 'opacity-50 cursor-not-allowed bg-muted/20' : ''}`}
                               />
                             </div>
                             <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 rounded-full">

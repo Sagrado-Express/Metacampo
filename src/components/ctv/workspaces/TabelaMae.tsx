@@ -49,6 +49,15 @@ import { MOCK_TEST_DATA } from '@/data/mock_database'
 
 export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isFrozen, setIsFrozen] = useState(false);
+
+  // Check handshake freeze status on mount
+  useEffect(() => {
+    const status = localStorage.getItem('metacampo_handshake_status');
+    if (status === 'FREEZE') {
+      setIsFrozen(true);
+    }
+  }, []);
   
   // Transform MOCK_TEST_DATA to ClienteInterativo format
   const [clientes, setClientes] = useState<ClienteInterativo[]>(
@@ -144,6 +153,19 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
+      {/* Handshake Freeze Banner */}
+      {isFrozen && (
+        <div className="p-4 bg-destructive/15 border-2 border-destructive/30 rounded-2xl flex items-center gap-3 text-destructive animate-pulse">
+          <AlertCircle size={24} className="flex-shrink-0" />
+          <div className="text-left">
+            <h4 className="text-xs font-black uppercase tracking-widest">Plano de Safra Congelado</h4>
+            <p className="text-[10px] font-bold uppercase mt-0.5 opacity-80">
+              O Handshake comercial foi oficializado de forma imutável. Alterações e edições de dados estão bloqueadas!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Grid da Tabela */}
       <div className="glass-card overflow-hidden shadow-2xl border-white/40">
         <div className="overflow-x-auto">
@@ -180,8 +202,9 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                         <input 
                           type="number"
                           value={cliente.areaHa}
+                          disabled={isFrozen}
                           onChange={(e) => updateCliente(cliente.id, 'areaHa', Number(e.target.value))}
-                          className="w-24 p-2 bg-white border-2 border-primary/5 rounded-xl text-center text-sm font-black focus:border-primary outline-none transition-all"
+                          className={`w-24 p-2 bg-white border-2 border-primary/5 rounded-xl text-center text-sm font-black focus:border-primary outline-none transition-all ${isFrozen ? 'opacity-50 cursor-not-allowed bg-muted/20' : ''}`}
                         />
                       </div>
                     </td>
@@ -202,8 +225,9 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                         <input 
                           type="number"
                           value={cliente.metaVenda}
+                          disabled={isFrozen}
                           onChange={(e) => updateCliente(cliente.id, 'metaVenda', Number(e.target.value))}
-                          className={`w-32 p-2 bg-white border-2 rounded-xl text-sm font-black focus:ring-2 outline-none transition-all ${cliente.areaInvalida ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/5'}`}
+                          className={`w-32 p-2 bg-white border-2 rounded-xl text-sm font-black focus:ring-2 outline-none transition-all ${cliente.areaInvalida ? 'border-destructive text-destructive bg-destructive/5' : 'border-primary/5'} ${isFrozen ? 'opacity-50 cursor-not-allowed bg-muted/20' : ''}`}
                         />
                       </div>
                     </td>
@@ -212,8 +236,9 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                       <div className="flex justify-center">
                         <select 
                           value={cliente.shareAlvo}
+                          disabled={isFrozen}
                           onChange={(e) => updateCliente(cliente.id, 'shareAlvo', Number(e.target.value))}
-                          className="bg-white border-2 border-primary/5 rounded-xl px-3 py-2 text-xs font-black outline-none focus:border-primary transition-all cursor-pointer"
+                          className={`bg-white border-2 border-primary/5 rounded-xl px-3 py-2 text-xs font-black outline-none focus:border-primary transition-all cursor-pointer ${isFrozen ? 'opacity-50 cursor-not-allowed bg-muted/20' : ''}`}
                         >
                           <option value={0.10}>10%</option>
                           <option value={0.15}>15%</option>

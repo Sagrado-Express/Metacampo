@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, Clock, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
+import { MOCK_TEST_DATA } from '@/data/mock_database'
 
 export default function VisitPlanner() {
   const [frequencies, setFrequencies] = useState({
@@ -12,12 +13,31 @@ export default function VisitPlanner() {
     vermelho: 0.5
   })
 
-  const counts = { azul: 8, verde: 15, amarelo: 22, vermelho: 12 }
-  const totalVisits = 
-    (counts.azul * frequencies.azul) +
-    (counts.verde * frequencies.verde) +
-    (counts.amarelo * frequencies.amarelo) +
-    (counts.vermelho * frequencies.vermelho)
+  // Calculate counts dynamically from real database
+  const counts = useMemo(() => {
+    let azul = 0, verde = 0, amarelo = 0, vermelho = 0;
+    MOCK_TEST_DATA.forEach(d => {
+      if (d.rating === 'A' && d.relacionamento >= 5) {
+        azul++;
+      } else if (d.rating === 'A') {
+        verde++;
+      } else if (d.rating === 'B' && d.relacionamento >= 4) {
+        amarelo++;
+      } else {
+        vermelho++;
+      }
+    });
+    return { azul, verde, amarelo, vermelho };
+  }, []);
+
+  const totalVisits = useMemo(() => {
+    return (
+      (counts.azul * frequencies.azul) +
+      (counts.verde * frequencies.verde) +
+      (counts.amarelo * frequencies.amarelo) +
+      (counts.vermelho * frequencies.vermelho)
+    );
+  }, [counts, frequencies]);
 
   const workingDays = 20
   const isOverCapacity = totalVisits > workingDays

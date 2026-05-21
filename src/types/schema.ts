@@ -182,5 +182,42 @@ export interface IBGEBenchmark {
   valorTotalBrl: number; // Total value of production in the municipality
 }
 
+// --- Novas Estruturas (Master Alignment V4) ---
 
+export interface SetupBudget {
+  empresaId: string; // Mapeia para tenant_id no banco
+  mes: string; // CHAR(2)
+  ctvId: string;
+  segmento: string;
+  valorMetaCentavos: number;
+}
 
+export interface CustomerForecast {
+  empresaId: string;
+  documento: string;
+  mes: string;
+  segmento: string;
+  valorPrevistoCentavos: number;
+  criadoEm: Date;
+}
+
+export interface FaturamentoSnapshot {
+  empresaId: string;
+  mes: string;
+  ctvId: string;
+  segmento: string;
+  valorRealizadoCentavos: number;
+  valorMetaCentavos: number;
+  createdAt: Date;
+}
+
+export interface OfficialSafraPlan {
+  id: string;
+  empresaId: string;
+  safraId: string;
+  status: 'PENDING' | 'APPROVED';
+  createdAt: Date;
+  approvedAt?: Date;
+  approvedBy?: string;
+  snapshotData: any; // JSONB
+}

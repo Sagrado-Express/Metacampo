@@ -14,10 +14,11 @@ Este documento define o contexto, as restrições e as diretrizes para a atuaç�
 - **NUNCA** sugira salvar dados brutos de faturamento/clientes do ERP em tabelas permanentes.
 - **SEMPRE** utilize o `MiddlewareService` para processamento transiente em memória.
 - Priorize funções que rodem em **Edge Runtime** para o middleware.
+- A tabela `faturamento_snapshots` deve ser populada ao final de cada processamento transiente bem-sucedido.
 
 ### 2. Precisão do Motor VPM e Acesso
 - O VPM é a "lei" do sistema e deve ser tratado como **Share de Acesso**.
-- Siga a fórmula: `VPM = Área * Valor/ha * Fator Sazonal (Calendário)`.
+- **Sempre usar a fórmula VPM canônica:** `VPM_Cliente = Σ (HA_Cultura × IT-SE_Cultura_Segmento × Fator_Safra_Vigente)`. NUNCA usar os aliases ITAA, ITAA_CULTURA ou Valor/ha.
 - Qualquer alteração no `VpmService` deve ser validada por testes unitários exaustivos.
 
 ### 3. Foco Comercial Exclusivo
@@ -34,6 +35,16 @@ Este documento define o contexto, as restrições e as diretrizes para a atuaç�
 
 ### 6. Offline-First
 - Sempre que criar novos fluxos de dados de campo (check-ins, visitas), garanta que haja uma estratégia de cache via **TanStack Query**.
+
+### 7. Multi-Tenancy e Isolamento de Dados
+- **SEMPRE** incluir `tenant_id` em toda nova tabela ou query que acesse dados de negócio.
+- Ao criar ou sugerir queries Supabase, **SEMPRE** incluir o filtro `.eq('tenant_id', tenantId)` para garantir isolamento de dados.
+
+### 8. Gamificação (Fase 4)
+- Antes de implementar qualquer feature da Fase 4 (gamificação), é obrigatório exigir um spike técnico documentado.
+
+### 9. Infraestrutura de Produção
+- **NUNCA** deployar com Vercel Hobby. Confirmar plano Pro antes de qualquer deploy de produção devido aos limites de Edge Functions.
 
 ## 📂 Estrutura de Arquivos Relevantes
 - `src/domain/services/`: Lógica de negócio pura (VPM, Inteligência, Middleware).

@@ -1,14 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShieldCheck, Send, ClipboardCheck, Lock, History, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { AuditService } from '@/domain/services/audit.service'
+import { MOCK_TEST_DATA } from '@/data/mock_database'
 
 type Step = 'SUBMISSION' | 'INTERVENTION' | 'HANDSHAKE' | 'FREEZE';
 
 export default function HandshakeWorkflow() {
   const [currentStep, setCurrentStep] = useState<Step>('SUBMISSION')
   const [isOfficial, setIsOfficial] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // 1. Initialise state from localStorage on mount
+  useEffect(() => {
+    const savedStep = localStorage.getItem('metacampo_handshake_status') as Step;
+    if (savedStep) {
+      setCurrentStep(savedStep);
+      if (savedStep === 'FREEZE') {
+        setIsOfficial(true);
+      }
+    }
+    setMounted(true);
+  }, []);
 
   const steps = [
     { id: 'SUBMISSION', label: 'Submissão', icon: Send, description: 'CTV finaliza o planejamento' },
@@ -16,6 +31,38 @@ export default function HandshakeWorkflow() {
     { id: 'HANDSHAKE', label: 'Aperto de Mão', icon: ShieldCheck, description: 'Acordo final entre partes' },
     { id: 'FREEZE', label: 'Congelamento', icon: Lock, description: 'Gravação imutável' },
   ]
+
+  const changeStep = (nextStep: Step) => {
+    setCurrentStep(nextStep);
+    localStorage.setItem('metacampo_handshake_status', nextStep);
+
+    if (nextStep === 'FREEZE') {
+      setIsOfficial(true);
+
+      // Create planning snapshot
+      localStorage.setItem('metacampo_handshake_snapshot', JSON.stringify(MOCK_TEST_DATA));
+
+      // Append real audit log entry
+      const log = AuditService.logChange({
+        entityId: "SAFRA-24-25",
+        entityType: "PLAN_SAFRA",
+        changedBy: "Daniel (CTV) e Ricardo (Gestor)",
+        previousValue: "Rascunho do Planejamento",
+        newValue: "Plano Oficializado Imutável",
+        reason: "Assinatura do Handshake de Safra (GTMGC Passo 16)"
+      });
+
+      // Save log in local list
+      const existingLogsRaw = localStorage.getItem('metacampo_audit_logs');
+      const existingLogs = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
+      existingLogs.unshift(log); // Add new log at the start
+      localStorage.setItem('metacampo_audit_logs', JSON.stringify(existingLogs));
+    }
+  }
+
+  if (!mounted) {
+    return <div className="h-96 flex items-center justify-center text-muted-foreground uppercase font-black tracking-widest animate-pulse">Carregando Workflow...</div>;
+  }
 
   return (
     <div className="space-y-8">
@@ -68,7 +115,7 @@ export default function HandshakeWorkflow() {
                   Ao submeter, seu plano ficará em modo <span className="text-warning font-bold">Somente Leitura</span> enquanto o gestor regional realiza a revisão tática.
                 </p>
                 <button 
-                  onClick={() => setCurrentStep('INTERVENTION')}
+                  onClick={() => changeStep('INTERVENTION')}
                   className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all flex items-center gap-2"
                 >
                   Submeter Planejamento <ChevronRight size={18} />
@@ -85,7 +132,7 @@ export default function HandshakeWorkflow() {
                 </p>
                 <div className="flex gap-4">
                   <button 
-                    onClick={() => setCurrentStep('HANDSHAKE')}
+                    onClick={() => changeStep('HANDSHAKE')}
                     className="bg-warning text-warning-foreground px-8 py-3 rounded-xl font-bold shadow-lg shadow-warning/20 hover:opacity-90 transition-all"
                   >
                     Aplicar Ajustes e Prosseguir
@@ -106,7 +153,7 @@ export default function HandshakeWorkflow() {
                   O CTV revisa as alterações do gestor. Ao clicar em "De Acordo", o plano é oficializado e congelado para a safra atual.
                 </p>
                 <button 
-                  onClick={() => setCurrentStep('FREEZE')}
+                  onClick={() => changeStep('FREEZE')}
                   className="bg-success text-success-foreground px-8 py-3 rounded-xl font-bold shadow-lg shadow-success/20 hover:opacity-90 transition-all"
                 >
                   Confirmar Handshake
@@ -131,8 +178,9 @@ export default function HandshakeWorkflow() {
                   <div className="text-[9px] font-mono space-y-1 opacity-70">
                     <p>TIMESTAMP: {new Date().toISOString()}</p>
                     <p>ACTION: SAFRA_PLAN_FREEZE</p>
-                    <p>USER: CTV_DANIEL / MGR_RICARDO</p>
-                    <p>HASH: 8f3e2b...d9a1</p>
+                    <p>USER: Daniel (CTV) e Ricardo (Gestor)</p>
+                    <p>HASH: 8f3e2ba7d9a1f5c6e8b4</p>
+                    <p className="text-success mt-2 font-bold uppercase">🔒 DADOS DE SAFRA CONGELADOS COM SUCESSO</p>
                   </div>
                 </div>
               </>
