@@ -5,6 +5,7 @@
 
 export const MOCK_TEST_DATA = [
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "1",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -18,6 +19,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 5
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "2",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -31,6 +33,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 4
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "3",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -44,6 +47,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 3
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "4",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -57,6 +61,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 5
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "5",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -70,6 +75,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 5
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "6",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -83,6 +89,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 4
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "7",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -96,6 +103,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 5
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "8",
     diretor: "Onório Dias",
     gerente: "Ricardo Oliveira",
@@ -109,6 +117,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 5
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "9",
     diretor: "Onório Dias",
     gerente: "Ana Paula Costa",
@@ -122,6 +131,7 @@ export const MOCK_TEST_DATA = [
     relacionamento: 5
   },
   {
+    tenantId: "00000000-0000-0000-0000-000000000000",
     id: "10",
     diretor: "Onório Dias",
     gerente: "Ana Paula Costa",

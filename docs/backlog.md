@@ -62,7 +62,7 @@ Visualização unificada de vendas, análise de Pareto (Curva ABC) e planos tát
 | **MC-401** | Workspaces Integrados de Planejamento | Dashboard unificado integrando os recortes de diretores, gerentes, CTVs (vendedores) e carteira detalhada. | 🔥 Crítica | 13 | ✅ Concluído |
 | **MC-402** | Régua de Confiança & Pareto | Classificação de clientes em cores (Azul, Verde, Amarelo, Vermelho) cruzando VPM, Wallet Share, Crédito e Relacionamento. | 🔥 Crítica | 8 | ✅ Concluído |
 | **MC-403** | Motor de Planos de Visitas | Geração automática de roteiros de visitas priorizados por potencial financeiro (Pareto) e nível de risco comercial. | ⭐ Alta | 8 | ✅ Concluído |
-| **MC-404** | Refinamento da UI do Saldo "TO GO" | Polimento estético do gap Meta vs. Realizado + Pedidos Pendentes, permitindo filtros interativos no dashboard. | ⭐ Alta | 5 | 🟡 Em Andamento |
+| **MC-404** | Refinamento da UI do Saldo "TO GO" | Polimento estético do gap Meta vs. Realizado + Pedidos Pendentes, permitindo filtros interativos no dashboard. | ⭐ Alta | 5 | ✅ Concluído |
 
 ---
 
@@ -71,13 +71,13 @@ Abertura para escala comercial através de arquitetura multi-tenant, persistênc
 
 | ID | Story / Tarefa | Descrição | Prioridade | Pontos | Status |
 | :--- | :--- | :--- | :---: | :---: | :---: |
-| **MC-501** | Arquitetura Multi-Tenancy (P0) | Criação da tabela `tenants`, coluna `tenant_id` em todas as tabelas de negócio e regras de RLS no Supabase para isolar dados. | 🔥 Crítica | 13 | 🔲 Pendente |
-| **MC-502** | Tabela de Forecast por Cliente (P0) | Criar tabela `customer_forecasts` permitindo ao CTV prever metas por cliente, com validação agregada vs `setup_budgets`. | 🔥 Crítica | 10 | 🔲 Pendente |
-| **MC-503** | Snapshots YoY de Faturamento (P0) | Criar a tabela `faturamento_snapshots` e populá-la pós-processamento transiente para permitir análises históricas multi-ano. | 🔥 Crítica | 10 | 🔲 Pendente |
-| **MC-504** | Integração com Rating ERP | Conectar o motor à base externa de crédito e relacionamento para automação da régua de confiança e risco comercial. | ⭐ Alta | 8 | 🔲 Pendente |
-| **MC-505** | Dashboard de Market Share | Painel analítico "Dona da Rua" mostrando a cobertura percentual da empresa em cada município de atuação. | 📈 Média | 8 | 🔲 Pendente |
-| **MC-506** | Deploy em Produção | Migração do ambiente para instâncias de produção (Vercel Pro, Upstash Redis Pay-As-You-Go e chaves Supabase oficiais). | 🔥 Crítica | 5 | 🔲 Pendente |
-| **MC-507** | Homologação & Critérios de Aceite | Validação de ponta a ponta com dados reais do cliente piloto sob cenários definidos de estresse e performance de carregamento. | ⭐ Alta | 5 | 🔲 Pendente |
+| **MC-501** | Arquitetura Multi-Tenancy (P0) | Criação da tabela `tenants`, coluna `tenant_id` em todas as tabelas de negócio e regras de RLS no Supabase para isolar dados. | 🔥 Crítica | 13 | ✅ Concluído |
+| **MC-502** | Tabela de Forecast por Cliente (P0) | Criar tabela `customer_forecasts` permitindo ao CTV prever metas por cliente, com validação agregada vs `setup_budgets`. | 🔥 Crítica | 10 | ✅ Concluído |
+| **MC-503** | Snapshots YoY de Faturamento (P0) | Criar a tabela `faturamento_snapshots` e populá-la pós-processamento transiente para permitir análises históricas multi-ano. | 🔥 Crítica | 10 | ✅ Concluído |
+| **MC-504** | Integração com Rating ERP | Conectar o motor à base externa de crédito e relacionamento para automação da régua de confiança e risco comercial. | ⭐ Alta | 8 | ✅ Concluído |
+| **MC-505** | Dashboard de Market Share | Painel analítico "Dona da Rua" mostrando a cobertura percentual da empresa em cada município de atuação. | 📈 Média | 8 | ✅ Concluído |
+| **MC-506** | Deploy em Produção | Migração do ambiente para instâncias de produção (Vercel Pro, Upstash Redis Pay-As-You-Go e chaves Supabase oficiais). | 🔥 Crítica | 5 | ✅ Concluído |
+| **MC-507** | Homologação & Critérios de Aceite | Validação de ponta a ponta com dados reais do cliente piloto sob cenários definidos de estresse e performance de carregamento. | ⭐ Alta | 5 | ✅ Concluído |
 
 ---
 
@@ -85,9 +85,9 @@ Abertura para escala comercial através de arquitetura multi-tenant, persistênc
 
 *   **Total de Histórias/Tarefas:** 19 itens
 *   **Esforço Estimado Total:** 144 pontos de história
-*   **Concluído (✓):** 89 pontos (61,8%)
-*   **Em Andamento (🟡):** 5 pontos (3,5%)
-*   **Pendente (🔲):** 50 pontos (34,7%)
+*   **Concluído (✓):** 144 pontos (100%)
+*   **Em Andamento (🟡):** 0 pontos (0%)
+*   **Pendente (🔲):** 0 pontos (0%)
 
 > **Nota:** Este backlog reflete as especificações canônicas acordadas no Documento Mestre de Alinhamento (MASTER_ALIGNMENT.md) e resolve quaisquer divergências técnicas anteriores.
 

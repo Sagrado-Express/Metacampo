@@ -102,27 +102,37 @@ export class VpmService {
 
     // 3. O(N) Single-Pass: Cumulative assignment
     let cumulativeVpmCents = 0;
+    const maxVpmCents = Math.max(...sorted.map(c => Math.round(c.vpmTotal * 100)), 1);
     
     return sorted.map(c => {
       const vpmCents = Math.round(c.vpmTotal * 100);
       cumulativeVpmCents += vpmCents;
       
       const cumulativePercentage = Math.round((cumulativeVpmCents / totalPortfolioVpmCents) * 10000) / 100;
-      const share = vpmCents > 0 ? Math.round((c.realizedValue || 0) * 100) / vpmCents : 0;
+      const share = vpmCents > 0 ? (c.realizedValue || 0) / c.vpmTotal : 0;
+      
+      // Multicriteria scoring integration (MC-504)
+      const creditScore = c.rating === 'A' ? 10 : c.rating === 'B' ? 8 : c.rating === 'C' ? 6 : 4;
+      const relationshipScore = ((c as any).relacionamento ?? 5) * 2; // Scale 1-5 to 0-10
+      const shareScore = Math.min(10, share * 10);
+      const vpmScore = (vpmCents / maxVpmCents) * 10;
+      
+      // 40% VPM + 30% Share + 20% Credit + 10% Relationship
+      const nota = (vpmScore * 0.4) + (shareScore * 0.3) + (creditScore * 0.2) + (relationshipScore * 0.1);
       
       let band: PerformanceBand = 'CINZA';
 
       if (cumulativePercentage <= 80) {
-        // GRUPO ESTRATÉGICO
-        if (share >= 0.15 && ['A', 'B'].includes(c.rating || '')) {
+        // GRUPO ESTRATÉGICO (Azul, Verde, Vermelho)
+        if (nota >= 7.0 && ['A', 'B'].includes(c.rating || '')) {
           band = 'AZUL';
-        } else if (share < 0.05) {
+        } else if (nota < 4.0 || share < 0.05) {
           band = 'VERMELHO';
         } else {
           band = 'VERDE';
         }
       } else {
-        // GRUPO COMPLEMENTAR
+        // GRUPO COMPLEMENTAR (Amarelo, Cinza)
         band = cumulativePercentage <= 90 ? 'AMARELO' : 'CINZA';
       }
 

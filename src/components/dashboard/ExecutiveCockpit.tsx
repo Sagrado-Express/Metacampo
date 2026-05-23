@@ -9,6 +9,7 @@ import {
 import { TrendingUp, AlertTriangle, Users, MapPin, Award } from "lucide-react";
 import { MONTHLY_MASTER_BASE, MONTH_LABELS, TERRITORY_COORDINATES } from "@/data/monthly_master";
 import { MOCK_TEST_DATA } from "@/data/mock_database";
+import { MarketShareDashboard } from "./MarketShareDashboard";
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -60,6 +61,7 @@ export function ExecutiveCockpit() {
   const [selectedCtvId, setSelectedCtvId] = useState<string>("");
   const [gerenteMetric, setGerenteMetric] = useState<"realizado"|"togo">("realizado");
   const [ctvMetric, setCtvMetric] = useState<"realizado"|"togo">("realizado");
+  const [activeTab, setActiveTab] = useState<"macro" | "dominance">("macro");
 
   // Slice of data for selected month
   const monthData = useMemo(() =>
@@ -89,10 +91,42 @@ export function ExecutiveCockpit() {
     return rows;
   }, [monthData, selectedGerenteId, selectedCtvId]);
 
+  const dominanceMetrics = useMemo(() => {
+    const result = new Map<string, { city: string; uf: string; haTotal: number; vpmTotal: number; realized: number; pedidos: number }>();
+    
+    MOCK_TEST_DATA.forEach(client => {
+      // Potencial total do cliente baseado em hectares * ITAA Matrix Total
+      const clientVpm = (client.areas.soja + client.areas.milho + client.areas.algodao + client.areas.cana + client.areas.cafe) * 3500;
+      
+      const clientRealized = filtered
+        .filter(r => r.documento === client.documento)
+        .reduce((acc, curr) => acc + curr.realizado, 0);
+        
+      const clientPedidos = filtered
+        .filter(r => r.documento === client.documento)
+        .reduce((acc, curr) => acc + ((curr as any).pedidos ?? 0), 0);
+
+      const clientHa = client.areas.soja + client.areas.milho + client.areas.algodao + client.areas.cana + client.areas.cafe;
+
+      const cur = result.get(client.city) ?? { city: client.city, uf: client.uf, haTotal: 0, vpmTotal: 0, realized: 0, pedidos: 0 };
+      cur.haTotal += clientHa;
+      cur.vpmTotal += clientVpm;
+      cur.realized += clientRealized;
+      cur.pedidos += clientPedidos;
+      result.set(client.city, cur);
+    });
+
+    return Array.from(result.values()).map(c => ({
+      ...c,
+      share: c.vpmTotal > 0 ? ((c.realized + c.pedidos) / c.vpmTotal) * 100 : 0
+    }));
+  }, [filtered]);
+
   // ── KPIs ──────────────────────────────────────────────
   const totalMeta     = useMemo(() => filtered.reduce((s, r) => s + r.meta, 0), [filtered]);
   const totalReal     = useMemo(() => filtered.reduce((s, r) => s + r.realizado, 0), [filtered]);
-  const totalToGo     = Math.max(0, totalMeta - totalReal);
+  const totalPedidos  = useMemo(() => filtered.reduce((s, r) => s + ((r as any).pedidos ?? 0), 0), [filtered]);
+  const totalToGo     = Math.max(0, totalMeta - (totalReal + totalPedidos));
   const pctToGo       = totalMeta > 0 ? Math.round((totalToGo / totalMeta) * 100) : 0;
 
   // ── Gerente Ranking ───────────────────────────────────
@@ -101,7 +135,7 @@ export function ExecutiveCockpit() {
     monthData.forEach(r => {
       const cur = map.get(r.gerenteId) ?? { name: r.gerenteName, realizado: 0, togo: 0 };
       cur.realizado += r.realizado;
-      cur.togo      += Math.max(0, r.meta - r.realizado);
+      cur.togo      += Math.max(0, r.meta - (r.realizado + ((r as any).pedidos ?? 0)));
       map.set(r.gerenteId, cur);
     });
     return Array.from(map.values())
@@ -118,7 +152,7 @@ export function ExecutiveCockpit() {
     base.forEach(r => {
       const cur = map.get(r.ctvId) ?? { name: r.ctvName, realizado: 0, togo: 0 };
       cur.realizado += r.realizado;
-      cur.togo      += Math.max(0, r.meta - r.realizado);
+      cur.togo      += Math.max(0, r.meta - (r.realizado + ((r as any).pedidos ?? 0)));
       map.set(r.ctvId, cur);
     });
     return Array.from(map.values())
@@ -224,23 +258,66 @@ export function ExecutiveCockpit() {
 
         {(selectedGerenteId || selectedCtvId) && (
           <button onClick={() => { setSelectedGerenteId(""); setSelectedCtvId(""); }}
-            className="text-[9px] font-black uppercase tracking-widest text-primary/70 hover:text-primary transition-colors ml-auto">
+            className="text-[9px] font-black uppercase tracking-widest text-primary/70 hover:text-primary transition-colors">
             ✕ Limpar filtros
           </button>
         )}
+
+        <div className="flex items-center gap-1 bg-white/60 border border-white/40 rounded-xl p-1 backdrop-blur-sm ml-auto">
+          <button onClick={() => setActiveTab("macro")}
+            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+              activeTab === "macro" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:bg-white/60"
+            }`}>
+            Cockpit Executivo
+          </button>
+          <button onClick={() => setActiveTab("dominance")}
+            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+              activeTab === "dominance" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:bg-white/60"
+            }`}>
+            Dominância (Dona da Rua)
+          </button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
-        <motion.div key={`${selectedMonth}-${selectedGerenteId}-${selectedCtvId}`}
+        <motion.div key={`${selectedMonth}-${selectedGerenteId}-${selectedCtvId}-${activeTab}`}
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.35 }} className="space-y-8">
 
-          {/* ── LINHA 1: KPIs ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {activeTab === "dominance" ? (
+            <MarketShareDashboard cityMetrics={dominanceMetrics} />
+          ) : (
+            <>
+
+           {/* ── LINHA 1: KPIs ── */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <KpiCard label="Orçamento Total" value={fmt(totalMeta)} sub={`Mês: ${MONTH_LABELS[selectedMonth]}`} />
             <KpiCard label="Faturado YTD" value={fmt(totalReal)}
               sub={`${totalMeta > 0 ? Math.round((totalReal / totalMeta) * 100) : 0}% da meta`} />
+            <KpiCard label="Pedidos Pendentes" value={fmt(totalPedidos)}
+              sub={`${totalMeta > 0 ? Math.round((totalPedidos / totalMeta) * 100) : 0}% coberto`} />
             <KpiCard label="Saldo TO-GO" value={fmt(totalToGo)} sub={`${pctToGo}% gap restante`} amber />
+          </div>
+
+          {/* ── Pacing Progress Bar ── */}
+          <div className="glass-card-premium p-6">
+            <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-muted-foreground mb-3">
+              <span>Progresso do Orçamento (Realizado + Pedidos Pendentes)</span>
+              <span className="text-primary">{totalMeta > 0 ? Math.round(((totalReal + totalPedidos) / totalMeta) * 100) : 0}%</span>
+            </div>
+            <div className="w-full bg-white/40 border border-white/50 h-4 rounded-full overflow-hidden flex backdrop-blur-sm shadow-inner">
+              <div className="h-full bg-primary relative group cursor-pointer transition-all duration-500" 
+                   style={{ width: `${totalMeta > 0 ? Math.min(100, (totalReal / totalMeta) * 100) : 0}%` }}
+                   title={`Faturado: ${fmt(totalReal)}`} />
+              <div className="h-full bg-amber-500 relative group cursor-pointer transition-all duration-500" 
+                   style={{ width: `${totalMeta > 0 ? Math.min(100 - (totalReal / totalMeta) * 100, (totalPedidos / totalMeta) * 100) : 0}%` }}
+                   title={`Pedidos: ${fmt(totalPedidos)}`} />
+            </div>
+            <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground mt-3">
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full inline-block bg-primary" /> Faturado YTD: {fmt(totalReal)} ({totalMeta > 0 ? Math.round((totalReal / totalMeta) * 100) : 0}%)</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full inline-block bg-amber-500" /> Pedidos Pendentes: {fmt(totalPedidos)} ({totalMeta > 0 ? Math.round((totalPedidos / totalMeta) * 100) : 0}%)</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full inline-block bg-white border border-border" /> Saldo TO-GO: {fmt(totalToGo)} ({pctToGo}%)</span>
+            </div>
           </div>
 
           {/* ── LINHA 2: Rankings Paralelos ── */}
@@ -437,6 +514,8 @@ export function ExecutiveCockpit() {
               )}
             </div>
           </div>
+            </>
+          )}
 
         </motion.div>
       </AnimatePresence>
