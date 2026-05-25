@@ -11,4 +11,4 @@ export default withSentryConfig(nextConfig, {
   silent: true,
   disableServerWebpackPlugin: true,
   disableClientWebpackPlugin: true,
-});
+} as any);
