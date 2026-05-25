@@ -134,7 +134,7 @@ export function MarketShareDashboard({ cityMetrics }: MarketShareDashboardProps)
                 <XAxis dataKey="name" tick={{ fill: "#3E2723", fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(v) => `${(v / 1000000).toFixed(1)}M`} tick={{ fill: "#3E2723", fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} />
                 <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,.1)" }} />
-                <Legend tick={{ fill: "#3E2723", fontSize: 9, fontWeight: 700 }} />
+                <Legend />
                 <Bar dataKey="VPM Total" fill="#E2DDD5" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Faturamento + Pedidos" fill="#2D5A27" radius={[4, 4, 0, 0]} />
               </BarChart>
