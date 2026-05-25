@@ -10,14 +10,15 @@ Este documento apresenta o estado de desenvolvimento, a saúde da Sprint e as m�
 - **Objetivo:** Construir uma plataforma de inteligência comercial com processamento *Memory-First* (zero persistência de dados brutos ERP), motor de VPM (Value Potential Mapping) baseado em Wallet Share e painéis de roteamento tático de visitas.
 - **Product Owner / Hero:** Daniel (Lead Developer)
 - **Data de Início:** 28/03/2026
-- **Data de Homologação Realizada:** 23/05/2026 (Fases 1 a 5 Completas)
-- **Status Geral:** 🟢 **Concluído & Homologado (100% Concluído)**
+- **Data de Homologação MVP:** 23/05/2026 (Fases 1 a 5 Concluídas)
+- **Data Prevista de Go-Live:** 18/07/2026 (Pós-Integração & Piloto)
+- **Status Geral:** 🟡 **Em Fase de Integração & Preparação para Go-Live (Fases 6–9)**
 
 ---
 
-## 🏃‍♂️ Sprint de Encerramento (Finalização do Backlog & Escala – 23/05/2026)
+## 🏃‍♂️ Sprints e Janelas de Trabalho Correntes (Integração & Go-Live)
 
-Esta Sprint consolidou as pendências de inteligência, governança multi-tenant, forecast e persistência imutável de snapshots.
+Abaixo está o registro das Sprints de consolidação técnica concluídas e as janelas planejadas para a esteira final de Go-Live.
 
 | ID | Tipo | Título | Status | Prioridade | Pontos | Início (R) | Fim (R) | Dependências |
 | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -29,38 +30,42 @@ Esta Sprint consolidou as pendências de inteligência, governança multi-tenant
 | **MC-505** | Feature | Dashboard de Market Share ("Dona da Rua") | **Concluído** | 📈 Média | 8 | 22/05/2026 | 23/05/2026 | – |
 | **MC-506** | Feature | Setup de Deploy em Produção | **Concluído** | 🔥 Crítica | 5 | 22/05/2026 | 23/05/2026 | – |
 | **MC-507** | Feature | Homologação & Critérios de Aceite | **Concluído** | ⭐ Alta | 5 | 22/05/2026 | 23/05/2026 | – |
+| **MC-601** | Feature | Pipeline Real-Time ERP (SAP/Totvs) | 🔲 Planejado | 🔥 Crítica | 13 | 24/05/2026 | 07/06/2026 | MC-506 |
+| **MC-602** | Feature | Motor de Filas de Processamento (Redis) | 🔲 Planejado | ⭐ Alta | 8 | 24/05/2026 | 07/06/2026 | MC-601 |
+| **MC-603** | Feature | Painel de Monitoramento de Sync | 🔲 Planejado | 📈 Média | 5 | 24/05/2026 | 07/06/2026 | MC-601 |
 
-### 📊 Resumo de Entrega do Fechamento
-- **Velocidade Concluída na Sprint:** 64 pontos de história.
-- **Velocidade Total do Projeto:** 144 pontos de história entregues.
-- **Burndown do Projeto:** Zerado. 100% dos marcos e funcionalidades foram plenamente validados e homologados.
+### 📊 Resumo do Progresso Total (MVP + Go-Live)
+- **Pontos Concluídos (MVP):** 144 pontos de história entregues.
+- **Pontos Planejados (Go-Live):** 73 pontos de história planejados.
+- **Velocidade Geral Prevista:** 217 pontos totais de projeto.
+- **Burndown do Go-Live:** Iniciando Fase 6 (Integração ERP).
 
 ---
 
 ## 📈 Histórico e Progresso Acumulado do Projeto
 
-O desenvolvimento do MetaCampo foi totalmente entregue conforme as especificações canônicas.
+O desenvolvimento do MetaCampo está estruturado em uma linha do tempo estendida cobrindo o setup técnico, refinamentos e o cronograma final de implantação.
 
 ```mermaid
 gantt
-    title Cronograma de Entrega MetaCampo V4
+    title Cronograma de Entrega MetaCampo V4 & Go-Live
     dateFormat  YYYY-MM-DD
-    section Fase 1: Setup & Modelagem
-    MC-101 a MC-104 :done, des1, 2026-03-28, 2026-04-11
-    section Fase 2: Motor VPM
-    MC-201 a MC-204 :done, des2, 2026-04-11, 2026-05-02
-    section Fase 3: CSV & Edge Memory
-    MC-301 a MC-304 :done, des3, 2026-05-02, 2026-05-16
-    section Fase 4: Inteligência Comercial
-    MC-401 a MC-404 :done, des4, 2026-05-16, 2026-05-23
-    section Fase 5: Escala & Governança
-    MC-501 a MC-507 :done, des5, 2026-05-23, 2026-05-23
+    section Fase 1-5: MVP & Escala
+    MVP Concluído :done, des1, 2026-03-28, 2026-05-23
+    section Fase 6: Integração ERP
+    MC-601 a MC-603 :active, des2, 2026-05-24, 2026-06-07
+    section Fase 7: Piloto Comercial
+    MC-701 a MC-703 :des3, 2026-06-07, 2026-06-21
+    section Fase 8: Compliance & Sec
+    MC-801 a MC-802 :des4, 2026-06-21, 2026-06-28
+    section Fase 9: Go-Live Oficial
+    MC-901 a MC-903 :des5, 2026-06-28, 2026-07-05
 ```
 
-### Métricas de Progresso
-*   **Histórias Concluídas:** 19 de 19 (100% Concluído)
-*   **Pontos de História Concluídos:** 144 de 144 (100%)
-*   **Qualidade Técnica:** Sem pendências e bugs mapeados.
+### Métricas de Progresso Atualizadas
+*   **Histórias Concluídas:** 19 de 30 (63% Concluído)
+*   **Pontos de História Concluídos:** 144 de 217 (66% do Escopo Total)
+*   **Qualidade Técnica:** Sem pendências e bugs impeditivos.
 
 ---
 
@@ -72,6 +77,24 @@ gantt
 
 ---
 
+## 🔮 Cronograma de Próximas Fases até o Go-Live
+
+As novas fases do projeto mapeiam de forma ágil as dependências para a implantação comercial corporativa:
+
+### FASE 6 — Integração Sistêmica & Sincronismo ERP (Semanas 11–12)
+Estabelecer a comunicação em tempo real ou via buffers programados com os principais ERPs do cliente piloto (SAP e Totvs Protheus). Garante automação do faturamento e pedidos sem depender apenas do fluxo manual transiente de arquivos CSV.
+
+### FASE 7 — Piloto Controlado & Homologação de Campo (Semanas 13–14)
+Fase de testes beta em campo controlados com 10 CTVs e 2 Gerentes de Contas selecionados para coletar feedback de usabilidade do painel de gap e agendas de visitas.
+
+### FASE 8 — Segurança, Compliance & LGPD (Semana 15)
+Implementação de regras estritas de anonimização e mascaramento de dados de CPF/CNPJ de produtores agrícolas no front-end em atendimento à LGPD, além de testes formais de segurança (PenTest) na API.
+
+### FASE 9 — Go-Live & Monitoramento de Operação (Semana 16)
+Migração oficial do DNS para os ambientes definitivos da MetaCampo, treinamentos práticos gravados com a equipe comercial e integração de observabilidade de exceções (Sentry/Datadog).
+
+---
+
 ## ⚠️ Mitigação de Riscos & Bloqueios Críticos
 
 - **Upgrade do Tier Vercel**: Totalmente planejado. A contratação do plano Vercel Pro foi aprovada pelos sócios para garantir SLA e cotas das Edge Functions de CSVs.
@@ -80,6 +103,6 @@ gantt
 
 ---
 
-> **Nota:** Este documento registra a homologação oficial e conclusão com louvor do ciclo MVP MetaCampo V4.
+> **Nota:** Este documento registra a homologação oficial e conclusão com louvor do ciclo MVP MetaCampo V4 e estabelece a esteira de implantação contínua (Go-Live).
 
-*Homologado em 2026-05-23 por Antigravity AI.*
+*Atualizado em 2026-05-25 por Antigravity AI.*

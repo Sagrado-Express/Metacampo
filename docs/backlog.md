@@ -1,18 +1,18 @@
 # 📋 Backlog de Produto — MetaCampo / Antigravity V4
 
-Este documento centraliza todos os itens de trabalho, histórias de usuários e tarefas técnicas necessárias para o desenvolvimento do motor de Inteligência Comercial e Financeira **MetaCampo (Antigravity V4)**, focado em Wallet Share, VPM (Value Potential Mapping) e Saldo "TO GO".
+Este documento centraliza todos os itens de trabalho, histórias de usuários e tarefas técnicas necessárias para o desenvolvimento do motor de Inteligência Comercial e Financeira **MetaCampo (Antigravity V4)**, focado em Wallet Share, VPM (Value Potential Mapping), Saldo "TO GO" e esteira final de Go-Live.
 
 ---
 
 ## 🚀 Visão Geral do Backlog
 
-O backlog está organizado em **5 Fases principais**, cobrindo o setup técnico, o motor de inteligência e janelas agrícolas, o processamento de faturamento memory-first, os workspaces analíticos de vendas e a governança multi-tenant para escala.
+O backlog está organizado em **9 Fases principais**, cobrindo o setup técnico, o motor de inteligência e janelas agrícolas, o processamento de faturamento memory-first, os workspaces analíticos de vendas, a governança multi-tenant e a esteira de integração, piloto, segurança e Go-Live sistêmico.
 
 ### Legenda de Prioridades:
-*   🔥 **Crítica (P0):** Bloqueante para o MVP e governança básica de dados.
-*   ⭐ **Alta (P1):** Essencial para a experiência do usuário e tomada de decisão comercial.
-*   📈 **Média (P2):** Importante para refinamento analítico e operacional.
-*   🌱 **Baixa (P3):** Melhorias futuras ou gamificação.
+*   🔥 **Crítica (P0):** Bloqueante para o MVP, integração e governança básica de dados.
+*   ⭐ **Alta (P1):** Essencial para a experiência do usuário, sincronismo e tomada de decisão comercial.
+*   📈 **Média (P2):** Importante para refinamento analítico, operacional e segurança de borda.
+*   🌱 **Baixa (P3):** Melhorias futuras, gamificação ou automações complementares.
 
 ---
 
@@ -81,14 +81,56 @@ Abertura para escala comercial através de arquitetura multi-tenant, persistênc
 
 ---
 
+### FASE 6 — Integração Sistêmica & Sincronismo ERP (Semanas 11–12)
+Automação do fluxo de faturamento YTD e pedidos pendentes conectando o middleware às APIs nativas de ERPs SAP e Totvs.
+
+| ID | Story / Tarefa | Descrição | Prioridade | Pontos | Status |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **MC-601** | Pipeline Real-Time ERP | Estabelecer integradores Webhook e buffers robustos de API para ler dados de faturamento diretamente de SAP e Totvs. | 🔥 Crítica | 13 | 🔲 Planejado |
+| **MC-602** | Motor de Filas Redis | Configuração de fila assíncrona baseada em Upstash Redis / BullMQ para suportar picos de chamadas de sincronismo ERP. | ⭐ Alta | 8 | 🔲 Planejado |
+| **MC-603** | Dashboard de Monitoramento | Painel visual de integridade para a equipe de TI visualizar a data do último sync, erros de fila e status das conexões de API. | 📈 Média | 5 | 🔲 Planejado |
+
+---
+
+### FASE 7 — Piloto Controlado & Homologação de Campo (Semanas 13–14)
+Fase de homologação operacional em campo com um grupo focal de CTVs para validação da experiência do usuário.
+
+| ID | Story / Tarefa | Descrição | Prioridade | Pontos | Status |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **MC-701** | Onboarding & Teste Piloto | Deploy inicial restrito e acompanhado para 10 CTVs e 2 Gerentes regionais de teste em ambiente beta. | 🔥 Crítica | 8 | 🔲 Planejado |
+| **MC-702** | UX Feedback Refinements | Refinar layouts de sliders de gap, visualizações mobile e o drawer de Churn baseados no feedback dos pilotos de campo. | ⭐ Alta | 5 | 🔲 Planejado |
+| **MC-703** | Stress-Test de Concorrência | Simular estresse de carga de 500 requisições simultâneas de geolocalização e roteamento no Edge Runtime. | 📈 Média | 5 | 🔲 Planejado |
+
+---
+
+### FASE 8 — Segurança, Compliance & LGPD (Semana 15)
+Blindagem de dados e conformidade do sistema de simulação de carteira com os marcos regulatórios de privacidade.
+
+| ID | Story / Tarefa | Descrição | Prioridade | Pontos | Status |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **MC-801** | Mascaramento de Dados LGPD | Criptografia em repouso e mascaramento visual de dados de CPF, CNPJ e contatos diretos de produtores agrícolas na UI. | 🔥 Crítica | 8 | 🔲 Planejado |
+| **MC-802** | Audit de Segurança (PenTest) | Executar auditorias estáticas e testes de injeção externa contra acessos não autorizados entre tenants no Supabase. | ⭐ Alta | 5 | 🔲 Planejado |
+
+---
+
+### FASE 9 — Go-Live & Monitoramento de Operação (Semana 16)
+Implantação geral, treinamento de larga escala da equipe comercial e monitoramento de logs em tempo real.
+
+| ID | Story / Tarefa | Descrição | Prioridade | Pontos | Status |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **MC-901** | Transição de DNS & Cutover | Migrar a aplicação Vercel para o domínio oficial da empresa e virar chaves Supabase definitivas. | 🔥 Crítica | 8 | 🔲 Planejado |
+| **MC-902** | Treinamento Comercial | Realizar workshops práticos e disponibilizar vídeo-tutoriais sobre o planejamento de gap de vendas e dominância. | ⭐ Alta | 5 | 🔲 Planejado |
+| **MC-903** | Monitoramento Proativo | Configurar Sentry e Datadog para detecção precoce de latência nas Edge Functions e quedas nas chamadas de banco de dados. | ⭐ Alta | 5 | 🔲 Planejado |
+
+---
+
 ## 📊 Métricas de Esforço do Escopo
 
-*   **Total de Histórias/Tarefas:** 19 itens
-*   **Esforço Estimado Total:** 144 pontos de história
-*   **Concluído (✓):** 144 pontos (100%)
-*   **Em Andamento (🟡):** 0 pontos (0%)
-*   **Pendente (🔲):** 0 pontos (0%)
+*   **Total de Histórias/Tarefas:** 30 itens
+*   **Esforço Estimado Total:** 217 pontos de história
+*   **Concluído (✓):** 19 itens (144 pontos — 66%)
+*   **Pendente (🔲):** 11 itens (73 pontos — 34%)
 
-> **Nota:** Este backlog reflete as especificações canônicas acordadas no Documento Mestre de Alinhamento (MASTER_ALIGNMENT.md) e resolve quaisquer divergências técnicas anteriores.
+> **Nota:** Este backlog reflete as especificações canônicas acordadas no Documento Mestre de Alinhamento (MASTER_ALIGNMENT.md) e estende o escopo técnico do projeto até a entrega final em produção corporativa.
 
-*Preparado em 2026-05-23 pela equipe Antigravity AI.*
+*Atualizado em 2026-05-25 pela equipe Antigravity AI.*
