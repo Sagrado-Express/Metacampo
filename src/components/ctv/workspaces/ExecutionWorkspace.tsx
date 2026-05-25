@@ -17,7 +17,9 @@ import {
   Search,
   Sparkles,
   ArrowRight,
-  Info
+  Info,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 // --- Types ---
@@ -37,6 +39,9 @@ interface InactiveClient {
   venda2025: number;
   crops: string[];
   produtos: InactiveProduct[];
+  documento: string;
+  telefone: string;
+  email: string;
 }
 
 interface ActiveClient {
@@ -49,6 +54,70 @@ interface ActiveClient {
   pedidos: number;
   forecastSuccess: number; // The distributed gap value the CTV believes they will close
   confidence: 'AZUL' | 'VERDE' | 'AMARELO' | 'VERMELHO';
+  documento: string;
+  telefone: string;
+  email: string;
+}
+
+// --- LGPD Masking Utilities ---
+const maskCPF = (cpf: string) => {
+  if (!cpf) return '';
+  return cpf.replace(/^(\d{3})\.?(\d{3})\.?(\d{3})\-?(\d{2})$/, "$1.***.***-$4");
+};
+
+const maskCNPJ = (cnpj: string) => {
+  if (!cnpj) return '';
+  return cnpj.replace(/^(\d{2})\.?(\d{3})\.?(\d{3})\/?(\d{4})\-?(\d{2})$/, "$1.***.***/****-$5");
+};
+
+const maskPhone = (phone: string) => {
+  if (!phone) return '';
+  return phone.replace(/^(\(?\d{2}\)?\s?)?(\d{1})?(\d{4})\-?(\d{4})$/, (match, ddd, prefix, start, end) => {
+    return `${ddd || ''}${prefix || ''}****-${end}`;
+  });
+};
+
+const maskEmail = (email: string) => {
+  if (!email) return '';
+  const [name, domain] = email.split('@');
+  if (!domain) return email;
+  return `${name[0]}****@${domain}`;
+};
+
+// --- Interactive Masked Field Component ---
+interface MaskedFieldProps {
+  value: string;
+  type: 'CPF' | 'CNPJ' | 'PHONE' | 'EMAIL';
+}
+
+function MaskedField({ value, type }: MaskedFieldProps) {
+  const [isMasked, setIsMasked] = useState(true);
+
+  const getMaskedValue = () => {
+    if (!isMasked) return value;
+    if (type === 'CPF') return maskCPF(value);
+    if (type === 'CNPJ') return maskCNPJ(value);
+    if (type === 'PHONE') return maskPhone(value);
+    if (type === 'EMAIL') return maskEmail(value);
+    return value;
+  };
+
+  return (
+    <div className="flex items-center gap-1.5 font-tabular select-none inline-flex">
+      <span className="font-mono text-[10px] text-[#3E2723]/90 bg-white/40 px-1 py-0.5 rounded border border-[#3E2723]/5 shadow-inner leading-none">{getMaskedValue()}</span>
+      <button 
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation(); // Evita ativar eventos de linha / drawer
+          setIsMasked(!isMasked);
+        }}
+        className="p-1 hover:bg-[#3E2723]/5 rounded transition-all text-[#3E2723]/50 hover:text-primary outline-none"
+        title={isMasked ? "Revelar dado protegido (LGPD)" : "Ocultar dado protegido"}
+      >
+        {isMasked ? <Eye size={12} /> : <EyeOff size={12} />}
+      </button>
+    </div>
+  );
 }
 
 export default function ExecutionWorkspace() {
@@ -57,15 +126,13 @@ export default function ExecutionWorkspace() {
   const realConsolidado = 3150000;
   const pedidosConsolidado = 600000;
   const totalConquistado = realConsolidado + pedidosConsolidado;
-  const totalGap = Math.max(0, metaConsolidada - totalConquistado); // R$ 1.450.000
-
-  // State for active clients under planning/execution
+  const totalGap = Math.max(0, metaConsolidada - totalConquistado); // R$ 1.450.000  // State for active clients under planning/execution
   const [activeClients, setActiveClients] = useState<ActiveClient[]>([
-    { id: '1', nome: 'Fazenda Esperança', cidade: 'Sorriso', uf: 'MT', meta: 1200000, real: 750000, pedidos: 150000, forecastSuccess: 100000, confidence: 'VERDE' },
-    { id: '2', nome: 'Fazenda Boa Vista', cidade: 'Sorriso', uf: 'MT', meta: 1800000, real: 1200000, pedidos: 200000, forecastSuccess: 250000, confidence: 'AZUL' },
-    { id: '3', nome: 'Fazenda Progressiva', cidade: 'Sinop', uf: 'MT', meta: 900000, real: 580000, pedidos: 50000, forecastSuccess: 120000, confidence: 'AMARELO' },
-    { id: '4', nome: 'Fazenda Santa Maria', cidade: 'Rio Verde', uf: 'GO', meta: 800000, real: 420000, pedidos: 100000, forecastSuccess: 80000, confidence: 'VERDE' },
-    { id: '5', nome: 'Fazenda Terra Rica', cidade: 'Cascavel', uf: 'PR', meta: 500000, real: 200000, pedidos: 100000, forecastSuccess: 50000, confidence: 'VERDE' },
+    { id: '1', nome: 'Fazenda Esperança', cidade: 'Sorriso', uf: 'MT', meta: 1200000, real: 750000, pedidos: 150000, forecastSuccess: 100000, confidence: 'VERDE', documento: '11122233301', telefone: '(66) 99876-5432', email: 'contato@esperanca.com.br' },
+    { id: '2', nome: 'Fazenda Boa Vista', cidade: 'Sorriso', uf: 'MT', meta: 1800000, real: 1200000, pedidos: 200000, forecastSuccess: 250000, confidence: 'AZUL', documento: '11122233302', telefone: '(66) 99765-4321', email: 'diretoria@boavista.com.br' },
+    { id: '3', nome: 'Fazenda Progressiva', cidade: 'Sinop', uf: 'MT', meta: 900000, real: 580000, pedidos: 50000, forecastSuccess: 120000, confidence: 'AMARELO', documento: '11122233303', telefone: '(65) 99654-3210', email: 'gerencia@progressiva.com.br' },
+    { id: '4', nome: 'Fazenda Santa Maria', cidade: 'Rio Verde', uf: 'GO', meta: 800000, real: 420000, pedidos: 100000, forecastSuccess: 80000, confidence: 'VERDE', documento: '11122233304', telefone: '(64) 99543-2109', email: 'compras@santamaria.com.br' },
+    { id: '5', nome: 'Fazenda Terra Rica', cidade: 'Cascavel', uf: 'PR', meta: 500000, real: 200000, pedidos: 100000, forecastSuccess: 50000, confidence: 'VERDE', documento: '11122233316', telefone: '(45) 99432-1098', email: 'financeiro@terrarica.com.br' },
   ]);
 
   // State for Churn Radar / Inactive clients
@@ -77,6 +144,9 @@ export default function ExecutionWorkspace() {
       uf: 'MT',
       venda2025: 1500000,
       crops: ['Soja', 'Milho'],
+      documento: '11222333000101',
+      telefone: '(65) 99321-0987',
+      email: 'diretoria@fazendauniao.com.br',
       produtos: [
         { name: 'Sementes Soja Monsoy 6210', segment: 'Sementes', value: 600000, volume: '1.500 scs', crop: 'Soja' },
         { name: 'Sementes Milho DKB 265', segment: 'Sementes', value: 300000, volume: '800 scs', crop: 'Milho' },
@@ -91,6 +161,9 @@ export default function ExecutionWorkspace() {
       uf: 'GO',
       venda2025: 850000,
       crops: ['Milho', 'Cana'],
+      documento: '11222333000102',
+      telefone: '(64) 99210-9876',
+      email: 'financeiro@solnascente.com.br',
       produtos: [
         { name: 'Fertilizante Especial Cana-Forte', segment: 'Fertilizantes', value: 500000, volume: '150 ton', crop: 'Cana' },
         { name: 'Sementes Milho Pioneer P3858', segment: 'Sementes', value: 250000, volume: '650 scs', crop: 'Milho' },
@@ -104,6 +177,9 @@ export default function ExecutionWorkspace() {
       uf: 'MG',
       venda2025: 600000,
       crops: ['Café'],
+      documento: '11222333000103',
+      telefone: '(38) 99109-8765',
+      email: 'comercial@fazendajatoba.com.br',
       produtos: [
         { name: 'Nutrição Foliar Café-Plus', segment: 'Nutrição', value: 350000, volume: '12.000 L', crop: 'Café' },
         { name: 'Agroquímico Defensivo Comet', segment: 'Agroquímicos', value: 250000, volume: '800 L', crop: 'Café' }
@@ -132,7 +208,6 @@ export default function ExecutionWorkspace() {
   const handleForecastChange = (id: string, value: number) => {
     setActiveClients(prev => prev.map(c => {
       if (c.id === id) {
-        // Capped at the maximum gap for this client
         const maxClientGap = Math.max(0, c.meta - (c.real + c.pedidos));
         const finalVal = Math.min(maxClientGap, Math.max(0, value));
         return { ...c, forecastSuccess: finalVal };
@@ -148,17 +223,19 @@ export default function ExecutionWorkspace() {
 
   // Activate a churned client
   const handleActivateClient = (client: InactiveClient) => {
-    // Add to active clients list
     const newActive: ActiveClient = {
       id: client.id,
       nome: client.nome,
       cidade: client.cidade,
       uf: client.uf,
-      meta: client.venda2025 * 1.1, // Set default meta as last year + 10%
+      meta: client.venda2025 * 1.1,
       real: 0,
       pedidos: 0,
-      forecastSuccess: client.venda2025 * 0.5, // Predict recovering 50% first
-      confidence: 'AMARELO'
+      forecastSuccess: client.venda2025 * 0.5,
+      confidence: 'AMARELO',
+      documento: client.documento,
+      telefone: client.telefone,
+      email: client.email
     };
 
     setActiveClients(prev => [...prev, newActive]);
@@ -245,9 +322,15 @@ export default function ExecutionWorkspace() {
                     {/* Client Info */}
                     <td className="px-6 py-5">
                       <p className="font-black text-[#3E2723]">{c.nome}</p>
-                      <p className="text-[9px] text-muted-foreground font-bold uppercase flex items-center gap-1 mt-0.5">
-                        <MapPin size={10} className="text-primary/70" /> {c.cidade} - {c.uf}
-                      </p>
+                      <div className="flex flex-col gap-1 mt-1">
+                        <p className="text-[9px] text-muted-foreground font-bold uppercase flex items-center gap-1">
+                          <MapPin size={10} className="text-primary/70" /> {c.cidade} - {c.uf}
+                        </p>
+                        <div className="flex items-center gap-1.5 text-muted-foreground font-bold">
+                          <span className="uppercase text-[8px] font-black tracking-wider opacity-70">Doc:</span>
+                          <MaskedField value={c.documento} type={c.documento.length > 11 ? 'CNPJ' : 'CPF'} />
+                        </div>
+                      </div>
                     </td>
 
                     {/* Meta */}
@@ -434,6 +517,27 @@ export default function ExecutionWorkspace() {
                     <span className="text-md font-black text-amber-600 font-tabular mt-1 block">
                       {fmt(selectedInactiveClient.venda2025)}
                     </span>
+                  </div>
+                </div>
+
+                {/* Informações Cadastrais - LGPD */}
+                <div className="bg-[#3E2723]/5 border border-[#3E2723]/10 p-5 rounded-2xl space-y-3">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#3E2723]/80 block flex items-center gap-1.5">
+                    🔒 Dados de Cadastro Protegidos (LGPD)
+                  </span>
+                  <div className="grid grid-cols-1 gap-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground font-bold uppercase text-[9px]">Documento (CNPJ/CPF):</span>
+                      <MaskedField value={selectedInactiveClient.documento} type={selectedInactiveClient.documento.length > 11 ? 'CNPJ' : 'CPF'} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground font-bold uppercase text-[9px]">Telefone Principal:</span>
+                      <MaskedField value={selectedInactiveClient.telefone} type="PHONE" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground font-bold uppercase text-[9px]">E-mail Comercial:</span>
+                      <MaskedField value={selectedInactiveClient.email} type="EMAIL" />
+                    </div>
                   </div>
                 </div>
 
