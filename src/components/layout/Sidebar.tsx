@@ -28,7 +28,7 @@ export function Sidebar() {
   const menuItems = [
     { icon: <LayoutDashboard />, label: "Cockpit", href: "/workspace" },
     { icon: <ShieldCheck />, label: "Admin", href: "/admin" },
-    { icon: <Users />, label: "Plano de Negócios", href: "/ctv/tabela-mae" },
+    { icon: <Users />, label: "Simulador CTV", href: "/ctv" },
     { icon: <TrendingUp />, label: "ITAA Matrix", href: "/admin" }, 
     { icon: <FileUp />, label: "Ingestão", href: "/workspace" },
   ];

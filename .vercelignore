@@ -1,0 +1,21 @@
+# Ignore Google Drive virtual shortcuts that cause EISDIR errors
+*.gdoc
+*.gsheet
+*.gslides
+*.gdraw
+*.gtable
+*.gform
+*.gmap
+*.gshortcut
+Arquivos teste
+
+# Standard ignores
+.next
+node_modules
+.git
+.vercel
+out
+build
+temp-init
+.env*.local
+.env
