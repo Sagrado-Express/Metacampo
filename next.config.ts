@@ -1,9 +1,9 @@
-import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   /* config options here */
-};
+  turbopack: {}, // Silences strict Turbopack vs Webpack config block in Next.js 16
+} as any;
 
 export default withSentryConfig(nextConfig, {
   org: "metacampo",
