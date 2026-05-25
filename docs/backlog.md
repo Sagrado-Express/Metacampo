@@ -81,14 +81,14 @@ Abertura para escala comercial através de arquitetura multi-tenant, persistênc
 
 ---
 
-### FASE 6 — Integração Sistêmica & Sincronismo ERP (Semanas 11–12)
-Automação do fluxo de faturamento YTD e pedidos pendentes conectando o middleware às APIs nativas de ERPs SAP e Totvs.
+### FASE 6 — Integração Sistêmica & Sincronismo ERP (Semanas 11–12) — [❌ CANCELADA]
+*Fase cancelada por decisão estratégica. O sistema manterá o processamento de arquivos CSV via Ingestão Transiente e Memory-First, que já atende com excelência à operação atual sem necessidade de integrações ativas de APIs externas de ERPs SAP e Totvs.*
 
 | ID | Story / Tarefa | Descrição | Prioridade | Pontos | Status |
 | :--- | :--- | :--- | :---: | :---: | :---: |
-| **MC-601** | Pipeline Real-Time ERP | Estabelecer integradores Webhook e buffers robustos de API para ler dados de faturamento diretamente de SAP e Totvs. | 🔥 Crítica | 13 | 🔲 Planejado |
-| **MC-602** | Motor de Filas Redis | Configuração de fila assíncrona baseada em Upstash Redis / BullMQ para suportar picos de chamadas de sincronismo ERP. | ⭐ Alta | 8 | 🔲 Planejado |
-| **MC-603** | Dashboard de Monitoramento | Painel visual de integridade para a equipe de TI visualizar a data do último sync, erros de fila e status das conexões de API. | 📈 Média | 5 | 🔲 Planejado |
+| **MC-601** | Pipeline Real-Time ERP | Estabelecer integradores Webhook e buffers de API para sincronizar faturamentos diretamente de SAP e Totvs. | 🔥 Crítica | 13 | ❌ Cancelado |
+| **MC-602** | Motor de Filas Redis | Configuração de fila assíncrona baseada em Upstash Redis / BullMQ para suportar picos de chamadas de sincronismo ERP. | ⭐ Alta | 8 | ❌ Cancelado |
+| **MC-603** | Dashboard de Monitoramento | Painel visual de integridade para a equipe de TI visualizar a data do último sync, erros de fila e status das conexões de API. | 📈 Média | 5 | ❌ Cancelado |
 
 ---
 
@@ -127,9 +127,10 @@ Implantação geral, treinamento de larga escala da equipe comercial e monitoram
 ## 📊 Métricas de Esforço do Escopo
 
 *   **Total de Histórias/Tarefas:** 30 itens
-*   **Esforço Estimado Total:** 217 pontos de história
-*   **Concluído (✓):** 19 itens (144 pontos — 66%)
-*   **Pendente (🔲):** 11 itens (73 pontos — 34%)
+*   **Esforço Estimado Total (Ativo):** 191 pontos de história
+*   **Concluído (✓):** 19 itens (144 pontos — 75% do esforço ativo)
+*   **Pendente (🔲):** 8 itens (47 pontos — 25% do espaço ativo)
+*   **Cancelado (❌):** 3 itens (26 pontos de esforço)
 
 > **Nota:** Este backlog reflete as especificações canônicas acordadas no Documento Mestre de Alinhamento (MASTER_ALIGNMENT.md) e estende o escopo técnico do projeto até a entrega final em produção corporativa.
 

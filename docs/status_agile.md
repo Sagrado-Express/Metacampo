@@ -11,8 +11,8 @@ Este documento apresenta o estado de desenvolvimento, a saúde da Sprint e as m�
 - **Product Owner / Hero:** Daniel (Lead Developer)
 - **Data de Início:** 28/03/2026
 - **Data de Homologação MVP:** 23/05/2026 (Fases 1 a 5 Concluídas)
-- **Data Prevista de Go-Live:** 18/07/2026 (Pós-Integração & Piloto)
-- **Status Geral:** 🟡 **Em Fase de Integração & Preparação para Go-Live (Fases 6–9)**
+- **Data Prevista de Go-Live:** 18/07/2026 (Pós-Piloto & Estabilização)
+- **Status Geral:** 🟡 **Em Fase de Preparação para Go-Live (Fases 7–9)**
 
 ---
 
@@ -30,15 +30,16 @@ Abaixo está o registro das Sprints de consolidação técnica concluídas e as 
 | **MC-505** | Feature | Dashboard de Market Share ("Dona da Rua") | **Concluído** | 📈 Média | 8 | 22/05/2026 | 23/05/2026 | – |
 | **MC-506** | Feature | Setup de Deploy em Produção | **Concluído** | 🔥 Crítica | 5 | 22/05/2026 | 23/05/2026 | – |
 | **MC-507** | Feature | Homologação & Critérios de Aceite | **Concluído** | ⭐ Alta | 5 | 22/05/2026 | 23/05/2026 | – |
-| **MC-601** | Feature | Pipeline Real-Time ERP (SAP/Totvs) | 🔲 Planejado | 🔥 Crítica | 13 | 24/05/2026 | 07/06/2026 | MC-506 |
-| **MC-602** | Feature | Motor de Filas de Processamento (Redis) | 🔲 Planejado | ⭐ Alta | 8 | 24/05/2026 | 07/06/2026 | MC-601 |
-| **MC-603** | Feature | Painel de Monitoramento de Sync | 🔲 Planejado | 📈 Média | 5 | 24/05/2026 | 07/06/2026 | MC-601 |
+| **MC-601** | Feature | Pipeline Real-Time ERP (SAP/Totvs) | ❌ Cancelado | 🔥 Crítica | 13 | 24/05/2026 | 25/05/2026 | MC-506 |
+| **MC-602** | Feature | Motor de Filas de Processamento (Redis) | ❌ Cancelado | ⭐ Alta | 8 | 24/05/2026 | 25/05/2026 | MC-601 |
+| **MC-603** | Feature | Painel de Monitoramento de Sync | ❌ Cancelado | 📈 Média | 5 | 24/05/2026 | 25/05/2026 | MC-601 |
 
-### 📊 Resumo do Progresso Total (MVP + Go-Live)
+### 📊 Resumo do Progresso Total (Escopo Ativo)
 - **Pontos Concluídos (MVP):** 144 pontos de história entregues.
-- **Pontos Planejados (Go-Live):** 73 pontos de história planejados.
-- **Velocidade Geral Prevista:** 217 pontos totais de projeto.
-- **Burndown do Go-Live:** Iniciando Fase 6 (Integração ERP).
+- **Pontos Planejados Ativos (Go-Live):** 47 pontos de história planejados.
+- **Esforço Estimado Total (Ativo):** 191 pontos totais de projeto.
+- **Esforço Cancelado:** 26 pontos de história (Fase 6).
+- **Burndown do Go-Live:** Sincronizado para iniciar na Fase 7 (Piloto Controlado).
 
 ---
 
@@ -52,8 +53,8 @@ gantt
     dateFormat  YYYY-MM-DD
     section Fase 1-5: MVP & Escala
     MVP Concluído :done, des1, 2026-03-28, 2026-05-23
-    section Fase 6: Integração ERP
-    MC-601 a MC-603 :active, des2, 2026-05-24, 2026-06-07
+    section Fase 6: ERP (Cancelada)
+    Fase Cancelada :crit, active, des2, 2026-05-24, 2026-05-25
     section Fase 7: Piloto Comercial
     MC-701 a MC-703 :des3, 2026-06-07, 2026-06-21
     section Fase 8: Compliance & Sec
@@ -62,9 +63,9 @@ gantt
     MC-901 a MC-903 :des5, 2026-06-28, 2026-07-05
 ```
 
-### Métricas de Progresso Atualizadas
-*   **Histórias Concluídas:** 19 de 30 (63% Concluído)
-*   **Pontos de História Concluídos:** 144 de 217 (66% do Escopo Total)
+### Métricas de Progresso Atualizadas (Escopo Ativo)
+*   **Histórias Concluídas:** 19 de 27 ativas (70% Concluído)
+*   **Pontos de História Concluídos:** 144 de 191 ativos (75% do Escopo Ativo)
 *   **Qualidade Técnica:** Sem pendências e bugs impeditivos.
 
 ---
@@ -81,8 +82,8 @@ gantt
 
 As novas fases do projeto mapeiam de forma ágil as dependências para a implantação comercial corporativa:
 
-### FASE 6 — Integração Sistêmica & Sincronismo ERP (Semanas 11–12)
-Estabelecer a comunicação em tempo real ou via buffers programados com os principais ERPs do cliente piloto (SAP e Totvs Protheus). Garante automação do faturamento e pedidos sem depender apenas do fluxo manual transiente de arquivos CSV.
+### FASE 6 — Integração Sistêmica & Sincronismo ERP (Semanas 11–12) — [❌ CANCELADA]
+*Fase cancelada por decisão estratégica. O sistema manterá o processamento de arquivos CSV via Ingestão Transiente e Memory-First (já funcional e homologado em produção), eliminando a complexidade e os custos de integrações diretas ativas com APIs de ERPs SAP e Totvs.*
 
 ### FASE 7 — Piloto Controlado & Homologação de Campo (Semanas 13–14)
 Fase de testes beta em campo controlados com 10 CTVs e 2 Gerentes de Contas selecionados para coletar feedback de usabilidade do painel de gap e agendas de visitas.
@@ -99,7 +100,7 @@ Migração oficial do DNS para os ambientes definitivos da MetaCampo, treinament
 
 - **Upgrade do Tier Vercel**: Totalmente planejado. A contratação do plano Vercel Pro foi aprovada pelos sócios para garantir SLA e cotas das Edge Functions de CSVs.
 - **Limites de Requests Upstash Redis**: Monitoramento ativo configurado. Limite de requisições será acompanhado no início da produção, habilitando o pay-as-you-go em caso de gargalos.
-- **Isolamento Multi-Tenant**: Injetado `tenant_id` em todos os mocks e lógica de RLS ativa no arquivo `supabase_migration_v4.sql` da pasta `docs/`.
+- **Isolamento Multi-Tenant**: Injetado `tenant_id` em todos os mocks e lógica de RLS ativa no banco de dados do Supabase.
 
 ---
 
