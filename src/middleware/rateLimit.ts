@@ -5,7 +5,7 @@
  * Uses a Map to store request timestamps per IP address.
  * Adjust `WINDOW_MS` and `MAX_REQUESTS` as needed.
  */
-import type { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const WINDOW_MS = 60 * 1000; // 1 minute window
 const MAX_REQUESTS = 100; // default threshold
