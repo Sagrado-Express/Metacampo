@@ -71,8 +71,8 @@ export function Passo5Apetite({ apetites }: Passo5Props) {
               return (
                 <tr key={i} className="hover:bg-slate-800/30 transition-colors group">
                   <td className="px-4 py-3 font-semibold text-white flex items-center gap-2">
-                    {isConservador && <AlertOctagon className="w-4 h-4 text-rose-500" title="Conservador Demais" />}
-                    {isWishful && <AlertOctagon className="w-4 h-4 text-amber-500" title="Desejo Sem Fundamento" />}
+                    {isConservador && <span title="Conservador Demais"><AlertOctagon className="w-4 h-4 text-rose-500" /></span>}
+                    {isWishful && <span title="Desejo Sem Fundamento"><AlertOctagon className="w-4 h-4 text-amber-500" /></span>}
                     {!isConservador && !isWishful && <div className="w-4 h-4 rounded-full border-2 border-emerald-500" />}
                     {row.cliente}
                   </td>
