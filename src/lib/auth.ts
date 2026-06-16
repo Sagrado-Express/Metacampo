@@ -4,7 +4,7 @@
  * Authentication utilities for protecting admin routes and pages.
  * Assumes Supabase auth is used (adjust imports if you use a different provider).
  */
-import { createServerComponentSupabaseClient } from '@/utils/supabase-browser';
+import { supabase } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -12,7 +12,6 @@ import { redirect } from 'next/navigation';
  * Retrieves the current Supabase session (server‑side).
  */
 export async function getSession() {
-  const supabase = createServerComponentSupabaseClient({ cookies });
   const { data, error } = await supabase.auth.getSession();
   if (error) {
     console.error('Error fetching session:', error);
