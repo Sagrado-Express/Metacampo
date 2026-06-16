@@ -7,10 +7,11 @@
 import { cookies } from 'next/headers';
 
 /** Generate a new CSRF token and set it as an http‑only cookie. */
-export function generateCsrfToken(): string {
+export async function generateCsrfToken(): Promise<string> {
   const token = crypto.randomUUID();
   // Set cookie – Next.js provides a mutable cookies() API on server components
-  cookies().set('csrf', token, {
+  const cookieStore = (await cookies()) as any;
+  cookieStore.set('csrf', token, {
     httpOnly: true,
     sameSite: 'strict',
     path: '/',
@@ -21,8 +22,9 @@ export function generateCsrfToken(): string {
 }
 
 /** Validate the token sent from a request (e.g., from form body or header). */
-export function validateCsrfToken(token: string | undefined): boolean {
+export async function validateCsrfToken(token: string | undefined): Promise<boolean> {
   if (!token) return false;
-  const stored = cookies().get('csrf')?.value;
+  const cookieStore = await cookies();
+  const stored = cookieStore.get('csrf')?.value;
   return stored === token;
 }
