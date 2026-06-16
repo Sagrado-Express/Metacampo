@@ -14,7 +14,7 @@ const MAX_REQUESTS = 100; // default threshold
 const ipRecords = new Map<string, number[]>();
 
 export function rateLimit(req: NextRequest) {
-  const ip = req.ip ?? req.headers.get('x-forwarded-for') ?? 'unknown';
+  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
   const now = Date.now();
 
   const timestamps = ipRecords.get(ip) ?? [];
