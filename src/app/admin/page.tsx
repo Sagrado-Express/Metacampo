@@ -4,7 +4,7 @@ import ITAAConfig from '@/components/admin/ITAAConfig'
 import ScoringConfig from '@/components/admin/ScoringConfig'
 import { motion } from 'framer-motion'
 import { ShieldCheck } from 'lucide-react';
-import { requireAdmin } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -13,12 +13,20 @@ export default function AdminPage() {
   useEffect(() => {
     (async () => {
       try {
-        await requireAdmin();
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          router.push('/login');
+          return;
+        }
+        const isAdmin = (data.session.user?.app_metadata?.role ?? '') === 'admin';
+        if (!isAdmin) {
+          router.push('/'); // ou rota unauthorized
+        }
       } catch (e) {
         router.push('/login');
       }
     })();
-  }, []);
+  }, [router]);
   return (
     <div className="p-8 space-y-12">
       <header className="flex items-center justify-between border-b border-white/10 pb-8">
