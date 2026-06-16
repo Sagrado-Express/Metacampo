@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UploadCloud, CheckCircle2, AlertCircle, LucideX } from "lucide-react";
+import { validateSafeUpload } from "@/lib/security";
 
 interface IngestionCenterProps {
   onUpload: (file: File) => Promise<void>;
@@ -31,8 +32,13 @@ export function IngestionCenter({ onUpload, isProcessing, progress, error }: Ing
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.type === "text/csv") {
-      onUpload(file);
+    if (file) {
+      const validationError = validateSafeUpload(file, 50);
+      if (!validationError) {
+        onUpload(file);
+      } else {
+        alert(validationError); // Ou integrar com o state `error` se possível
+      }
     }
   };
 
@@ -68,10 +74,20 @@ export function IngestionCenter({ onUpload, isProcessing, progress, error }: Ing
         {/* Action Button */}
         <input
           type="file"
-          accept=".csv"
+          accept=".csv,.xlsx"
           className="hidden"
           id="csv-upload"
-          onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              const validationError = validateSafeUpload(file, 50);
+              if (!validationError) {
+                onUpload(file);
+              } else {
+                alert(validationError);
+              }
+            }
+          }}
         />
         <label
           htmlFor="csv-upload"

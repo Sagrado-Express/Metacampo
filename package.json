@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "npx tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:test": "ts-node scripts/seed.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^8.9.0",
@@ -38,6 +39,7 @@
     "eslint-config-next": "16.2.4",
     "jsdom": "^24.1.0",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5",
     "vitest": "^1.6.0"
   }

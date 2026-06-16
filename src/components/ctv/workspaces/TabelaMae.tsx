@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { VpmService } from '@/domain/services/vpm.service'
 import { PerformanceBand, ITAAConfig } from '@/types/schema'
+import { maskPII } from '@/lib/security'
 
 // Mock ITAA Matrix Reference for calculation (DNA Financeiro)
 const MOCK_ITAA_CONFIGS: ITAAConfig[] = [
@@ -33,6 +34,7 @@ const ITAA_TOTAL = MOCK_ITAA_CONFIGS.reduce((acc, c) => acc + c.valuePerHectare,
 interface ClienteInterativo {
   id: string;
   name: string;
+  documento: string;
   municipio: string;
   areaHa: number;
   metaVenda: number;
@@ -66,6 +68,7 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
       return {
         id: d.id,
         name: d.name,
+        documento: d.documento || "",
         municipio: `${d.city}/${d.uf}`,
         areaHa: totalArea,
         metaVenda: totalArea * 450, // Initial mock meta for demo
@@ -194,7 +197,8 @@ export default function TabelaMae({ onNavigate }: { onNavigate?: () => void }) {
                   >
                     <td className="px-6 py-6">
                       <p className="text-sm font-black text-primary">{cliente.name}</p>
-                      <p className="text-[10px] text-muted-foreground font-bold uppercase">{cliente.municipio}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{maskPII(cliente.documento)}</p>
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">{cliente.municipio}</p>
                     </td>
                     
                     <td className="px-6 py-6">

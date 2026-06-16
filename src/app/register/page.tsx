@@ -1,0 +1,130 @@
+"use client";
+
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+// reCAPTCHA component (assumes you have site key in env)
+const Recaptcha = ({ onVerify }: { onVerify: (token: string) => void }) => {
+  const [widgetId, setWidgetId] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).grecaptcha) {
+      const id = (window as any).grecaptcha.render("recaptcha", {
+        sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+        callback: (token: string) => onVerify(token),
+      });
+      setWidgetId(id);
+    }
+  }, []);
+  return <div id="recaptcha" className="my-4" />;
+};
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!captchaToken) {
+      setErrorMsg("Por favor, complete o reCAPTCHA.");
+      return;
+    }
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, captchaToken }),
+      });
+      if (res.ok) {
+        setStatus("success");
+        setTimeout(() => router.push("/login"), 1500);
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.message || "Falha no cadastro.");
+        setStatus("error");
+      }
+    } catch (err) {
+      setErrorMsg("Erro inesperado.");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-primary/5 to-primary/10 p-4">
+      <motion.div
+        className="w-full max-w-md rounded-2xl bg-white/80 backdrop-blur-md shadow-xl p-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h2 className="text-2xl font-bold text-center text-primary mb-6">
+          Crie sua conta
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Nome completo"
+            required
+            value={form.name}
+            onChange={handleChange}
+            className="w-full rounded-xl border-2 border-primary/10 p-3 focus:border-primary transition"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="E‑mail"
+            required
+            value={form.email}
+            onChange={handleChange}
+            className="w-full rounded-xl border-2 border-primary/10 p-3 focus:border-primary transition"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Senha"
+            required
+            minLength={8}
+            value={form.password}
+            onChange={handleChange}
+            className="w-full rounded-xl border-2 border-primary/10 p-3 focus:border-primary transition"
+          />
+          <Recaptcha onVerify={setCaptchaToken} />
+          {status === "error" && (
+            <div className="flex items-center gap-2 text-destructive text-sm">
+              <AlertCircle size={16} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="w-full flex items-center justify-center gap-2 rounded-full bg-primary py-3 text-white font-medium hover:bg-primary/90 transition disabled:opacity-50"
+          >
+            {status === "loading" ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              "Cadastrar"
+            )}
+          </button>
+        </form>
+        {status === "success" && (
+          <div className="mt-4 flex items-center gap-2 text-emerald-600">
+            <CheckCircle2 size={20} />
+            <span>Conta criada! Redirecionando...</span>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
+}

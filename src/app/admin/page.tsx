@@ -2,11 +2,23 @@
 
 import ITAAConfig from '@/components/admin/ITAAConfig'
 import ScoringConfig from '@/components/admin/ScoringConfig'
-import AgriculturalWindowConfig from '@/components/AgriculturalWindowConfig'
 import { motion } from 'framer-motion'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react';
+import { requireAdmin } from '@/lib/auth';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
+  const router = useRouter();
+  useEffect(() => {
+    (async () => {
+      try {
+        await requireAdmin();
+      } catch (e) {
+        router.push('/login');
+      }
+    })();
+  }, []);
   return (
     <div className="p-8 space-y-12">
       <header className="flex items-center justify-between border-b border-white/10 pb-8">
@@ -42,14 +54,6 @@ export default function AdminPage() {
           transition={{ delay: 0.2 }}
         >
           <ScoringConfig />
-        </motion.section>
-
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <AgriculturalWindowConfig />
         </motion.section>
       </main>
 

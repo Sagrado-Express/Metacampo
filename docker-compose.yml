@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  app:
+    image: node:22-alpine
+    working_dir: /app
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=http://supabase:54321
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=anon-key
+    depends_on:
+      - supabase
+
+  supabase:
+    image: supabase/postgres:15
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: postgres
+    ports:
+      - "54321:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
