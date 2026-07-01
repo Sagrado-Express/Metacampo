@@ -33,14 +33,14 @@ export function CSVImport() {
         // Simulation of a brief processing delay for UX
         await new Promise(resolve => setTimeout(resolve, 800))
         
-        const consolidated = MiddlewareService.processStrategicConsolidation(parsedData, [])
+        const consolidated = MiddlewareService.processStrategicConsolidation(parsedData.data, [])
         const clientCount = Object.keys(consolidated).length
         const totalRevenue = Object.values(consolidated).reduce((acc: number, curr: { totalRevenue: number }) => acc + curr.totalRevenue, 0)
 
         setImportResult({
           clientCount,
           totalRevenue,
-          recordCount: parsedData.length
+          recordCount: parsedData.data.length
         })
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Erro ao processar arquivo.')

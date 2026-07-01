@@ -34,32 +34,32 @@ export default function CockpitGTMGCPage() {
 
   const mockMatriz = [
     {
-      segmento: "Agroquímicos",
+      segmento: "AGROQUIMICOS",
       valoresPorCultivo: { Café: 2154400, Soja: 1354750, Milho: 1050 },
       totalSegmento: 3509200,
     },
     {
-      segmento: "Fertilizantes",
+      segmento: "FERTILIZANTES",
       valoresPorCultivo: { Café: 1380000, Soja: 1205200, Milho: 3510 },
       totalSegmento: 2588710,
     },
     {
-      segmento: "Regulador de Crescimento",
+      segmento: "REGULADOR_DE_CRESCIMENTO",
       valoresPorCultivo: { Café: 882000, Soja: 0, Milho: 0 },
       totalSegmento: 882000,
     },
     {
-      segmento: "Nutrição",
+      segmento: "NUTRICAO",
       valoresPorCultivo: { Café: 357200, Soja: 56100, Milho: 480 },
       totalSegmento: 413780,
     },
     {
-      segmento: "Sementes",
+      segmento: "SEMENTES",
       valoresPorCultivo: { Café: 0, Soja: 370000, Milho: 2040 },
       totalSegmento: 372040,
     },
     {
-      segmento: "Biológicos",
+      segmento: "BIOLOGICOS",
       valoresPorCultivo: { Café: 80000, Soja: 98700, Milho: 720 },
       totalSegmento: 179420,
     },

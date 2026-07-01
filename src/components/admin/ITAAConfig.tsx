@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Settings2, Save, Info, TrendingUp, Plus, Trash2, X, AlertCircle } from 'lucide-react'
-import { ITAAEngine, SEGMENTOS } from '@/domain/services/itAAEngine'
+import { ITAAEngine, SEGMENTOS_LEGACY } from '@/domain/services/itAAEngine'
 import { Segmento, ITAAConfig as ITAAConfigType } from '@/types/blueprint'
 
 export default function ITAAConfig() {
@@ -52,7 +52,7 @@ export default function ITAAConfig() {
   const addCulture = () => {
     if (!newCultureName || configs[newCultureName]) return
     
-    const initialValues = SEGMENTOS.reduce((acc, seg) => {
+    const initialValues = SEGMENTOS_LEGACY.reduce((acc, seg) => {
       acc[seg] = 0
       return acc
     }, {} as Record<Segmento, number>)
@@ -132,7 +132,7 @@ export default function ITAAConfig() {
                 <th className="px-6 py-4 text-left label-finance min-w-[200px] text-[#3E2723]">
                   Cultura / Safra
                 </th>
-                {SEGMENTOS.map((seg) => (
+                {SEGMENTOS_LEGACY.map((seg) => (
                   <th key={seg} className="px-6 py-4 text-center label-finance min-w-[140px] text-[#3E2723]/60">
                     {seg}
                   </th>
@@ -168,7 +168,7 @@ export default function ITAAConfig() {
                       </div>
                     </td>
                     
-                    {SEGMENTOS.map((seg) => {
+                    {SEGMENTOS_LEGACY.map((seg) => {
                       const value = config.valores[seg as Segmento];
                       const mix = (config.mixTecnico[seg as Segmento] * 100).toFixed(1);
                       
@@ -211,7 +211,7 @@ export default function ITAAConfig() {
               {/* Inline Add Row */}
               {showAddRow && (
                 <tr className="bg-primary/5 animate-in fade-in slide-in-from-left-2">
-                  <td className="p-6" colSpan={SEGMENTOS.length + 2}>
+                  <td className="p-6" colSpan={SEGMENTOS_LEGACY.length + 2}>
                     <div className="flex items-center gap-4">
                       <input 
                         autoFocus

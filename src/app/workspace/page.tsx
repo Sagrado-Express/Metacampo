@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { IngestionCenter } from "@/components/ingestion/IngestionCenter";
 import { ReconciliationModal } from "@/components/ingestion/ReconciliationModal";
 import { PacingSpeedometer } from "@/components/dashboard/PacingSpeedometer";
@@ -8,7 +9,8 @@ import { HuntingRadar } from "@/components/dashboard/HuntingRadar";
 import { IngestionMapper } from "@/domain/services/ingestionMapper";
 import { MOCK_TEST_DATA } from "@/data/mock_database";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Settings, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, Users, LogOut, Loader2 } from "lucide-react";
+import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
 
 /**
  * METACAMPO SaaS (Premium Edition) - Main Workspace
@@ -18,11 +20,38 @@ import { MONTHLY_MASTER_BASE } from "@/data/monthly_master";
 
 import { ExecutiveCockpit } from "@/components/dashboard/ExecutiveCockpit";
 
+import { useEffect } from "react";
+
 export default function WorkspacePage() {
+  const router = useRouter();
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showReconciliation, setShowReconciliation] = useState(false);
   const [unmappedSegments, setUnmappedSegments] = useState<string[]>([]);
+  
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/auth/session");
+        if (res.ok) {
+          const data = await res.json();
+          setSession(data.session);
+        } else {
+          router.push("/login");
+        }
+      } catch (err) {
+        router.push("/login");
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkSession();
+  }, []);
+
+  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const { classifications, invertedMap, invalidate } = useSegmentDictionary(tenantId);
   
   // Real data mapping for the Hunting Radar (The "Map")
   const radarClients = useMemo(() => {
@@ -75,7 +104,8 @@ export default function WorkspacePage() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = e.target?.result as string;
-      const anomalies = IngestionMapper.identifyAnomalies(text, ["Sementes", "Fertilizantes", "Agroquímicos", "Nutrição", "Biológicos"]);
+      // Use dynamic dictionary from tenant instead of hardcoded array
+      const anomalies = IngestionMapper.identifyAnomalies(text, invertedMap);
       
       if (anomalies.length > 0) {
         setUnmappedSegments(anomalies);
@@ -88,6 +118,14 @@ export default function WorkspacePage() {
     };
     reader.readAsText(file);
   };
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="animate-spin text-emerald-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-12">
@@ -118,13 +156,36 @@ export default function WorkspacePage() {
           </div>
         </section>
 
-        {/* Reconciliation Modal */}
+        {/* Reconciliation Modal — Dynamic from tenant dictionary */}
         <ReconciliationModal 
           isOpen={showReconciliation}
           onClose={() => setShowReconciliation(false)}
           unmappedItems={unmappedSegments}
-          availableSegments={["Sementes", "Fertilizantes", "Agroquímicos", "Nutrição", "Biológicos"]}
-          onMap={(item, seg) => console.log(`Mapping ${item} to ${seg}`)}
+          availableClassifications={classifications.filter(c => c.isActive)}
+          onMap={async (alias, classId, classKey) => {
+            console.log(`[Learning Loop] Mapping "${alias}" → ${classKey} (${classId})`);
+            try {
+              const response = await fetch("/api/classifications", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  tenantId,
+                  id: classId,
+                  newAlias: alias,
+                }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Erro desconhecido");
+              }
+
+              invalidate(); // Refresh dictionary cache & UI
+            } catch (err: any) {
+              console.error("Erro ao mapear alias:", err);
+              alert(`Erro ao salvar mapeamento: ${err.message}`);
+            }
+          }}
         />
       </div>
     </div>

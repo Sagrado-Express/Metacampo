@@ -3,15 +3,18 @@
 import React from "react";
 import { Sidebar } from "./Sidebar";
 import { SidebarProvider, useSidebar } from "@/providers/SidebarProvider";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <div className="flex">
-        <Sidebar />
-        <LayoutContent>{children}</LayoutContent>
-      </div>
-    </SidebarProvider>
+    <QueryProvider>
+      <SidebarProvider>
+        <div className="flex">
+          <Sidebar />
+          <LayoutContent>{children}</LayoutContent>
+        </div>
+      </SidebarProvider>
+    </QueryProvider>
   );
 }
 

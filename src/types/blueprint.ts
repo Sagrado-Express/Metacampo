@@ -1,17 +1,28 @@
 /**
  * Antigravity AI - Master Blueprint V4
  * Core Types & Interfaces
+ * 
+ * Updated for Metadata-Oriented Architecture (Dictionary Pattern):
+ * Segmento is now a dynamic string — each tenant defines their own
+ * product classifications freely. Validation is done at runtime
+ * via the tenant's dictionary (tenant_config_classificacoes).
  */
 
 export type Role = 'ADMIN' | 'GESTOR' | 'CTV';
 
-export type Segmento = 'Semente' | 'Fertilizante' | 'Agroquímicos' | 'Nutrição' | 'Biológico' | 'Regulador de Crescimento';
+/**
+ * Segmento: Now a dynamic string (internal_key from tenant dictionary).
+ * Previously a fixed union type, but per meeting Daniel × Marco Polo (16/06/2026):
+ * "O nome é o que menos me importa, é para que serve esse campo."
+ * Each tenant defines their own classifications freely.
+ */
+export type Segmento = string;
 
 export interface ITAAConfig {
   cultura: string;
-  valores: Record<Segmento, number>;
+  valores: Record<string, number>;
   total: number;
-  mixTecnico: Record<Segmento, number>;
+  mixTecnico: Record<string, number>;
 }
 
 export interface ScoringWeights {

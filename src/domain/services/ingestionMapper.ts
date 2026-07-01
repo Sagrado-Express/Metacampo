@@ -31,8 +31,17 @@ export class IngestionMapper {
   /**
    * Aggregation: Grouping by CTV + Client + Month + Segment
    * Processed in memory to ensure instant feedback.
+   * 
+   * Updated for Dictionary Pattern: if classificationDictionary is provided,
+   * resolves each CSV segment string to its internal_key via O(1) lookup.
+   * Unmapped segments are collected and returned separately.
+   * 
+   * @param classificationDictionary - Optional Map<alias_lowercase, internal_key> from Redis cache
    */
-  static aggregateBilling(csvContent: string): Partial<BillingSummary>[] {
+  static aggregateBilling(
+    csvContent: string,
+    classificationDictionary?: Map<string, string>
+  ): { data: Partial<BillingSummary>[]; unmappedSegments: string[] } {
     const parsed = Papa.parse(csvContent, { 
       header: true, 
       skipEmptyLines: true,
@@ -41,19 +50,32 @@ export class IngestionMapper {
     
     const rawData = parsed.data as any[];
     const buckets = new Map<string, number>();
+    const unmappedSet = new Set<string>();
 
     rawData.forEach(row => {
       // Flexible header mapping (Normalizing legacy ERP headers)
       const cnpj = row.CNPJ_Cliente || row.cnpj || '00.000.000/0000-00';
       const ctvId = String(row.ID_CTV || row.ctv || row.vendedor || '');
-      const segmentId = row.Segmento || row.segmento || 'Outros';
+      const rawSegment = row.Segmento || row.segmento || 'Outros';
       const value = parseFloat(row.Valor_Liquido || row.valor || row.faturamento || '0');
       const date = this.normalizeDate(row.Data_Nota || row.data || '');
+
+      // Resolve segment via dictionary (O(1) lookup) or use raw string
+      let segmentId = rawSegment;
+      if (classificationDictionary) {
+        const resolved = classificationDictionary.get(rawSegment.trim().toLowerCase());
+        if (resolved) {
+          segmentId = resolved; // Use internal_key
+        } else {
+          unmappedSet.add(rawSegment.trim());
+          return; // Skip unmapped rows (will be reconciled via Modal)
+        }
+      }
 
       const month = date.getMonth();
       const year = date.getFullYear();
       
-      // Bucket Key: Client + CTV + Segment + Month + Year
+      // Bucket Key: Client + CTV + Segment (internal_key) + Month + Year
       const key = `${cnpj}|${ctvId}|${segmentId}|${month}|${year}`;
       
       // Safe Math: Convert to cents for accumulation to avoid floating point errors
@@ -62,7 +84,7 @@ export class IngestionMapper {
       buckets.set(key, currentCents + valueCents);
     });
 
-    return Array.from(buckets.entries()).map(([key, cents]) => {
+    const data = Array.from(buckets.entries()).map(([key, cents]) => {
       const [cnpj, ctvId, segmentId, month, year] = key.split('|');
       return {
         cnpjClient: cnpj,
@@ -72,6 +94,8 @@ export class IngestionMapper {
         billingDate: new Date(parseInt(year), parseInt(month), 1)
       };
     });
+
+    return { data, unmappedSegments: Array.from(unmappedSet) };
   }
 
   /**
@@ -130,17 +154,28 @@ export class IngestionMapper {
 
   /**
    * Smart Reconciliation Check
-   * Identifies unmapped segments or new clients.
+   * Identifies unmapped classifications using the tenant's dictionary.
+   * 
+   * Updated for Dictionary Pattern: accepts a Map<alias_lowercase, internal_key>
+   * instead of a hardcoded string array.
+   * 
+   * @param classificationDictionary - Map from Redis cache or Supabase
    */
-  static identifyAnomalies(csvContent: string, knownSegments: string[]): string[] {
+  static identifyAnomalies(
+    csvContent: string,
+    classificationDictionary: Map<string, string>
+  ): string[] {
     const parsed = Papa.parse(csvContent, { header: true, skipEmptyLines: true });
     const rawData = parsed.data as any[];
     const unknownSegments = new Set<string>();
 
     rawData.forEach(row => {
       const segment = row.Segmento || row.segmento;
-      if (segment && !knownSegments.includes(segment)) {
-        unknownSegments.add(segment);
+      if (segment) {
+        const resolved = classificationDictionary.get(segment.trim().toLowerCase());
+        if (!resolved) {
+          unknownSegments.add(segment.trim());
+        }
       }
     });
 

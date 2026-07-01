@@ -10,10 +10,19 @@ export class MiddlewareService {
   /**
    * Parses a CSV string following the expanded strategic layout.
    * Designed to run in Vercel Edge Runtime.
+   * 
+   * Updated for Dictionary Pattern: resolves each segment string via
+   * the tenant's classification dictionary (O(1) lookup per line).
+   * Unmapped segments are collected for the ReconciliationModal.
+   * 
+   * @param classificationDictionary - Map<alias_lowercase, internal_key> from Redis cache
    */
-  static parseBillingCSV(csvContent: string): any[] {
+  static parseBillingCSV(
+    csvContent: string,
+    classificationDictionary?: Map<string, string>
+  ): { data: any[]; unmappedSegments: string[] } {
     const lines = csvContent.split(/\r?\n/);
-    if (lines.length < 2) return [];
+    if (lines.length < 2) return { data: [], unmappedSegments: [] };
 
     const headers = lines[0].split(',').map(h => h.trim());
     
@@ -32,6 +41,7 @@ export class MiddlewareService {
     }
 
     const results: any[] = [];
+    const unmappedSet = new Set<string>();
     
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -43,12 +53,26 @@ export class MiddlewareService {
       headers.forEach((header, index) => {
         record[header] = values[index];
       });
+
+      // Resolve segment via dictionary (O(1) lookup)
+      const rawSegment = record['Segmento'] || '';
+      let resolvedSegment = rawSegment;
+
+      if (classificationDictionary) {
+        const internalKey = classificationDictionary.get(rawSegment.trim().toLowerCase());
+        if (internalKey) {
+          resolvedSegment = internalKey;
+        } else {
+          unmappedSet.add(rawSegment.trim());
+          // Still include the row with the raw segment for potential reconciliation
+        }
+      }
       
       results.push({
         clientId: record['ID_Cliente'],
         clientName: record['Nome_Cliente'],
         revenue: parseFloat(record['Faturamento_R$']) || 0,
-        segment: record['Segmento'],
+        segment: resolvedSegment, // internal_key or raw string if no dictionary
         product: record['Produto'],
         vendedor: record['vendedor'],
         marca: record['marca'],
@@ -64,7 +88,7 @@ export class MiddlewareService {
       });
     }
 
-    return results;
+    return { data: results, unmappedSegments: Array.from(unmappedSet) };
   }
 
   /**

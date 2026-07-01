@@ -1,8 +1,8 @@
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "path";
 
 const nextConfig = {
-  /* config options here */
-  turbopack: {}, // Silences strict Turbopack vs Webpack config block in Next.js 16
+  turbopack: {},
 } as any;
 
 export default withSentryConfig(nextConfig, {

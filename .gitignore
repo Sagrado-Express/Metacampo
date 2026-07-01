@@ -44,3 +44,12 @@ next-env.d.ts
 *.gshortcut
 
 .vercel
+.env*
+
+# Temporary testing artifacts
+cookies.txt
+/node_modules_old
+/node_modules_old/
+/C
+/Arquivos teste
+~$*

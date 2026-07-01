@@ -1,0 +1,89 @@
+{
+  "classifications": [
+    {
+      "id": "mock-seeds-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "SEMENTES",
+      "parentKey": null,
+      "customName": "Sementes",
+      "aliases": [
+        "sementes",
+        "seeds"
+      ],
+      "isActive": true,
+      "displayOrder": 0,
+      "color": "#22C55E"
+    },
+    {
+      "id": "mock-fertilizers-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "FERTILIZANTES",
+      "parentKey": null,
+      "customName": "Fertilizantes",
+      "aliases": [
+        "fertilizantes",
+        "adubos"
+      ],
+      "isActive": true,
+      "displayOrder": 1,
+      "color": "#3B82F6"
+    },
+    {
+      "id": "mock-agrochemicals-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "AGROQUIMICOS",
+      "parentKey": null,
+      "customName": "Defensivos",
+      "aliases": [
+        "defensivos",
+        "mata-mato",
+        "agroquimicos"
+      ],
+      "isActive": true,
+      "displayOrder": 2,
+      "color": "#F59E0B"
+    }
+  ],
+  "cultures": [
+    {
+      "id": "mock-soja-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "SOJA",
+      "customName": "Soja",
+      "isActive": true,
+      "displayOrder": 0
+    },
+    {
+      "id": "mock-milho-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "MILHO",
+      "customName": "Milho",
+      "isActive": true,
+      "displayOrder": 1
+    },
+    {
+      "id": "mock-algodao-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "ALGODAO",
+      "customName": "Algodão",
+      "isActive": true,
+      "displayOrder": 2
+    },
+    {
+      "id": "mock-cana-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "CANA",
+      "customName": "Cana",
+      "isActive": true,
+      "displayOrder": 3
+    },
+    {
+      "id": "mock-cafe-id",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "CAFE",
+      "customName": "Café",
+      "isActive": true,
+      "displayOrder": 4
+    }
+  ]
+}

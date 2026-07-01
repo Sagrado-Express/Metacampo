@@ -10,6 +10,7 @@ import { TrendingUp, AlertTriangle, Users, MapPin, Award } from "lucide-react";
 import { MONTHLY_MASTER_BASE, MONTH_LABELS, TERRITORY_COORDINATES } from "@/data/monthly_master";
 import { MOCK_TEST_DATA } from "@/data/mock_database";
 import { MarketShareDashboard } from "./MarketShareDashboard";
+import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -59,6 +60,10 @@ export function ExecutiveCockpit() {
   const [selectedMonth, setSelectedMonth] = useState("05");
   const [selectedGerenteId, setSelectedGerenteId] = useState<string>("");
   const [selectedCtvId, setSelectedCtvId] = useState<string>("");
+
+  // Tenant context dictionary
+  const tenantId = "00000000-0000-0000-0000-000000000000";
+  const { translateKey, getColor } = useSegmentDictionary(tenantId);
   const [gerenteMetric, setGerenteMetric] = useState<"realizado"|"togo">("realizado");
   const [ctvMetric, setCtvMetric] = useState<"realizado"|"togo">("realizado");
   const [activeTab, setActiveTab] = useState<"macro" | "dominance">("macro");
@@ -164,8 +169,13 @@ export function ExecutiveCockpit() {
   const mixData = useMemo(() => {
     const map = new Map<string, number>();
     filtered.forEach(r => map.set(r.segmento, (map.get(r.segmento) ?? 0) + r.realizado));
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [filtered]);
+    return Array.from(map.entries()).map(([key, value]) => ({
+      key,
+      name: translateKey(key),
+      value,
+      color: getColor(key),
+    }));
+  }, [filtered, translateKey, getColor]);
 
   // ── Top Clients ───────────────────────────────────────
   const topClients = useMemo(() => {
@@ -401,7 +411,7 @@ export function ExecutiveCockpit() {
                   <PieChart>
                     <Pie data={mixData} cx="50%" cy="50%" innerRadius={60} outerRadius={90}
                       paddingAngle={6} dataKey="value" stroke="none">
-                      {mixData.map((_, i) => <Cell key={i} fill={C.pie[i % C.pie.length]} />)}
+                      {mixData.map((item, i) => <Cell key={i} fill={item.color || C.pie[i % C.pie.length]} />)}
                     </Pie>
                     <Tooltip formatter={(v: number) => fmt(v)}
                       contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 12px rgba(0,0,0,.1)" }} />
@@ -410,9 +420,9 @@ export function ExecutiveCockpit() {
               </div>
               <div className="space-y-2 mt-4">
                 {mixData.map((item, i) => (
-                  <div key={item.name} className="flex items-center justify-between text-xs">
+                  <div key={item.key} className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: C.pie[i % C.pie.length] }} />
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color || C.pie[i % C.pie.length] }} />
                       <span className="font-black text-[10px] uppercase tracking-wider text-muted-foreground">{item.name}</span>
                     </div>
                     <span className="font-black text-[#3E2723]">{fmt(item.value)}</span>

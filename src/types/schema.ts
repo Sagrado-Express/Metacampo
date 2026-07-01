@@ -49,12 +49,48 @@ export interface AgriculturalWindow {
 }
 
 /**
- * ProductSegment: Global/Tenant parameterization (seeds, fertilizers, etc.)
+ * ProductSegment: Tenant-configurable product classification.
+ * Updated for Dictionary Pattern — each tenant defines freely.
  */
 export interface ProductSegment {
   id: string;
   empresaId: string;
-  name: string; // Ex: "Sementes", "Fertilizantes"
+  internalKey: string;       // UPPER_SNAKE_CASE canonical key
+  parentKey: string | null;  // NULL = root, value = parent's internal_key
+  name: string;              // custom_name displayed to user
+  aliases: string[];         // Alternative names for CSV/ERP matching
+  displayOrder: number;
+  color: string;             // HEX color for charts
+  isActive: boolean;
+}
+
+/**
+ * TenantClassificacao: Product classification from tenant dictionary.
+ * Maps to tenant_config_classificacoes table.
+ */
+export interface TenantClassificacao {
+  id: string;
+  tenantId: string;
+  internalKey: string;
+  parentKey: string | null;
+  customName: string;
+  aliases: string[];
+  isActive: boolean;
+  displayOrder: number;
+  color: string;
+}
+
+/**
+ * TenantCultura: Crop from tenant dictionary.
+ * Maps to tenant_config_culturas table.
+ */
+export interface TenantCultura {
+  id: string;
+  tenantId: string;
+  internalKey: string;
+  customName: string;
+  isActive: boolean;
+  displayOrder: number;
 }
 
 /**

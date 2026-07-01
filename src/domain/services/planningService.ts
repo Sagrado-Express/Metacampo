@@ -17,36 +17,48 @@ export class PlanningService {
   }
 
   /**
-   * Passo 5: Drill-down por Segmento
-   * Agrega a meta total de cada segmento baseado no share do mix técnico
+   * Passo 5: Drill-down por Classificação de Produto
+   * Aggregates the total target for each product classification
+   * based on the technical mix share.
+   * 
+   * Updated for Dictionary Pattern:
+   * - classificationKeys come from tenant's dictionary (no hardcoded names)
+   * - hectares and itAAConfigs use dynamic crop keys from tenant's culture dictionary
+   * 
+   * @param clientes - Client list with hectares per crop
+   * @param itAAConfigs - IT-SE configs keyed by crop internal_key
+   * @param classificationKeys - Active classification internal_keys from tenant dictionary
    */
-  static calculateSegmentDrillDown(clientes: Cliente[], itAAConfigs: Record<string, ITAAConfig>) {
-    const drillDown: Record<string, number> = {
-      'Semente': 0,
-      'Fertilizante': 0,
-      'Agroquímicos': 0,
-      'Nutrição': 0,
-      'Biológico': 0,
-      'Regulador de Crescimento': 0
-    };
+  static calculateSegmentDrillDown(
+    clientes: Cliente[],
+    itAAConfigs: Record<string, ITAAConfig>,
+    classificationKeys: string[]
+  ) {
+    // Initialize drill-down accumulator dynamically from tenant classifications
+    const drillDown: Record<string, number> = {};
+    classificationKeys.forEach(key => { drillDown[key] = 0; });
 
     clientes.forEach(cliente => {
-      const totalHectares = cliente.hectares.soja + cliente.hectares.milho + cliente.hectares.algodao;
+      // Build hectares dynamically from client data
+      const hectaresMap = cliente.hectares as unknown as Record<string, number>;
+      const cropKeys = Object.keys(hectaresMap);
+      const totalHectares = cropKeys.reduce((sum, k) => sum + (hectaresMap[k] || 0), 0);
       if (totalHectares === 0) return;
 
-      const pesos = {
-        soja: cliente.hectares.soja / totalHectares,
-        milho: cliente.hectares.milho / totalHectares,
-        algodao: cliente.hectares.algodao / totalHectares
-      };
+      // Calculate weight of each crop
+      const pesos: Record<string, number> = {};
+      cropKeys.forEach(crop => {
+        pesos[crop] = hectaresMap[crop] / totalHectares;
+      });
 
-      (['Semente', 'Fertilizante', 'Agroquímicos', 'Nutrição', 'Biológico', 'Regulador de Crescimento'] as const).forEach(segmento => {
-        const valorSegmento = 
-          (cliente.previsaoVendas * pesos.soja * (itAAConfigs['Soja']?.mixTecnico[segmento] || 0)) +
-          (cliente.previsaoVendas * pesos.milho * (itAAConfigs['Milho']?.mixTecnico[segmento] || 0)) +
-          (cliente.previsaoVendas * pesos.algodao * (itAAConfigs['Algodão']?.mixTecnico[segmento] || 0));
-        
-        drillDown[segmento] += valorSegmento;
+      // Iterate classifications dynamically
+      classificationKeys.forEach(classificacao => {
+        let valorSegmento = 0;
+        cropKeys.forEach(crop => {
+          const mix = itAAConfigs[crop]?.mixTecnico[classificacao] || 0;
+          valorSegmento += cliente.previsaoVendas * (pesos[crop] || 0) * mix;
+        });
+        drillDown[classificacao] += valorSegmento;
       });
     });
 

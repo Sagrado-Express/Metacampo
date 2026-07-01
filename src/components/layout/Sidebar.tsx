@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/providers/SidebarProvider";
 import { 
@@ -23,7 +23,20 @@ import {
  */
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { isCollapsed, toggleSidebar } = useSidebar();
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/auth/logout", { method: "POST" });
+      if (res.ok) {
+        router.push("/login");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to logout:", err);
+    }
+  };
 
   const menuItems = [
     { icon: <LayoutDashboard />, label: "Cockpit", href: "/workspace" },
@@ -124,7 +137,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer / Logout */}
-      <button className="mt-auto flex items-center gap-4 px-3 py-4 text-muted-foreground hover:text-destructive transition-all rounded-2xl hover:bg-destructive/5 group/logout relative">
+      <button onClick={handleLogout} className="mt-auto flex items-center gap-4 px-3 py-4 text-muted-foreground hover:text-destructive transition-all rounded-2xl hover:bg-destructive/5 group/logout relative">
         <div className="shrink-0 w-6 flex justify-center">
           <LogOut size={20} />
         </div>

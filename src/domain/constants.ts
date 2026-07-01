@@ -19,3 +19,21 @@ export const DEFAULT_ITAA = {
 } as const;
 
 export const PARETO_THRESHOLD = 0.8; // 80/20 rule mentioned in Excel
+
+/**
+ * Default color palette (Morning Dew theme) for dynamic product classifications.
+ * Used when a tenant creates a new classification without specifying a color.
+ * Colors cycle through this palette based on creation order.
+ */
+export const DEFAULT_CLASSIFICATION_COLORS = [
+  '#22C55E', // Verde Clorofila
+  '#3B82F6', // Azul Safira
+  '#F59E0B', // Âmbar Colheita
+  '#8B5CF6', // Violeta Orvalho
+  '#EF4444', // Vermelho Alerta
+  '#06B6D4', // Ciano Água
+  '#EC4899', // Rosa Flor
+  '#14B8A6', // Teal Folha
+  '#F97316', // Laranja Solo
+  '#6366F1', // Índigo Noite
+] as const;

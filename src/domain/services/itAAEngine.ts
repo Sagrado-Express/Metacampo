@@ -1,34 +1,62 @@
-import { Segmento, ITAAConfig } from '@/types/blueprint';
+/**
+ * Antigravity V4 - IT-SE / ITAA Engine
+ * 
+ * Updated for Metadata-Oriented Architecture:
+ * - Removed hardcoded SEGMENTOS array
+ * - calculateITAA now receives classification keys dynamically from tenant dictionary
+ * - calculateVPMIndividual unchanged (already operates with dynamic Record keys)
+ * 
+ * The canonical formula remains: VPM_Cliente = Σ (HA_Cultura × IT-SE_Cultura_Segmento × Fator_Safra_Vigente)
+ * Per GEMINI.md Regra 2: NEVER use aliases ITAA, ITAA_CULTURA, or Valor/ha.
+ */
 
-export const SEGMENTOS: Segmento[] = [
+import { ITAAConfig } from '@/types/blueprint';
+
+/**
+ * @deprecated Use tenant dictionary instead. 
+ * This export is kept temporarily for backward compatibility during migration.
+ * Components should migrate to useSegmentDictionary hook.
+ */
+export const SEGMENTOS_LEGACY = [
   'Semente',
   'Fertilizante',
   'Agroquímicos',
   'Nutrição',
   'Biológico',
   'Regulador de Crescimento'
-];
+] as const;
 
 export class ITAAEngine {
   /**
-   * Passo 1: Calcula o ITAA Total e o Mix Técnico %
+   * Calculates the IT-SE total and technical mix percentages.
+   * 
+   * @param cultura - Crop internal_key (from tenant dictionary)
+   * @param valores - Record mapping classification internal_keys to values per hectare
+   *                  e.g. { "SEMENTES": 3500, "FERTILIZANTES": 2500 }
    */
-  static calculateITAA(cultura: string, valores: Record<Segmento, number>): ITAAConfig {
+  static calculateITAA(cultura: string, valores: Record<string, number>): ITAAConfig {
     const total = Object.values(valores).reduce((acc, val) => acc + val, 0);
     
-    const mixTecnico: Partial<Record<Segmento, number>> = {};
-    SEGMENTOS.forEach(segmento => {
-      mixTecnico[segmento] = total > 0 ? (valores[segmento] / total) : 0;
+    const mixTecnico: Record<string, number> = {};
+    Object.keys(valores).forEach(key => {
+      mixTecnico[key] = total > 0 ? (valores[key] / total) : 0;
     });
 
     return {
       cultura,
       valores,
       total,
-      mixTecnico: mixTecnico as Record<Segmento, number>
+      mixTecnico,
     };
   }
 
+  /**
+   * Calculates individual VPM for a client.
+   * Operates with dynamic keys from the tenant dictionary.
+   * 
+   * @param hectares - Record mapping crop internal_keys to hectare values
+   * @param itAAConfigs - Record mapping crop internal_keys to IT-SE totals
+   */
   static calculateVPMIndividual(
     hectares: Record<string, number>,
     itAAConfigs: Record<string, number>
