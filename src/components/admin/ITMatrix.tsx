@@ -1,0 +1,375 @@
+"use client";
+
+import React, { useState, useCallback, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  TrendingUp,
+  Save,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Info,
+} from "lucide-react";
+import { useITConfigurations, UpsertITConfigInput } from "@/hooks/useITConfigurations";
+import { TenantCultura, TenantClassificacao } from "@/types/schema";
+
+// ============================================================
+// Types
+// ============================================================
+
+interface ITMatrixProps {
+  culturas: TenantCultura[];
+  classificacoes: TenantClassificacao[];
+  safra?: string;
+}
+
+// Local draft: cultivo|segmento → value (centavos)
+type MatrixDraft = Record<string, number>;
+
+// ============================================================
+// Helpers
+// ============================================================
+
+function formatBRL(centavos: number): string {
+  return (centavos / 100).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function parseBRL(raw: string): number {
+  // Accept "4.000,00" or "4000.00" or plain "4000"
+  const cleaned = raw.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
+  const parsed = parseFloat(cleaned);
+  if (isNaN(parsed)) return 0;
+  return Math.round(parsed * 100); // Store as centavos
+}
+
+function cellKey(cultivo: string, segmento: string): string {
+  return `${cultivo}|${segmento}`;
+}
+
+// ============================================================
+// Component
+// ============================================================
+
+/**
+ * ITMatrix — Índice Tecnológico SE (R$/ha) Matrix
+ *
+ * Displays a cultivo × segmento grid with editable R$/ha values.
+ * Saves to /api/indice-tecnologico via upsert (POST or PATCH).
+ *
+ * Design: Morning Dew — glass cards with micro-animations.
+ */
+export function ITMatrix({
+  culturas,
+  classificacoes,
+  safra = "25/26",
+}: ITMatrixProps) {
+  const {
+    getCellValue,
+    upsertConfig,
+    isLoading,
+    isError,
+    isUpserting,
+  } = useITConfigurations();
+
+  // Active classifications only (roots)
+  const activeSegmentos = classificacoes.filter(
+    (c) => c.isActive && c.parentKey === null
+  );
+  const activeCulturas = culturas.filter((c) => c.isActive);
+
+  // Local draft for batch editing
+  const [draft, setDraft] = useState<MatrixDraft>({});
+  const [dirtyKeys, setDirtyKeys] = useState<Set<string>>(new Set());
+  const [savedKeys, setSavedKeys] = useState<Set<string>>(new Set());
+  const [savingAll, setSavingAll] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editingCell, setEditingCell] = useState<string | null>(null);
+
+  // Initialize draft from server data when cultures/classifications/configs change
+  useEffect(() => {
+    const initial: MatrixDraft = {};
+    activeCulturas.forEach((cultura) => {
+      activeSegmentos.forEach((seg) => {
+        const key = cellKey(cultura.customName, seg.customName);
+        initial[key] = getCellValue(cultura.customName, seg.customName);
+      });
+    });
+    setDraft((prev) => {
+      // Only update non-dirty cells to preserve user edits
+      const merged = { ...initial };
+      dirtyKeys.forEach((k) => {
+        if (prev[k] !== undefined) merged[k] = prev[k];
+      });
+      return merged;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCulturas.length, activeSegmentos.length, getCellValue]);
+
+  const handleCellChange = useCallback(
+    (cultivo: string, segmento: string, rawValue: string) => {
+      const key = cellKey(cultivo, segmento);
+      const centavos = parseBRL(rawValue);
+      setDraft((prev) => ({ ...prev, [key]: centavos }));
+      setDirtyKeys((prev) => new Set(prev).add(key));
+      setSavedKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleSaveAll = async () => {
+    if (dirtyKeys.size === 0) return;
+    setSavingAll(true);
+    setError(null);
+
+    try {
+      const ops: Promise<unknown>[] = [];
+
+      dirtyKeys.forEach((key) => {
+        const [cultivo, segmento] = key.split("|");
+        const input: UpsertITConfigInput = {
+          safra,
+          cultivo,
+          segmento,
+          valorPorHectareCentavos: draft[key] ?? 0,
+        };
+        ops.push(upsertConfig(input));
+      });
+
+      await Promise.all(ops);
+
+      setSavedKeys(new Set(dirtyKeys));
+      setDirtyKeys(new Set());
+    } catch (err: any) {
+      setError(err.message || "Erro ao salvar configurações.");
+    } finally {
+      setSavingAll(false);
+    }
+  };
+
+  // ============================================================
+  // Render
+  // ============================================================
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-muted-foreground text-sm gap-2">
+        <Loader2 size={16} className="animate-spin" />
+        Carregando configurações de IT-SE...
+      </div>
+    );
+  }
+
+  if (activeCulturas.length === 0 || activeSegmentos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-muted-foreground">
+        <Info size={32} className="text-muted-foreground/40" />
+        <p className="text-sm font-medium">
+          {activeCulturas.length === 0
+            ? "Nenhuma cultura ativa. Adicione culturas na aba Cultivos."
+            : "Nenhuma classificação ativa. Adicione classificações na aba Classificações."}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-5"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600">
+            <TrendingUp size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Índice Tecnológico (IT-SE)</h2>
+            <p className="text-xs text-muted-foreground">
+              Valor de referência R$/ha por cultivo × classificação — Safra{" "}
+              <span className="font-medium text-foreground">{safra}</span>
+            </p>
+          </div>
+        </div>
+
+        <button
+          id="btn-save-it-matrix"
+          onClick={handleSaveAll}
+          disabled={dirtyKeys.size === 0 || savingAll}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-violet-500/20"
+        >
+          {savingAll ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <Save size={14} />
+          )}
+          Salvar{dirtyKeys.size > 0 ? ` (${dirtyKeys.size} alterações)` : ""}
+        </button>
+      </div>
+
+      {/* Error Banner */}
+      {(isError || error) && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+          <AlertCircle size={14} />
+          <span>
+            {error ||
+              "Falha ao carregar dados do servidor. Verifique o Supabase."}
+          </span>
+        </div>
+      )}
+
+      {/* Info Note */}
+      <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-700">
+        <Info size={12} className="mt-0.5 shrink-0" />
+        <span>
+          Edite o valor R$/ha para cada combinação cultivo × classificação.
+          Clique em{" "}
+          <strong>Salvar</strong> para persistir as alterações no banco de dados.
+        </span>
+      </div>
+
+      {/* Matrix Table */}
+      <div className="overflow-x-auto rounded-2xl border border-border/50 shadow-sm">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="bg-muted/30">
+              <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider border-b border-border/40 min-w-[140px]">
+                Cultivo ↓ / Classificação →
+              </th>
+              {activeSegmentos.map((seg) => (
+                <th
+                  key={seg.id}
+                  className="px-3 py-3 font-semibold text-center text-xs uppercase tracking-wider border-b border-border/40 min-w-[130px]"
+                >
+                  <div className="flex items-center justify-center gap-1.5">
+                    <span
+                      className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: seg.color || "#6B7280" }}
+                    />
+                    <span className="truncate max-w-[100px]">{seg.customName}</span>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {activeCulturas.map((cultura, rowIdx) => (
+              <tr
+                key={cultura.id}
+                className={rowIdx % 2 === 0 ? "bg-white/60" : "bg-muted/10"}
+              >
+                {/* Row label */}
+                <td className="px-4 py-3 font-medium border-b border-border/20">
+                  <div className="flex items-center gap-2">
+                    <span>{cultura.customName}</span>
+                    <span className="text-[9px] text-muted-foreground font-mono bg-muted/40 px-1.5 py-0.5 rounded-full">
+                      {cultura.internalKey}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Cells */}
+                {activeSegmentos.map((seg) => {
+                  const key = cellKey(cultura.customName, seg.customName);
+                  const isDirty = dirtyKeys.has(key);
+                  const isSaved = savedKeys.has(key);
+                  const cellVal = draft[key] ?? 0;
+                  const isEditing = editingCell === key;
+
+                  return (
+                    <td
+                      key={seg.id}
+                      className="px-2 py-2 border-b border-border/20 text-center"
+                    >
+                      <div className="relative">
+                        <input
+                          id={`it-cell-${cultura.internalKey}-${seg.internalKey}`}
+                          type="text"
+                          defaultValue={
+                            isEditing
+                              ? String(cellVal / 100)
+                              : formatBRL(cellVal)
+                          }
+                          onFocus={(e) => {
+                            setEditingCell(key);
+                            // Show raw number on focus for easier editing
+                            e.target.value = cellVal > 0 ? String(cellVal / 100) : "";
+                          }}
+                          onBlur={(e) => {
+                            setEditingCell(null);
+                            handleCellChange(
+                              cultura.customName,
+                              seg.customName,
+                              e.target.value
+                            );
+                            // Re-format on blur
+                            const centavos = parseBRL(e.target.value);
+                            e.target.value = formatBRL(centavos);
+                          }}
+                          onChange={(e) => {
+                            // Allow free typing but update draft
+                            handleCellChange(
+                              cultura.customName,
+                              seg.customName,
+                              e.target.value
+                            );
+                          }}
+                          placeholder="R$ 0,00"
+                          className={`w-full px-2 py-1.5 rounded-lg text-center text-xs font-medium border transition-all focus:outline-none focus:ring-2 ${
+                            isDirty
+                              ? "border-violet-400 bg-violet-50 focus:ring-violet-300 text-violet-900"
+                              : isSaved
+                              ? "border-green-300 bg-green-50/60 focus:ring-green-200 text-green-900"
+                              : "border-border/40 bg-white/70 focus:ring-primary/20 text-foreground"
+                          }`}
+                        />
+                        {isSaved && !isDirty && (
+                          <CheckCircle2
+                            size={10}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none"
+                          />
+                        )}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Summary row */}
+      {dirtyKeys.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between p-3 rounded-xl bg-violet-50 border border-violet-200 text-sm"
+        >
+          <span className="text-violet-700">
+            <strong>{dirtyKeys.size}</strong> célula
+            {dirtyKeys.size !== 1 ? "s" : ""} com alterações não salvas
+          </span>
+          <button
+            onClick={handleSaveAll}
+            disabled={savingAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 transition-colors"
+          >
+            {savingAll ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+            Salvar tudo
+          </button>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}

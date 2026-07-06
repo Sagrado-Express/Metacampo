@@ -11,6 +11,7 @@ import { MONTHLY_MASTER_BASE, MONTH_LABELS, TERRITORY_COORDINATES } from "@/data
 import { MOCK_TEST_DATA } from "@/data/mock_database";
 import { MarketShareDashboard } from "./MarketShareDashboard";
 import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
+import { useSession } from "@/hooks/useSession";
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 const C = {
@@ -62,7 +63,8 @@ export function ExecutiveCockpit() {
   const [selectedCtvId, setSelectedCtvId] = useState<string>("");
 
   // Tenant context dictionary
-  const tenantId = "00000000-0000-0000-0000-000000000000";
+  const { data: sessionData } = useSession();
+  const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
   const { translateKey, getColor } = useSegmentDictionary(tenantId);
   const [gerenteMetric, setGerenteMetric] = useState<"realizado"|"togo">("realizado");
   const [ctvMetric, setCtvMetric] = useState<"realizado"|"togo">("realizado");

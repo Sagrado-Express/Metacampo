@@ -51,6 +51,10 @@ interface SegmentSettingsProps {
   onSaveCultura: (item: CulturaItem) => Promise<void>;
   onCreateCultura: (customName: string) => Promise<void>;
   onDeleteCultura: (id: string) => Promise<void>;
+  /** When true, renders only the Culturas section (used by the Cultivos tab). */
+  showOnlyCulturas?: boolean;
+  /** When true, renders only the Classificações section (used by the Classificações tab). */
+  showOnlyClassifications?: boolean;
 }
 
 // ============================================================
@@ -79,6 +83,8 @@ export function SegmentSettings({
   onSaveCultura,
   onCreateCultura,
   onDeleteCultura,
+  showOnlyCulturas = false,
+  showOnlyClassifications = false,
 }: SegmentSettingsProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [newClassName, setNewClassName] = useState("");
@@ -145,20 +151,27 @@ export function SegmentSettings({
   // Render
   // ============================================================
 
+  // Determine which sections to show
+  const showCulturas = !showOnlyClassifications;
+  const showClassificacoes = !showOnlyCulturas;
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Parametrização</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Configure as culturas e classificações de produto do seu negócio.
-          O sistema usará esses nomes em todos os relatórios e dashboards.
-        </p>
-      </div>
+      {/* Header — only shown when rendering both sections */}
+      {!showOnlyCulturas && !showOnlyClassifications && (
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Parametrização</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Configure as culturas e classificações de produto do seu negócio.
+            O sistema usará esses nomes em todos os relatórios e dashboards.
+          </p>
+        </div>
+      )}
 
       {/* ========================================== */}
       {/* Section 1: Culturas */}
       {/* ========================================== */}
+      {showCulturas && (
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -233,10 +246,12 @@ export function SegmentSettings({
           </button>
         </div>
       </motion.section>
+      )}
 
       {/* ========================================== */}
       {/* Section 2: Classificação de Produtos */}
       {/* ========================================== */}
+      {showClassificacoes && (
       <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -482,6 +497,7 @@ export function SegmentSettings({
           </button>
         </div>
       </motion.section>
+      )}
     </div>
   );
 }
