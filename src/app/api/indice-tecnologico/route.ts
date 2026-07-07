@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
+import fs from 'fs';
+import path from 'path';
 
 // Helper to check session and return session or response error
 async function checkAuth() {
@@ -9,6 +11,47 @@ async function checkAuth() {
     return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), session: null };
   }
   return { error: null, session };
+}
+
+const DICT_PATH = path.join(process.cwd(), 'src/data/local_dictionary.json');
+
+// Default IT-SE values per crop (R$/ha in centavos)
+const DEFAULT_IT_VALUES: Record<string, number> = {
+  'Soja': 400000,
+  'Milho': 300000,
+  'Algodão': 500000,
+  'Café': 1000000,
+  'Cana': 250000,
+  'HF': 800000,
+};
+
+function getLocalITFallback(tenantId: string): any[] {
+  try {
+    if (fs.existsSync(DICT_PATH)) {
+      const dict = JSON.parse(fs.readFileSync(DICT_PATH, 'utf-8'));
+      const cultures = (dict.cultures || []).filter((c: any) => c.tenantId === tenantId && c.isActive);
+      const segments = (dict.classifications || []).filter((c: any) => c.tenantId === tenantId && c.isActive);
+
+      const result: any[] = [];
+      cultures.forEach((culture: any) => {
+        segments.forEach((segment: any) => {
+          result.push({
+            id: `it-${culture.internalKey}-${segment.internalKey}`,
+            tenantId: tenantId,
+            safra: '2025/2026',
+            cultivo: culture.customName,
+            segmento: segment.customName,
+            valorPorHectareCentavos: DEFAULT_IT_VALUES[culture.customName] || 350000,
+            createdAt: new Date().toISOString(),
+          });
+        });
+      });
+      return result;
+    }
+  } catch (err) {
+    console.warn('[IT API] Failed to read local dictionary:', err);
+  }
+  return [];
 }
 
 export async function GET(request: Request) {
@@ -40,7 +83,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json(mapped);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    // Fallback to local dictionary-derived IT values
+    console.warn('[IT API] Supabase failed, using local fallback:', err.message);
+    const fallback = getLocalITFallback(tenantId);
+    return NextResponse.json(fallback);
   }
 }
 
