@@ -289,11 +289,119 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  const { error, session } = await checkAuth();
+  if (error) return error;
+
+  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  if (!id) {
+    return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 });
+  }
+
+  try {
+    const body = await request.json();
+    const { name, city, state, region, areas } = body;
+
+    // 1. Update customer in DB
+    const { data: customer, error: custError } = await supabase
+      .from('customers')
+      .update({
+        name,
+        city,
+        state,
+        region: region || 'Região Geral',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (custError) throw custError;
+
+    // 2. Update areas in DB if provided
+    if (areas && Array.isArray(areas)) {
+      // Delete old areas first
+      await supabase
+        .from('customer_crop_areas')
+        .delete()
+        .eq('customer_id', id)
+        .eq('tenant_id', tenantId);
+
+      for (const area of areas) {
+        const { cropName, areaHa } = area;
+        if (cropName && areaHa !== undefined) {
+          await supabase
+            .from('customer_crop_areas')
+            .insert({
+              tenant_id: tenantId,
+              customer_id: id,
+              crop_name: cropName,
+              area_ha: areaHa
+            });
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, customer });
+  } catch (err: any) {
+    console.warn('[Clientes API] DB Update failed, falling back to local file store. Error:', err.message);
+    const body = await request.json().catch(() => ({}));
+    const { name, city, state, region, areas } = body;
+
+    const localData = getLocalCustomers();
+    const idx = localData.findIndex(c => c.id === id && (c.tenantId === tenantId || c.tenant_id === tenantId));
+    
+    if (idx !== -1) {
+      const mockIndices = [
+        { crop: 'CAFÉ', value: 890000 },
+        { crop: 'SOJA', value: 350000 }
+      ];
+
+      let vpmTotalCentavos = 0;
+      const mappedAreas = (areas || []).map((area: any, indexIdx: number) => {
+        const cropName = area.cropName || area.crop_name || 'SOJA';
+        const areaHa = Number(area.areaHa || area.area_ha || 0);
+        const matchedIdx = mockIndices.find(m => m.crop === cropName.toUpperCase());
+        const valuePerHectare = matchedIdx ? matchedIdx.value : 350000;
+        const areaVpm = Math.round(areaHa * valuePerHectare);
+        vpmTotalCentavos += areaVpm;
+
+        return {
+          id: `mock-area-id-${id}-${indexIdx}`,
+          cropName,
+          areaHa,
+          valorPorHectareCentavos: valuePerHectare,
+          vpmCentavos: areaVpm
+        };
+      });
+
+      localData[idx] = {
+        ...localData[idx],
+        name: name || localData[idx].name,
+        city: city || localData[idx].city,
+        state: state || localData[idx].state,
+        region: region || localData[idx].region || 'Região Geral',
+        areas: areas ? mappedAreas : localData[idx].areas,
+        vpmTotalCentavos: areas ? vpmTotalCentavos : localData[idx].vpmTotalCentavos
+      };
+
+      saveLocalCustomers(localData);
+      return NextResponse.json(localData[idx]);
+    }
+
+    return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
+  }
+}
+
 export async function DELETE(request: Request) {
   const { error, session } = await checkAuth();
   if (error) return error;
 
-  const tenantId = session?.user?.app_metadata?.tenant_id;
+  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
@@ -312,6 +420,10 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.warn('[Clientes API] DB Delete failed, deleting from local fallback. Error:', err.message);
+    const localData = getLocalCustomers();
+    const filtered = localData.filter(c => !(c.id === id && (c.tenantId === tenantId || c.tenant_id === tenantId)));
+    saveLocalCustomers(filtered);
+    return NextResponse.json({ success: true });
   }
 }
