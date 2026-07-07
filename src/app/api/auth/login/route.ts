@@ -56,14 +56,13 @@ export async function POST(request: Request) {
       console.warn('Supabase Auth offline. Falling back to local mock authentication.');
       
       // Determine tenant ID based on email pattern for multi-tenant testing
-      let tenantId = '00000000-0000-0000-0000-000000000000'; // Default Piloto
+      // All test users use the Piloto tenant where pedagogical data is seeded
+      let tenantId = '00000000-0000-0000-0000-000000000000'; // Piloto (dados pedagógicos)
       let role = 'admin';
 
-      if (email.includes('tenant1') || email.includes('teste1')) {
-        tenantId = '11111111-1111-1111-1111-111111111111';
-      } else if (email.includes('tenant2') || email.includes('teste2')) {
-        tenantId = '22222222-2222-2222-2222-222222222222';
-      }
+      // Future multi-tenant: uncomment below when tenants have their own data
+      // if (email.includes('tenant1')) tenantId = '11111111-...';
+      // if (email.includes('tenant2')) tenantId = '22222222-...';
 
       const mockToken = generateMockJwt('mock-user-uuid', email, tenantId, role);
       
