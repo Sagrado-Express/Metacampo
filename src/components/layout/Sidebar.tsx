@@ -42,7 +42,8 @@ export function Sidebar() {
     { icon: <LayoutDashboard />, label: "Cockpit", href: "/workspace" },
     { icon: <ShieldCheck />, label: "Admin", href: "/admin" },
     { icon: <Users />, label: "Simulador CTV", href: "/ctv" },
-    { icon: <TrendingUp />, label: "Planejamento", href: "/workspace/planejamento" }, 
+    { icon: <TrendingUp />, label: "Planejamento", href: "/workspace/planejamento" },
+    { icon: <Settings />, label: "Configuração", href: "/workspace/settings/configuracao" }, 
     { icon: <FileUp />, label: "Ingestão", href: "/workspace" },
   ];
 
