@@ -1,0 +1,25 @@
+[
+  {
+    "Cultivo": "Soja",
+    "ITR (R$/ha)": 4000
+  },
+  {
+    "Cultivo": "Milho",
+    "ITR (R$/ha)": 3000
+  },
+  {
+    "Cultivo": "Café",
+    "ITR (R$/ha)": 10000
+  },
+  {
+    "Cultivo": "HF",
+    "ITR (R$/ha)": 30000
+  },
+  {
+    "Cultivo": "Algodão",
+    "ITR (R$/ha)": 10000
+  },
+  {
+    "Cultivo": "TOTAL"
+  }
+]

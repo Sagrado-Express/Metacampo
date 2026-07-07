@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
+import fs from 'fs';
+import path from 'path';
 
 async function checkAuth() {
   const session = await getSession();
@@ -10,35 +12,57 @@ async function checkAuth() {
   return { error: null, session };
 }
 
-// Global in-memory fallback store to allow creation/retrieval when database is unreachable
-let localCustomersStore: any[] = [
-  {
-    id: "pedro-id",
-    tenant_id: "00000000-0000-0000-0000-000000000000",
-    ctv_id: "ctv-mock-id",
-    name: "Pedro",
-    city: "Carmo do Paranaíba",
-    state: "MG",
-    region: "Cerrado Mineiro",
-    areas: [
-      { id: "area-1", cropName: "Café", areaHa: 6000, valorPorHectareCentavos: 890000, vpmCentavos: 5340000000 }
-    ],
-    vpmTotalCentavos: 5340000000
-  },
-  {
-    id: "paulo-id",
-    tenant_id: "00000000-0000-0000-0000-000000000000",
-    ctv_id: "ctv-mock-id",
-    name: "Paulo",
-    city: "Carmo do Paranaíba",
-    state: "MG",
-    region: "Cerrado Mineiro",
-    areas: [
-      { id: "area-2", cropName: "Soja", areaHa: 1000, valorPorHectareCentavos: 350000, vpmCentavos: 350000000 }
-    ],
-    vpmTotalCentavos: 350000000
+const FALLBACK_FILE_PATH = path.join(process.cwd(), 'src/data/local_customers.json');
+
+function getLocalCustomers(): any[] {
+  try {
+    if (fs.existsSync(FALLBACK_FILE_PATH)) {
+      return JSON.parse(fs.readFileSync(FALLBACK_FILE_PATH, 'utf-8'));
+    }
+  } catch (err) {
+    console.warn('[Clientes API] Failed to read fallback file:', err);
   }
-];
+  return [
+    {
+      id: "pedro-id",
+      tenant_id: "00000000-0000-0000-0000-000000000000",
+      ctv_id: "ctv-mock-id",
+      name: "Pedro",
+      city: "Carmo do Paranaíba",
+      state: "MG",
+      region: "Cerrado Mineiro",
+      areas: [
+        { id: "area-1", cropName: "Café", areaHa: 6000, valorPorHectareCentavos: 890000, vpmCentavos: 5340000000 }
+      ],
+      vpmTotalCentavos: 5340000000
+    },
+    {
+      id: "paulo-id",
+      tenant_id: "00000000-0000-0000-0000-000000000000",
+      ctv_id: "ctv-mock-id",
+      name: "Paulo",
+      city: "Carmo do Paranaíba",
+      state: "MG",
+      region: "Cerrado Mineiro",
+      areas: [
+        { id: "area-2", cropName: "Soja", areaHa: 1000, valorPorHectareCentavos: 350000, vpmCentavos: 350000000 }
+      ],
+      vpmTotalCentavos: 350000000
+    }
+  ];
+}
+
+function saveLocalCustomers(data: any[]) {
+  try {
+    const dir = path.dirname(FALLBACK_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(FALLBACK_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('[Clientes API] Failed to write fallback file:', err);
+  }
+}
 
 export async function GET(request: Request) {
   const { error, session } = await checkAuth();
@@ -116,9 +140,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result);
   } catch (err: any) {
-    console.warn('Database error, falling back to local memory store:', err.message);
-    // Filter local memory store by tenant_id
-    const filteredLocal = localCustomersStore.filter(c => c.tenantId === tenantId || c.tenant_id === tenantId);
+    console.warn('Database error, falling back to local file store:', err.message);
+    const localStore = getLocalCustomers();
+    const filteredLocal = localStore.filter(c => c.tenantId === tenantId || c.tenant_id === tenantId);
     return NextResponse.json(filteredLocal);
   }
 }
@@ -258,7 +282,9 @@ export async function POST(request: Request) {
       vpmTotalCentavos
     };
 
-    localCustomersStore.push(newMockCustomer);
+    const localStore = getLocalCustomers();
+    localStore.push(newMockCustomer);
+    saveLocalCustomers(localStore);
     return NextResponse.json(newMockCustomer);
   }
 }

@@ -42,7 +42,7 @@ export function Sidebar() {
     { icon: <LayoutDashboard />, label: "Cockpit", href: "/workspace" },
     { icon: <ShieldCheck />, label: "Admin", href: "/admin" },
     { icon: <Users />, label: "Simulador CTV", href: "/ctv" },
-    { icon: <TrendingUp />, label: "ITAA Matrix", href: "/admin" }, 
+    { icon: <TrendingUp />, label: "Planejamento", href: "/workspace/planejamento" }, 
     { icon: <FileUp />, label: "Ingestão", href: "/workspace" },
   ];
 

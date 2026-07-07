@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -70,9 +70,50 @@ export function ExecutiveCockpit() {
   const [ctvMetric, setCtvMetric] = useState<"realizado"|"togo">("realizado");
   const [activeTab, setActiveTab] = useState<"macro" | "dominance">("macro");
 
+  const [dbClients, setDbClients] = useState<any[]>([]);
+  const [faturamentoList, setFaturamentoList] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [cRes, fRes] = await Promise.all([
+          fetch("/api/clientes"),
+          fetch("/api/faturamento")
+        ]);
+        if (cRes.ok) setDbClients(await cRes.json());
+        if (fRes.ok) setFaturamentoList(await fRes.json());
+      } catch (err) {
+        console.error("Failed to fetch dashboard data:", err);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Combine faturamentoList and static base
+  const activeMasterData = useMemo(() => {
+    if (faturamentoList.length === 0) return MONTHLY_MASTER_BASE;
+    return faturamentoList.map(item => {
+      const client = dbClients.find(c => c.ctvId === item.id_ctv) || { name: "Cliente Geral", document: "000000000" };
+      return {
+        tenantId: item.tenant_id,
+        mes: item.mes,
+        ctvId: item.id_ctv,
+        ctvName: item.id_ctv === "CTV01" ? "Joao Silva" : item.id_ctv === "CTV02" ? "Beatriz Santos" : item.id_ctv === "CTV03" ? "Carlos Gomes" : item.id_ctv === "CTV04" ? "Fernanda Melo" : item.id_ctv === "CTV05" ? "Gabriel Neves" : "Daniela Lima",
+        gerenteId: item.id_ctv === "CTV04" || item.id_ctv === "CTV05" ? "G02" : "G01",
+        gerenteName: item.id_ctv === "CTV04" || item.id_ctv === "CTV05" ? "Ana Paula Costa" : "Ricardo Oliveira",
+        documento: client.document || "000000000",
+        clientName: client.name || "Cliente Geral",
+        segmento: item.segmento,
+        meta: (item.valor_meta_centavos || 0) / 100,
+        realizado: (item.valor_realizado_centavos || 0) / 100,
+        pedidos: 0
+      };
+    });
+  }, [faturamentoList, dbClients]);
+
   // Slice of data for selected month
   const monthData = useMemo(() =>
-    MONTHLY_MASTER_BASE.filter(r => r.mes === selectedMonth), [selectedMonth]);
+    activeMasterData.filter(r => r.mes === selectedMonth), [selectedMonth, activeMasterData]);
 
   // Gerentes available this month
   const gerentesAvail = useMemo(() => {
@@ -101,21 +142,33 @@ export function ExecutiveCockpit() {
   const dominanceMetrics = useMemo(() => {
     const result = new Map<string, { city: string; uf: string; haTotal: number; vpmTotal: number; realized: number; pedidos: number }>();
     
-    MOCK_TEST_DATA.forEach(client => {
-      // Potencial total do cliente baseado em hectares * ITAA Matrix Total
-      const clientVpm = (client.areas.soja + client.areas.milho + client.areas.algodao + client.areas.cana + client.areas.cafe) * 3500;
+    const activeClients = dbClients.length > 0 ? dbClients : MOCK_TEST_DATA.map(d => ({
+      ...d,
+      areas: [
+        { cropName: "Soja", areaHa: d.areas.soja },
+        { cropName: "Milho", areaHa: d.areas.milho },
+        { cropName: "Algodão", areaHa: d.areas.algodao },
+        { cropName: "Cana", areaHa: d.areas.cana },
+        { cropName: "Café", areaHa: d.areas.cafe }
+      ],
+      performanceBand: d.rating === 'A' ? "AZUL" : "VERDE",
+      city: d.city,
+      uf: d.uf
+    }));
+
+    activeClients.forEach(client => {
+      const clientHa = client.areas ? client.areas.reduce((acc: number, curr: any) => acc + (curr.areaHa || curr.area_ha || 0), 0) : 0;
+      const clientVpm = (client.vpmTotalCentavos || (clientHa * 3500 * 100)) / 100;
       
       const clientRealized = filtered
-        .filter(r => r.documento === client.documento)
+        .filter(r => r.documento === client.documento || r.documento === client.document)
         .reduce((acc, curr) => acc + curr.realizado, 0);
         
       const clientPedidos = filtered
-        .filter(r => r.documento === client.documento)
+        .filter(r => r.documento === client.documento || r.documento === client.document)
         .reduce((acc, curr) => acc + ((curr as any).pedidos ?? 0), 0);
 
-      const clientHa = client.areas.soja + client.areas.milho + client.areas.algodao + client.areas.cana + client.areas.cafe;
-
-      const cur = result.get(client.city) ?? { city: client.city, uf: client.uf, haTotal: 0, vpmTotal: 0, realized: 0, pedidos: 0 };
+      const cur = result.get(client.city) ?? { city: client.city, uf: client.uf || client.state || '', haTotal: 0, vpmTotal: 0, realized: 0, pedidos: 0 };
       cur.haTotal += clientHa;
       cur.vpmTotal += clientVpm;
       cur.realized += clientRealized;
@@ -127,7 +180,7 @@ export function ExecutiveCockpit() {
       ...c,
       share: c.vpmTotal > 0 ? ((c.realized + c.pedidos) / c.vpmTotal) * 100 : 0
     }));
-  }, [filtered]);
+  }, [filtered, dbClients]);
 
   // ── KPIs ──────────────────────────────────────────────
   const totalMeta     = useMemo(() => filtered.reduce((s, r) => s + r.meta, 0), [filtered]);
@@ -197,24 +250,42 @@ export function ExecutiveCockpit() {
   // ── Heatmap — city VPM & TO-GO health ────────────────
   const cityMetrics = useMemo(() => {
     const result = new Map<string, { vpm: number; realizado: number; meta: number; city: string; uf: string }>();
-    MOCK_TEST_DATA.forEach(client => {
+    const activeClients = dbClients.length > 0 ? dbClients : MOCK_TEST_DATA.map(d => ({
+      ...d,
+      areas: [
+        { cropName: "Soja", areaHa: d.areas.soja },
+        { cropName: "Milho", areaHa: d.areas.milho },
+        { cropName: "Algodão", areaHa: d.areas.algodao },
+        { cropName: "Cana", areaHa: d.areas.cana },
+        { cropName: "Café", areaHa: d.areas.cafe }
+      ],
+      performanceBand: d.rating === 'A' ? "AZUL" : "VERDE",
+      city: d.city,
+      uf: d.uf
+    }));
+
+    activeClients.forEach(client => {
       const coords = TERRITORY_COORDINATES[client.city];
       if (!coords) return;
-      const vpm = (client.areas.soja + client.areas.milho + client.areas.algodao + client.areas.cana + client.areas.cafe) * 3500;
+      
+      const clientHa = client.areas ? client.areas.reduce((acc: number, curr: any) => acc + (curr.areaHa || curr.area_ha || 0), 0) : 0;
+      const vpm = (client.vpmTotalCentavos || (clientHa * 3500 * 100)) / 100;
+
       const realizedForClient = filtered
-        .filter(r => r.documento === client.documento)
+        .filter(r => r.documento === client.documento || r.documento === client.document)
         .reduce((s, r) => s + r.realizado, 0);
       const metaForClient = filtered
-        .filter(r => r.documento === client.documento)
+        .filter(r => r.documento === client.documento || r.documento === client.document)
         .reduce((s, r) => s + r.meta, 0);
-      const cur = result.get(client.city) ?? { vpm: 0, realizado: 0, meta: 0, city: client.city, uf: client.uf };
+      
+      const cur = result.get(client.city) ?? { vpm: 0, realizado: 0, meta: 0, city: client.city, uf: client.uf || client.state || '' };
       cur.vpm       += vpm;
       cur.realizado += realizedForClient;
       cur.meta      += metaForClient;
       result.set(client.city, cur);
     });
     return Array.from(result.values());
-  }, [filtered]);
+  }, [filtered, dbClients]);
 
   const maxVpm = Math.max(...cityMetrics.map(c => c.vpm), 1);
 

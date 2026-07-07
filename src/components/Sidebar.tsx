@@ -23,6 +23,7 @@ const navigation = [
   { name: "Radar de Caça (CTV)", href: "/ctv/radar", icon: Radar },
   { name: "Simulador CTV", href: "/ctv", icon: Users },
   { name: "Segmentação (Pareto)", href: "/ctv/planejamento", icon: Target },
+  { name: "Planejamento", href: "/workspace/planejamento", icon: TrendingUp },
   { name: "Configuração", href: "/workspace/settings/configuracao", icon: Settings2 },
   { name: "Configurações", href: "/admin", icon: Settings },
 ];

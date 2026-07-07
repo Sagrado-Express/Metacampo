@@ -84,6 +84,14 @@
       "customName": "Café",
       "isActive": true,
       "displayOrder": 4
+    },
+    {
+      "id": "culture-hf",
+      "tenantId": "00000000-0000-0000-0000-000000000000",
+      "internalKey": "HF",
+      "customName": "HF",
+      "isActive": true,
+      "displayOrder": 4
     }
   ]
 }

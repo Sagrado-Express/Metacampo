@@ -1,0 +1,6402 @@
+[
+  {
+    "id": "customer-P001",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 1",
+    "document": "P001",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P001-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P001-1",
+        "cropName": "Soja",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P001-2",
+        "cropName": "Milho",
+        "areaHa": 800,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 240000000
+      }
+    ],
+    "vpmTotalCentavos": 240000000
+  },
+  {
+    "id": "customer-P002",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 2",
+    "document": "P002",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P002-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P002-1",
+        "cropName": "Soja",
+        "areaHa": 600,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 240000000
+      },
+      {
+        "id": "area-id-P002-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 390000000
+  },
+  {
+    "id": "customer-P003",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 3",
+    "document": "P003",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P003-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P003-1",
+        "cropName": "Soja",
+        "areaHa": 600,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 240000000
+      },
+      {
+        "id": "area-id-P003-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 390000000
+  },
+  {
+    "id": "customer-P004",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 4",
+    "document": "P004",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P004-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P004-1",
+        "cropName": "Soja",
+        "areaHa": 600,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 240000000
+      },
+      {
+        "id": "area-id-P004-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 390000000
+  },
+  {
+    "id": "customer-P005",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 5",
+    "document": "P005",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P005-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P005-1",
+        "cropName": "Soja",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P005-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 120000000
+  },
+  {
+    "id": "customer-P006",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 6",
+    "document": "P006",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P006-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P006-1",
+        "cropName": "Soja",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P006-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 320000000
+  },
+  {
+    "id": "customer-P007",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 7",
+    "document": "P007",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P007-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P007-1",
+        "cropName": "Soja",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P007-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 150000000
+  },
+  {
+    "id": "customer-P008",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 8",
+    "document": "P008",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P008-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P008-1",
+        "cropName": "Soja",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P008-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 320000000
+  },
+  {
+    "id": "customer-P009",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 9",
+    "document": "P009",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P009-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P009-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P009-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P010",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 10",
+    "document": "P010",
+    "city": "Uberaba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P010-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P010-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P010-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P011",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 11",
+    "document": "P011",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P011-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P011-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P011-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P012",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 12",
+    "document": "P012",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P012-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P012-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P012-2",
+        "cropName": "Milho",
+        "areaHa": 250,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 75000000
+      }
+    ],
+    "vpmTotalCentavos": 195000000
+  },
+  {
+    "id": "customer-P013",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 13",
+    "document": "P013",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P013-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P013-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P013-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P014",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 14",
+    "document": "P014",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P014-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P014-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P014-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P015",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 15",
+    "document": "P015",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P015-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P015-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P015-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P016",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 16",
+    "document": "P016",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P016-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P016-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P016-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P017",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 17",
+    "document": "P017",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P017-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P017-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P017-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P018",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 18",
+    "document": "P018",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P018-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P018-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P018-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P019",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 19",
+    "document": "P019",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P019-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P019-1",
+        "cropName": "Soja",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P019-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 140000000
+  },
+  {
+    "id": "customer-P020",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 20",
+    "document": "P020",
+    "city": "Uberlândia",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P020-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P020-1",
+        "cropName": "Soja",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P020-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 140000000
+  },
+  {
+    "id": "customer-P021",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 21",
+    "document": "P021",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P021-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P021-1",
+        "cropName": "Soja",
+        "areaHa": 600,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 240000000
+      },
+      {
+        "id": "area-id-P021-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 390000000
+  },
+  {
+    "id": "customer-P022",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 22",
+    "document": "P022",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P022-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P022-1",
+        "cropName": "Soja",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P022-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 150000000
+  },
+  {
+    "id": "customer-P023",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 23",
+    "document": "P023",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P023-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P023-1",
+        "cropName": "Soja",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P023-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 150000000
+  },
+  {
+    "id": "customer-P024",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 24",
+    "document": "P024",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P024-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P024-1",
+        "cropName": "Soja",
+        "areaHa": 600,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 240000000
+      },
+      {
+        "id": "area-id-P024-2",
+        "cropName": "Milho",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 390000000
+  },
+  {
+    "id": "customer-P025",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 25",
+    "document": "P025",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P025-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P025-1",
+        "cropName": "Soja",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P025-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 320000000
+  },
+  {
+    "id": "customer-P026",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 26",
+    "document": "P026",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P026-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P026-1",
+        "cropName": "Soja",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P026-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 320000000
+  },
+  {
+    "id": "customer-P027",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 27",
+    "document": "P027",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P027-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P027-1",
+        "cropName": "Soja",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P027-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 320000000
+  },
+  {
+    "id": "customer-P028",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 28",
+    "document": "P028",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P028-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P028-1",
+        "cropName": "Soja",
+        "areaHa": 500,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P028-2",
+        "cropName": "Milho",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 320000000
+  },
+  {
+    "id": "customer-P029",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 29",
+    "document": "P029",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P029-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P029-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P029-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P030",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 30",
+    "document": "P030",
+    "city": "Campo Florido",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P030-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P030-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P030-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P031",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 31",
+    "document": "P031",
+    "city": "Conceição das Alagoas",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P031-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P031-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P031-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P032",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 32",
+    "document": "P032",
+    "city": "Conceição das Alagoas",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P032-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P032-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P032-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P033",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 33",
+    "document": "P033",
+    "city": "Conceição das Alagoas",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P033-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P033-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P033-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P034",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 34",
+    "document": "P034",
+    "city": "Conceição das Alagoas",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P034-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P034-1",
+        "cropName": "Soja",
+        "areaHa": 400,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P034-2",
+        "cropName": "Milho",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 250000000
+  },
+  {
+    "id": "customer-P035",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 35",
+    "document": "P035",
+    "city": "Conceição das Alagoas",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P035-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P035-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P035-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P036",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 36",
+    "document": "P036",
+    "city": "Frutal",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P036-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P036-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P036-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P037",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 37",
+    "document": "P037",
+    "city": "Frutal",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P037-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P037-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P037-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P038",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 38",
+    "document": "P038",
+    "city": "Frutal",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P038-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P038-1",
+        "cropName": "Soja",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P038-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P039",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 39",
+    "document": "P039",
+    "city": "Frutal",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P039-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P039-1",
+        "cropName": "Soja",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P039-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 140000000
+  },
+  {
+    "id": "customer-P040",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 40",
+    "document": "P040",
+    "city": "Frutal",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P040-0",
+        "cropName": "Algodão",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P040-1",
+        "cropName": "Soja",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P040-2",
+        "cropName": "Milho",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 140000000
+  },
+  {
+    "id": "customer-P041",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 41",
+    "document": "P041",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P041-0",
+        "cropName": "Café",
+        "areaHa": 420,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 420000000
+      },
+      {
+        "id": "area-id-P041-1",
+        "cropName": "Soja",
+        "areaHa": 280,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 112000000
+      },
+      {
+        "id": "area-id-P041-2",
+        "cropName": "Milho",
+        "areaHa": 220,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 66000000
+      }
+    ],
+    "vpmTotalCentavos": 598000000
+  },
+  {
+    "id": "customer-P042",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 42",
+    "document": "P042",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P042-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P042-1",
+        "cropName": "Soja",
+        "areaHa": 240,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 96000000
+      },
+      {
+        "id": "area-id-P042-2",
+        "cropName": "Milho",
+        "areaHa": 190,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 57000000
+      }
+    ],
+    "vpmTotalCentavos": 153000000
+  },
+  {
+    "id": "customer-P043",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 43",
+    "document": "P043",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P043-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P043-1",
+        "cropName": "Soja",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P043-2",
+        "cropName": "Milho",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 48000000
+      }
+    ],
+    "vpmTotalCentavos": 128000000
+  },
+  {
+    "id": "customer-P044",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 44",
+    "document": "P044",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P044-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P044-1",
+        "cropName": "Soja",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 64000000
+      },
+      {
+        "id": "area-id-P044-2",
+        "cropName": "Milho",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 103000000
+  },
+  {
+    "id": "customer-P045",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 45",
+    "document": "P045",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P045-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P045-1",
+        "cropName": "Soja",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 48000000
+      },
+      {
+        "id": "area-id-P045-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 78000000
+  },
+  {
+    "id": "customer-P046",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 46",
+    "document": "P046",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P046-0",
+        "cropName": "Café",
+        "areaHa": 450,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 450000000
+      },
+      {
+        "id": "area-id-P046-1",
+        "cropName": "Soja",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 64000000
+      },
+      {
+        "id": "area-id-P046-2",
+        "cropName": "Milho",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 553000000
+  },
+  {
+    "id": "customer-P047",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 47",
+    "document": "P047",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P047-0",
+        "cropName": "Café",
+        "areaHa": 350,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 350000000
+      },
+      {
+        "id": "area-id-P047-1",
+        "cropName": "Soja",
+        "areaHa": 180,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 72000000
+      },
+      {
+        "id": "area-id-P047-2",
+        "cropName": "Milho",
+        "areaHa": 140,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 42000000
+      }
+    ],
+    "vpmTotalCentavos": 464000000
+  },
+  {
+    "id": "customer-P048",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 48",
+    "document": "P048",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P048-0",
+        "cropName": "Café",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 300000000
+      },
+      {
+        "id": "area-id-P048-1",
+        "cropName": "Soja",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 52000000
+      },
+      {
+        "id": "area-id-P048-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 382000000
+  },
+  {
+    "id": "customer-P049",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 49",
+    "document": "P049",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P049-0",
+        "cropName": "Café",
+        "areaHa": 330,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 330000000
+      },
+      {
+        "id": "area-id-P049-1",
+        "cropName": "Soja",
+        "areaHa": 190,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 76000000
+      },
+      {
+        "id": "area-id-P049-2",
+        "cropName": "Milho",
+        "areaHa": 150,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 45000000
+      }
+    ],
+    "vpmTotalCentavos": 451000000
+  },
+  {
+    "id": "customer-P050",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 50",
+    "document": "P050",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P050-0",
+        "cropName": "Café",
+        "areaHa": 390,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 390000000
+      },
+      {
+        "id": "area-id-P050-1",
+        "cropName": "Soja",
+        "areaHa": 110,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 44000000
+      },
+      {
+        "id": "area-id-P050-2",
+        "cropName": "Milho",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 27000000
+      }
+    ],
+    "vpmTotalCentavos": 461000000
+  },
+  {
+    "id": "customer-P051",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 51",
+    "document": "P051",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P051-0",
+        "cropName": "Café",
+        "areaHa": 290,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 290000000
+      },
+      {
+        "id": "area-id-P051-1",
+        "cropName": "Soja",
+        "areaHa": 190,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 76000000
+      },
+      {
+        "id": "area-id-P051-2",
+        "cropName": "Milho",
+        "areaHa": 150,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 45000000
+      }
+    ],
+    "vpmTotalCentavos": 411000000
+  },
+  {
+    "id": "customer-P052",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 52",
+    "document": "P052",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P052-0",
+        "cropName": "Café",
+        "areaHa": 300,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 300000000
+      },
+      {
+        "id": "area-id-P052-1",
+        "cropName": "Soja",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 64000000
+      },
+      {
+        "id": "area-id-P052-2",
+        "cropName": "Milho",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 403000000
+  },
+  {
+    "id": "customer-P053",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 53",
+    "document": "P053",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P053-0",
+        "cropName": "Café",
+        "areaHa": 310,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 310000000
+      },
+      {
+        "id": "area-id-P053-1",
+        "cropName": "Soja",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 52000000
+      },
+      {
+        "id": "area-id-P053-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 392000000
+  },
+  {
+    "id": "customer-P054",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 54",
+    "document": "P054",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P054-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P054-1",
+        "cropName": "Soja",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 40000000
+      },
+      {
+        "id": "area-id-P054-2",
+        "cropName": "Milho",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 24000000
+      }
+    ],
+    "vpmTotalCentavos": 64000000
+  },
+  {
+    "id": "customer-P055",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 55",
+    "document": "P055",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P055-0",
+        "cropName": "Café",
+        "areaHa": 320,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 320000000
+      },
+      {
+        "id": "area-id-P055-1",
+        "cropName": "Soja",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 32000000
+      },
+      {
+        "id": "area-id-P055-2",
+        "cropName": "Milho",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 370000000
+  },
+  {
+    "id": "customer-P056",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 56",
+    "document": "P056",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P056-0",
+        "cropName": "Café",
+        "areaHa": 270,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 270000000
+      },
+      {
+        "id": "area-id-P056-1",
+        "cropName": "Soja",
+        "areaHa": 110,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 44000000
+      },
+      {
+        "id": "area-id-P056-2",
+        "cropName": "Milho",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 27000000
+      }
+    ],
+    "vpmTotalCentavos": 341000000
+  },
+  {
+    "id": "customer-P057",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 57",
+    "document": "P057",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P057-0",
+        "cropName": "Café",
+        "areaHa": 240,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 240000000
+      },
+      {
+        "id": "area-id-P057-1",
+        "cropName": "Soja",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 48000000
+      },
+      {
+        "id": "area-id-P057-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 318000000
+  },
+  {
+    "id": "customer-P058",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 58",
+    "document": "P058",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P058-0",
+        "cropName": "Café",
+        "areaHa": 260,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 260000000
+      },
+      {
+        "id": "area-id-P058-1",
+        "cropName": "Soja",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 32000000
+      },
+      {
+        "id": "area-id-P058-2",
+        "cropName": "Milho",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 310000000
+  },
+  {
+    "id": "customer-P059",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 59",
+    "document": "P059",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P059-0",
+        "cropName": "Café",
+        "areaHa": 200,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 200000000
+      },
+      {
+        "id": "area-id-P059-1",
+        "cropName": "Soja",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 48000000
+      },
+      {
+        "id": "area-id-P059-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 278000000
+  },
+  {
+    "id": "customer-P060",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 60",
+    "document": "P060",
+    "city": "Patrocínio",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P060-0",
+        "cropName": "Café",
+        "areaHa": 230,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 230000000
+      },
+      {
+        "id": "area-id-P060-1",
+        "cropName": "Soja",
+        "areaHa": 70,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 28000000
+      },
+      {
+        "id": "area-id-P060-2",
+        "cropName": "Milho",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 276000000
+  },
+  {
+    "id": "customer-P061",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 61",
+    "document": "P061",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P061-0",
+        "cropName": "Café",
+        "areaHa": 170,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 170000000
+      },
+      {
+        "id": "area-id-P061-1",
+        "cropName": "Soja",
+        "areaHa": 110,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 44000000
+      },
+      {
+        "id": "area-id-P061-2",
+        "cropName": "Milho",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 27000000
+      }
+    ],
+    "vpmTotalCentavos": 241000000
+  },
+  {
+    "id": "customer-P062",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 62",
+    "document": "P062",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P062-0",
+        "cropName": "Café",
+        "areaHa": 170,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 170000000
+      },
+      {
+        "id": "area-id-P062-1",
+        "cropName": "Soja",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 36000000
+      },
+      {
+        "id": "area-id-P062-2",
+        "cropName": "Milho",
+        "areaHa": 70,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 21000000
+      }
+    ],
+    "vpmTotalCentavos": 227000000
+  },
+  {
+    "id": "customer-P063",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 63",
+    "document": "P063",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P063-0",
+        "cropName": "Café",
+        "areaHa": 170,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 170000000
+      },
+      {
+        "id": "area-id-P063-1",
+        "cropName": "Soja",
+        "areaHa": 70,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 28000000
+      },
+      {
+        "id": "area-id-P063-2",
+        "cropName": "Milho",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 216000000
+  },
+  {
+    "id": "customer-P064",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 64",
+    "document": "P064",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P064-0",
+        "cropName": "Café",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P064-1",
+        "cropName": "Soja",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 24000000
+      },
+      {
+        "id": "area-id-P064-2",
+        "cropName": "Milho",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 199000000
+  },
+  {
+    "id": "customer-P065",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 65",
+    "document": "P065",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P065-0",
+        "cropName": "Café",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 160000000
+      },
+      {
+        "id": "area-id-P065-1",
+        "cropName": "Soja",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 16000000
+      },
+      {
+        "id": "area-id-P065-2",
+        "cropName": "Milho",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 185000000
+  },
+  {
+    "id": "customer-P066",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 66",
+    "document": "P066",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P066-0",
+        "cropName": "Café",
+        "areaHa": 140,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 140000000
+      },
+      {
+        "id": "area-id-P066-1",
+        "cropName": "Soja",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 20000000
+      },
+      {
+        "id": "area-id-P066-2",
+        "cropName": "Milho",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 12000000
+      }
+    ],
+    "vpmTotalCentavos": 172000000
+  },
+  {
+    "id": "customer-P067",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 67",
+    "document": "P067",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P067-0",
+        "cropName": "Café",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P067-1",
+        "cropName": "Soja",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 24000000
+      },
+      {
+        "id": "area-id-P067-2",
+        "cropName": "Milho",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 159000000
+  },
+  {
+    "id": "customer-P068",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 68",
+    "document": "P068",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P068-0",
+        "cropName": "Café",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 130000000
+      },
+      {
+        "id": "area-id-P068-1",
+        "cropName": "Soja",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 16000000
+      },
+      {
+        "id": "area-id-P068-2",
+        "cropName": "Milho",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 155000000
+  },
+  {
+    "id": "customer-P069",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 69",
+    "document": "P069",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P069-0",
+        "cropName": "Café",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 100000000
+      },
+      {
+        "id": "area-id-P069-1",
+        "cropName": "Soja",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 24000000
+      },
+      {
+        "id": "area-id-P069-2",
+        "cropName": "Milho",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 139000000
+  },
+  {
+    "id": "customer-P070",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 70",
+    "document": "P070",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P070-0",
+        "cropName": "Café",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 120000000
+      },
+      {
+        "id": "area-id-P070-1",
+        "cropName": "Soja",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 12000000
+      },
+      {
+        "id": "area-id-P070-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 138000000
+  },
+  {
+    "id": "customer-P071",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 71",
+    "document": "P071",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P071-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P071-1",
+        "cropName": "Soja",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 24000000
+      },
+      {
+        "id": "area-id-P071-2",
+        "cropName": "Milho",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 119000000
+  },
+  {
+    "id": "customer-P072",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 72",
+    "document": "P072",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P072-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P072-1",
+        "cropName": "Soja",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 20000000
+      },
+      {
+        "id": "area-id-P072-2",
+        "cropName": "Milho",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 12000000
+      }
+    ],
+    "vpmTotalCentavos": 112000000
+  },
+  {
+    "id": "customer-P073",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 73",
+    "document": "P073",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P073-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P073-1",
+        "cropName": "Soja",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 16000000
+      },
+      {
+        "id": "area-id-P073-2",
+        "cropName": "Milho",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 105000000
+  },
+  {
+    "id": "customer-P074",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 74",
+    "document": "P074",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P074-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P074-1",
+        "cropName": "Soja",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 12000000
+      },
+      {
+        "id": "area-id-P074-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 98000000
+  },
+  {
+    "id": "customer-P075",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 75",
+    "document": "P075",
+    "city": "Monte Carmelo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P075-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P075-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P075-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 94000000
+  },
+  {
+    "id": "customer-P076",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 76",
+    "document": "P076",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P076-0",
+        "cropName": "Café",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 60000000
+      },
+      {
+        "id": "area-id-P076-1",
+        "cropName": "Soja",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 12000000
+      },
+      {
+        "id": "area-id-P076-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 78000000
+  },
+  {
+    "id": "customer-P077",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 77",
+    "document": "P077",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P077-0",
+        "cropName": "Café",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 50000000
+      },
+      {
+        "id": "area-id-P077-1",
+        "cropName": "Soja",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 12000000
+      },
+      {
+        "id": "area-id-P077-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 68000000
+  },
+  {
+    "id": "customer-P078",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 78",
+    "document": "P078",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P078-0",
+        "cropName": "Café",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 50000000
+      },
+      {
+        "id": "area-id-P078-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P078-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 64000000
+  },
+  {
+    "id": "customer-P079",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 79",
+    "document": "P079",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P079-0",
+        "cropName": "Café",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 40000000
+      },
+      {
+        "id": "area-id-P079-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P079-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 54000000
+  },
+  {
+    "id": "customer-P080",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 80",
+    "document": "P080",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P080-0",
+        "cropName": "Café",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 40000000
+      },
+      {
+        "id": "area-id-P080-1",
+        "cropName": "Soja",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 4000000
+      },
+      {
+        "id": "area-id-P080-2",
+        "cropName": "Milho",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 47000000
+  },
+  {
+    "id": "customer-P081",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 81",
+    "document": "P081",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P081-0",
+        "cropName": "Café",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 20000000
+      },
+      {
+        "id": "area-id-P081-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P081-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 34000000
+  },
+  {
+    "id": "customer-P082",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 82",
+    "document": "P082",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P082-0",
+        "cropName": "Café",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 20000000
+      },
+      {
+        "id": "area-id-P082-1",
+        "cropName": "Soja",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 4000000
+      },
+      {
+        "id": "area-id-P082-2",
+        "cropName": "Milho",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 27000000
+  },
+  {
+    "id": "customer-P083",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 83",
+    "document": "P083",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P083-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P083-1",
+        "cropName": "Soja",
+        "areaHa": 210,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 84000000
+      },
+      {
+        "id": "area-id-P083-2",
+        "cropName": "Milho",
+        "areaHa": 170,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 51000000
+      }
+    ],
+    "vpmTotalCentavos": 135000000
+  },
+  {
+    "id": "customer-P084",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 84",
+    "document": "P084",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P084-0",
+        "cropName": "Café",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 60000000
+      },
+      {
+        "id": "area-id-P084-1",
+        "cropName": "Soja",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 64000000
+      },
+      {
+        "id": "area-id-P084-2",
+        "cropName": "Milho",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 163000000
+  },
+  {
+    "id": "customer-P085",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 85",
+    "document": "P085",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P085-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P085-1",
+        "cropName": "Soja",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 48000000
+      },
+      {
+        "id": "area-id-P085-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 158000000
+  },
+  {
+    "id": "customer-P086",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 86",
+    "document": "P086",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P086-0",
+        "cropName": "Café",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 60000000
+      },
+      {
+        "id": "area-id-P086-1",
+        "cropName": "Soja",
+        "areaHa": 150,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 60000000
+      },
+      {
+        "id": "area-id-P086-2",
+        "cropName": "Milho",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 36000000
+      }
+    ],
+    "vpmTotalCentavos": 156000000
+  },
+  {
+    "id": "customer-P087",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 87",
+    "document": "P087",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P087-0",
+        "cropName": "Café",
+        "areaHa": 70,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 70000000
+      },
+      {
+        "id": "area-id-P087-1",
+        "cropName": "Soja",
+        "areaHa": 160,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 64000000
+      },
+      {
+        "id": "area-id-P087-2",
+        "cropName": "Milho",
+        "areaHa": 130,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 173000000
+  },
+  {
+    "id": "customer-P088",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 88",
+    "document": "P088",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P088-0",
+        "cropName": "Café",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 30000000
+      },
+      {
+        "id": "area-id-P088-1",
+        "cropName": "Soja",
+        "areaHa": 110,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 44000000
+      },
+      {
+        "id": "area-id-P088-2",
+        "cropName": "Milho",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 27000000
+      }
+    ],
+    "vpmTotalCentavos": 101000000
+  },
+  {
+    "id": "customer-P089",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 89",
+    "document": "P089",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P089-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P089-1",
+        "cropName": "Soja",
+        "areaHa": 140,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 56000000
+      },
+      {
+        "id": "area-id-P089-2",
+        "cropName": "Milho",
+        "areaHa": 110,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 33000000
+      }
+    ],
+    "vpmTotalCentavos": 169000000
+  },
+  {
+    "id": "customer-P090",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 90",
+    "document": "P090",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P090-0",
+        "cropName": "Café",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 90000000
+      },
+      {
+        "id": "area-id-P090-1",
+        "cropName": "Soja",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 32000000
+      },
+      {
+        "id": "area-id-P090-2",
+        "cropName": "Milho",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 140000000
+  },
+  {
+    "id": "customer-P091",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 91",
+    "document": "P091",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P091-0",
+        "cropName": "Café",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 10000000
+      },
+      {
+        "id": "area-id-P091-1",
+        "cropName": "Soja",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 48000000
+      },
+      {
+        "id": "area-id-P091-2",
+        "cropName": "Milho",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 88000000
+  },
+  {
+    "id": "customer-P092",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 92",
+    "document": "P092",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P092-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P092-1",
+        "cropName": "Soja",
+        "areaHa": 90,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 36000000
+      },
+      {
+        "id": "area-id-P092-2",
+        "cropName": "Milho",
+        "areaHa": 70,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 21000000
+      }
+    ],
+    "vpmTotalCentavos": 57000000
+  },
+  {
+    "id": "customer-P093",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 93",
+    "document": "P093",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P093-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P093-1",
+        "cropName": "Soja",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 24000000
+      },
+      {
+        "id": "area-id-P093-2",
+        "cropName": "Milho",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 39000000
+  },
+  {
+    "id": "customer-P094",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 94",
+    "document": "P094",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P094-0",
+        "cropName": "Café",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 0
+      },
+      {
+        "id": "area-id-P094-1",
+        "cropName": "Soja",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 16000000
+      },
+      {
+        "id": "area-id-P094-2",
+        "cropName": "Milho",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 25000000
+  },
+  {
+    "id": "customer-P095",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 95",
+    "document": "P095",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P095-0",
+        "cropName": "Café",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 80000000
+      },
+      {
+        "id": "area-id-P095-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P095-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 94000000
+  },
+  {
+    "id": "customer-P096",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 96",
+    "document": "P096",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P096-0",
+        "cropName": "Café",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 60000000
+      },
+      {
+        "id": "area-id-P096-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P096-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 74000000
+  },
+  {
+    "id": "customer-P097",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 97",
+    "document": "P097",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P097-0",
+        "cropName": "Café",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 40000000
+      },
+      {
+        "id": "area-id-P097-1",
+        "cropName": "Soja",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 8000000
+      },
+      {
+        "id": "area-id-P097-2",
+        "cropName": "Milho",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 54000000
+  },
+  {
+    "id": "customer-P098",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 98",
+    "document": "P098",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P098-0",
+        "cropName": "Café",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 40000000
+      },
+      {
+        "id": "area-id-P098-1",
+        "cropName": "Soja",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 4000000
+      },
+      {
+        "id": "area-id-P098-2",
+        "cropName": "Milho",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 47000000
+  },
+  {
+    "id": "customer-P099",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 99",
+    "document": "P099",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P099-0",
+        "cropName": "Café",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 30000000
+      },
+      {
+        "id": "area-id-P099-1",
+        "cropName": "Soja",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 4000000
+      },
+      {
+        "id": "area-id-P099-2",
+        "cropName": "Milho",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 37000000
+  },
+  {
+    "id": "customer-P100",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 100",
+    "document": "P100",
+    "city": "Carmo do Paranaíba",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P100-0",
+        "cropName": "Café",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 1000000,
+        "vpmCentavos": 20000000
+      },
+      {
+        "id": "area-id-P100-1",
+        "cropName": "Soja",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 400000,
+        "vpmCentavos": 4000000
+      },
+      {
+        "id": "area-id-P100-2",
+        "cropName": "Milho",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 300000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 27000000
+  },
+  {
+    "id": "customer-P101",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 101",
+    "document": "P101",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P101-0",
+        "cropName": "HF",
+        "areaHa": 133,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 399000000
+      }
+    ],
+    "vpmTotalCentavos": 399000000
+  },
+  {
+    "id": "customer-P102",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 102",
+    "document": "P102",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P102-0",
+        "cropName": "HF",
+        "areaHa": 127,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 381000000
+      }
+    ],
+    "vpmTotalCentavos": 381000000
+  },
+  {
+    "id": "customer-P103",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 103",
+    "document": "P103",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P103-0",
+        "cropName": "HF",
+        "areaHa": 120,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 360000000
+      }
+    ],
+    "vpmTotalCentavos": 360000000
+  },
+  {
+    "id": "customer-P104",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 104",
+    "document": "P104",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P104-0",
+        "cropName": "HF",
+        "areaHa": 113,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 339000000
+      }
+    ],
+    "vpmTotalCentavos": 339000000
+  },
+  {
+    "id": "customer-P105",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 105",
+    "document": "P105",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P105-0",
+        "cropName": "HF",
+        "areaHa": 107,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 321000000
+      }
+    ],
+    "vpmTotalCentavos": 321000000
+  },
+  {
+    "id": "customer-P106",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 106",
+    "document": "P106",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P106-0",
+        "cropName": "HF",
+        "areaHa": 100,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 300000000
+      }
+    ],
+    "vpmTotalCentavos": 300000000
+  },
+  {
+    "id": "customer-P107",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 107",
+    "document": "P107",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P107-0",
+        "cropName": "HF",
+        "areaHa": 93,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 279000000
+      }
+    ],
+    "vpmTotalCentavos": 279000000
+  },
+  {
+    "id": "customer-P108",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 108",
+    "document": "P108",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P108-0",
+        "cropName": "HF",
+        "areaHa": 87,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 261000000
+      }
+    ],
+    "vpmTotalCentavos": 261000000
+  },
+  {
+    "id": "customer-P109",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 109",
+    "document": "P109",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P109-0",
+        "cropName": "HF",
+        "areaHa": 80,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 240000000
+      }
+    ],
+    "vpmTotalCentavos": 240000000
+  },
+  {
+    "id": "customer-P110",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 110",
+    "document": "P110",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P110-0",
+        "cropName": "HF",
+        "areaHa": 73,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 219000000
+      }
+    ],
+    "vpmTotalCentavos": 219000000
+  },
+  {
+    "id": "customer-P111",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 111",
+    "document": "P111",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P111-0",
+        "cropName": "HF",
+        "areaHa": 67,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 201000000
+      }
+    ],
+    "vpmTotalCentavos": 201000000
+  },
+  {
+    "id": "customer-P112",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 112",
+    "document": "P112",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P112-0",
+        "cropName": "HF",
+        "areaHa": 60,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 180000000
+      }
+    ],
+    "vpmTotalCentavos": 180000000
+  },
+  {
+    "id": "customer-P113",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 113",
+    "document": "P113",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P113-0",
+        "cropName": "HF",
+        "areaHa": 53,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 159000000
+      }
+    ],
+    "vpmTotalCentavos": 159000000
+  },
+  {
+    "id": "customer-P114",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 114",
+    "document": "P114",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P114-0",
+        "cropName": "HF",
+        "areaHa": 47,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 141000000
+      }
+    ],
+    "vpmTotalCentavos": 141000000
+  },
+  {
+    "id": "customer-P115",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 115",
+    "document": "P115",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P115-0",
+        "cropName": "HF",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 120000000
+  },
+  {
+    "id": "customer-P116",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 116",
+    "document": "P116",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P116-0",
+        "cropName": "HF",
+        "areaHa": 33,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 99000000
+      }
+    ],
+    "vpmTotalCentavos": 99000000
+  },
+  {
+    "id": "customer-P117",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 117",
+    "document": "P117",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P117-0",
+        "cropName": "HF",
+        "areaHa": 27,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 81000000
+      }
+    ],
+    "vpmTotalCentavos": 81000000
+  },
+  {
+    "id": "customer-P118",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 118",
+    "document": "P118",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P118-0",
+        "cropName": "HF",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 60000000
+  },
+  {
+    "id": "customer-P119",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 119",
+    "document": "P119",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P119-0",
+        "cropName": "HF",
+        "areaHa": 13,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 39000000
+  },
+  {
+    "id": "customer-P120",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 120",
+    "document": "P120",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P120-0",
+        "cropName": "HF",
+        "areaHa": 7,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 21000000
+      }
+    ],
+    "vpmTotalCentavos": 21000000
+  },
+  {
+    "id": "customer-P121",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 121",
+    "document": "P121",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P121-0",
+        "cropName": "HF",
+        "areaHa": 50,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 150000000
+      }
+    ],
+    "vpmTotalCentavos": 150000000
+  },
+  {
+    "id": "customer-P122",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 122",
+    "document": "P122",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P122-0",
+        "cropName": "HF",
+        "areaHa": 48,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 144000000
+      }
+    ],
+    "vpmTotalCentavos": 144000000
+  },
+  {
+    "id": "customer-P123",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 123",
+    "document": "P123",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P123-0",
+        "cropName": "HF",
+        "areaHa": 45,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 135000000
+      }
+    ],
+    "vpmTotalCentavos": 135000000
+  },
+  {
+    "id": "customer-P124",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 124",
+    "document": "P124",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P124-0",
+        "cropName": "HF",
+        "areaHa": 43,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 129000000
+      }
+    ],
+    "vpmTotalCentavos": 129000000
+  },
+  {
+    "id": "customer-P125",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 125",
+    "document": "P125",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P125-0",
+        "cropName": "HF",
+        "areaHa": 40,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 120000000
+      }
+    ],
+    "vpmTotalCentavos": 120000000
+  },
+  {
+    "id": "customer-P126",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 126",
+    "document": "P126",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P126-0",
+        "cropName": "HF",
+        "areaHa": 38,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 114000000
+      }
+    ],
+    "vpmTotalCentavos": 114000000
+  },
+  {
+    "id": "customer-P127",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 127",
+    "document": "P127",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P127-0",
+        "cropName": "HF",
+        "areaHa": 35,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 105000000
+      }
+    ],
+    "vpmTotalCentavos": 105000000
+  },
+  {
+    "id": "customer-P128",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 128",
+    "document": "P128",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P128-0",
+        "cropName": "HF",
+        "areaHa": 33,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 99000000
+      }
+    ],
+    "vpmTotalCentavos": 99000000
+  },
+  {
+    "id": "customer-P129",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 129",
+    "document": "P129",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P129-0",
+        "cropName": "HF",
+        "areaHa": 30,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 90000000
+      }
+    ],
+    "vpmTotalCentavos": 90000000
+  },
+  {
+    "id": "customer-P130",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 130",
+    "document": "P130",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P130-0",
+        "cropName": "HF",
+        "areaHa": 28,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 84000000
+      }
+    ],
+    "vpmTotalCentavos": 84000000
+  },
+  {
+    "id": "customer-P131",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 131",
+    "document": "P131",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P131-0",
+        "cropName": "HF",
+        "areaHa": 25,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 75000000
+      }
+    ],
+    "vpmTotalCentavos": 75000000
+  },
+  {
+    "id": "customer-P132",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 132",
+    "document": "P132",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P132-0",
+        "cropName": "HF",
+        "areaHa": 23,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 69000000
+      }
+    ],
+    "vpmTotalCentavos": 69000000
+  },
+  {
+    "id": "customer-P133",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 133",
+    "document": "P133",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P133-0",
+        "cropName": "HF",
+        "areaHa": 20,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 60000000
+      }
+    ],
+    "vpmTotalCentavos": 60000000
+  },
+  {
+    "id": "customer-P134",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 134",
+    "document": "P134",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P134-0",
+        "cropName": "HF",
+        "areaHa": 18,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 54000000
+      }
+    ],
+    "vpmTotalCentavos": 54000000
+  },
+  {
+    "id": "customer-P135",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 135",
+    "document": "P135",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P135-0",
+        "cropName": "HF",
+        "areaHa": 15,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 45000000
+      }
+    ],
+    "vpmTotalCentavos": 45000000
+  },
+  {
+    "id": "customer-P136",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 136",
+    "document": "P136",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P136-0",
+        "cropName": "HF",
+        "areaHa": 13,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 39000000
+      }
+    ],
+    "vpmTotalCentavos": 39000000
+  },
+  {
+    "id": "customer-P137",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 137",
+    "document": "P137",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P137-0",
+        "cropName": "HF",
+        "areaHa": 10,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 30000000
+      }
+    ],
+    "vpmTotalCentavos": 30000000
+  },
+  {
+    "id": "customer-P138",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 138",
+    "document": "P138",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P138-0",
+        "cropName": "HF",
+        "areaHa": 8,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 24000000
+      }
+    ],
+    "vpmTotalCentavos": 24000000
+  },
+  {
+    "id": "customer-P139",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 139",
+    "document": "P139",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P139-0",
+        "cropName": "HF",
+        "areaHa": 5,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 15000000
+  },
+  {
+    "id": "customer-P140",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 140",
+    "document": "P140",
+    "city": "Perdizes",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P140-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P141",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 141",
+    "document": "P141",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P141-0",
+        "cropName": "HF",
+        "areaHa": 8,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 24000000
+      }
+    ],
+    "vpmTotalCentavos": 24000000
+  },
+  {
+    "id": "customer-P142",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 142",
+    "document": "P142",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P142-0",
+        "cropName": "HF",
+        "areaHa": 8,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 24000000
+      }
+    ],
+    "vpmTotalCentavos": 24000000
+  },
+  {
+    "id": "customer-P143",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 143",
+    "document": "P143",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P143-0",
+        "cropName": "HF",
+        "areaHa": 7,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 21000000
+      }
+    ],
+    "vpmTotalCentavos": 21000000
+  },
+  {
+    "id": "customer-P144",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 144",
+    "document": "P144",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P144-0",
+        "cropName": "HF",
+        "areaHa": 7,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 21000000
+      }
+    ],
+    "vpmTotalCentavos": 21000000
+  },
+  {
+    "id": "customer-P145",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 145",
+    "document": "P145",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P145-0",
+        "cropName": "HF",
+        "areaHa": 6,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 18000000
+  },
+  {
+    "id": "customer-P146",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 146",
+    "document": "P146",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P146-0",
+        "cropName": "HF",
+        "areaHa": 6,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 18000000
+  },
+  {
+    "id": "customer-P147",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 147",
+    "document": "P147",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P147-0",
+        "cropName": "HF",
+        "areaHa": 6,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 18000000
+      }
+    ],
+    "vpmTotalCentavos": 18000000
+  },
+  {
+    "id": "customer-P148",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 148",
+    "document": "P148",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P148-0",
+        "cropName": "HF",
+        "areaHa": 5,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 15000000
+  },
+  {
+    "id": "customer-P149",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 149",
+    "document": "P149",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P149-0",
+        "cropName": "HF",
+        "areaHa": 5,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 15000000
+      }
+    ],
+    "vpmTotalCentavos": 15000000
+  },
+  {
+    "id": "customer-P150",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 150",
+    "document": "P150",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P150-0",
+        "cropName": "HF",
+        "areaHa": 4,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 12000000
+      }
+    ],
+    "vpmTotalCentavos": 12000000
+  },
+  {
+    "id": "customer-P151",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 151",
+    "document": "P151",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P151-0",
+        "cropName": "HF",
+        "areaHa": 4,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 12000000
+      }
+    ],
+    "vpmTotalCentavos": 12000000
+  },
+  {
+    "id": "customer-P152",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 152",
+    "document": "P152",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P152-0",
+        "cropName": "HF",
+        "areaHa": 4,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 12000000
+      }
+    ],
+    "vpmTotalCentavos": 12000000
+  },
+  {
+    "id": "customer-P153",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 153",
+    "document": "P153",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P153-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P154",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 154",
+    "document": "P154",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P154-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P155",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 155",
+    "document": "P155",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P155-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P156",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 156",
+    "document": "P156",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P156-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P157",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 157",
+    "document": "P157",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P157-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P158",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 158",
+    "document": "P158",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P158-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P159",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 159",
+    "document": "P159",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P159-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P160",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 160",
+    "document": "P160",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P160-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  },
+  {
+    "id": "customer-P161",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 161",
+    "document": "P161",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P161-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P162",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 162",
+    "document": "P162",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P162-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P163",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 163",
+    "document": "P163",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P163-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P164",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 164",
+    "document": "P164",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P164-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P165",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 165",
+    "document": "P165",
+    "city": "Araguari",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P165-0",
+        "cropName": "HF",
+        "areaHa": 3,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 9000000
+      }
+    ],
+    "vpmTotalCentavos": 9000000
+  },
+  {
+    "id": "customer-P166",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 166",
+    "document": "P166",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P166-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P167",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 167",
+    "document": "P167",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P167-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P168",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 168",
+    "document": "P168",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P168-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P169",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 169",
+    "document": "P169",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P169-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P170",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 170",
+    "document": "P170",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P170-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P171",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 171",
+    "document": "P171",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P171-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P172",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 172",
+    "document": "P172",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P172-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P173",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 173",
+    "document": "P173",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P173-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P174",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 174",
+    "document": "P174",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P174-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P175",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 175",
+    "document": "P175",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P175-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P176",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 176",
+    "document": "P176",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P176-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P177",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 177",
+    "document": "P177",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P177-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P178",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 178",
+    "document": "P178",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P178-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P179",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 179",
+    "document": "P179",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P179-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  },
+  {
+    "id": "customer-P180",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 180",
+    "document": "P180",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P180-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  },
+  {
+    "id": "customer-P181",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 181",
+    "document": "P181",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P181-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P182",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 182",
+    "document": "P182",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P182-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P183",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 183",
+    "document": "P183",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P183-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P184",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 184",
+    "document": "P184",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P184-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P185",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 185",
+    "document": "P185",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P185-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P186",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 186",
+    "document": "P186",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P186-0",
+        "cropName": "HF",
+        "areaHa": 2,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 6000000
+      }
+    ],
+    "vpmTotalCentavos": 6000000
+  },
+  {
+    "id": "customer-P187",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 187",
+    "document": "P187",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P187-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P188",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 188",
+    "document": "P188",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P188-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P189",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 189",
+    "document": "P189",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P189-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P190",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 190",
+    "document": "P190",
+    "city": "São Gotardo",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P190-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P191",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 191",
+    "document": "P191",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P191-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P192",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 192",
+    "document": "P192",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P192-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P193",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 193",
+    "document": "P193",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P193-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P194",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 194",
+    "document": "P194",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P194-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P195",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 195",
+    "document": "P195",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P195-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P196",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 196",
+    "document": "P196",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P196-0",
+        "cropName": "HF",
+        "areaHa": 1,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 3000000
+      }
+    ],
+    "vpmTotalCentavos": 3000000
+  },
+  {
+    "id": "customer-P197",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 197",
+    "document": "P197",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P197-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  },
+  {
+    "id": "customer-P198",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 198",
+    "document": "P198",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P198-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  },
+  {
+    "id": "customer-P199",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 199",
+    "document": "P199",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P199-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  },
+  {
+    "id": "customer-P200",
+    "tenantId": "00000000-0000-0000-0000-000000000000",
+    "ctvId": "mock-ctv-uuid-001",
+    "name": "Nome produtor 200",
+    "document": "P200",
+    "city": "Sacramento",
+    "state": "MG",
+    "region": "Região Geral",
+    "performanceBand": "CINZA",
+    "confidenceLevel": "AMARELO",
+    "creditRating": "C",
+    "walletShare": 0,
+    "qualitativeWeight": 3,
+    "areas": [
+      {
+        "id": "area-id-P200-0",
+        "cropName": "HF",
+        "areaHa": 0,
+        "valorPorHectareCentavos": 3000000,
+        "vpmCentavos": 0
+      }
+    ],
+    "vpmTotalCentavos": 0
+  }
+]

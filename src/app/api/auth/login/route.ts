@@ -59,9 +59,9 @@ export async function POST(request: Request) {
       let tenantId = '00000000-0000-0000-0000-000000000000'; // Default Piloto
       let role = 'admin';
 
-      if (email.includes('tenant1')) {
+      if (email.includes('tenant1') || email.includes('teste1')) {
         tenantId = '11111111-1111-1111-1111-111111111111';
-      } else if (email.includes('tenant2')) {
+      } else if (email.includes('tenant2') || email.includes('teste2')) {
         tenantId = '22222222-2222-2222-2222-222222222222';
       }
 

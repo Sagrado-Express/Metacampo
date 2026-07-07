@@ -1,0 +1,32 @@
+[
+  {
+    "Cultivo": "Soja",
+    "ITR Safra Anterior -1 (R$/ha)": 3500,
+    "ITR Safra Corrente (R$/ha)": 4000,
+    "Variação %": 0.1428571428571428
+  },
+  {
+    "Cultivo": "Milho",
+    "ITR Safra Anterior -1 (R$/ha)": 2600,
+    "ITR Safra Corrente (R$/ha)": 3000,
+    "Variação %": 0.15384615384615374
+  },
+  {
+    "Cultivo": "Café",
+    "ITR Safra Anterior -1 (R$/ha)": 8900,
+    "ITR Safra Corrente (R$/ha)": 10000,
+    "Variação %": 0.12359550561797761
+  },
+  {
+    "Cultivo": "HF",
+    "ITR Safra Anterior -1 (R$/ha)": 28100,
+    "ITR Safra Corrente (R$/ha)": 30000,
+    "Variação %": 0.06761565836298922
+  },
+  {
+    "Cultivo": "Algodão",
+    "ITR Safra Anterior -1 (R$/ha)": 8900,
+    "ITR Safra Corrente (R$/ha)": 10000,
+    "Variação %": 0.12359550561797761
+  }
+]

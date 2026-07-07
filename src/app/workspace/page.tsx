@@ -31,6 +31,9 @@ export default function WorkspacePage() {
   const [showReconciliation, setShowReconciliation] = useState(false);
   const [unmappedSegments, setUnmappedSegments] = useState<string[]>([]);
   
+  const [dbClients, setDbClients] = useState<any[]>([]);
+  const [faturamentoList, setFaturamentoList] = useState<any[]>([]);
+
   useEffect(() => {
     async function checkSession() {
       try {
@@ -38,6 +41,20 @@ export default function WorkspacePage() {
         if (res.ok) {
           const data = await res.json();
           setSession(data.session);
+          
+          // Fetch real db clients and faturamento snapshots
+          const [clientsRes, faturamentoRes] = await Promise.all([
+            fetch("/api/clientes"),
+            fetch("/api/faturamento")
+          ]);
+          if (clientsRes.ok) {
+            const clientsData = await clientsRes.json();
+            setDbClients(clientsData);
+          }
+          if (faturamentoRes.ok) {
+            const faturamentoData = await faturamentoRes.json();
+            setFaturamentoList(faturamentoData);
+          }
         } else {
           router.push("/login");
         }
@@ -55,37 +72,60 @@ export default function WorkspacePage() {
   
   // Real data mapping for the Hunting Radar (The "Map")
   const radarClients = useMemo(() => {
-    return MOCK_TEST_DATA.map(d => {
-      // Calculate VPM based on standard ITAA factor (3500 R$/ha)
-      const vpmTotal = (d.areas.soja + d.areas.milho + d.areas.algodao + d.areas.cana + d.areas.cafe) * 3500;
-      
-      // Get realized from MONTHLY_MASTER_BASE for this client (using CTV as proxy for now)
-      const realized = MONTHLY_MASTER_BASE
-        .filter(m => m.ctvId === "CTV01" && m.mes === "05") // Simulation
-        .reduce((acc, curr) => acc + curr.realizado, 0) / 10; // Divided among clients
+    const clientsSource = dbClients.length > 0 ? dbClients : MOCK_TEST_DATA.map(d => {
+      const totalArea = d.areas.soja + d.areas.milho + d.areas.algodao + d.areas.cana + d.areas.cafe;
+      return {
+        id: d.id,
+        name: d.name,
+        city: d.city,
+        state: d.uf,
+        vpmTotalCentavos: totalArea * 3500 * 100,
+        areas: [
+          { cropName: "Soja", areaHa: d.areas.soja },
+          { cropName: "Milho", areaHa: d.areas.milho },
+          { cropName: "Algodão", areaHa: d.areas.algodao },
+          { cropName: "Cana", areaHa: d.areas.cana },
+          { cropName: "Café", areaHa: d.areas.cafe }
+        ],
+        performanceBand: d.rating === 'A' ? "AZUL" : "VERDE"
+      };
+    });
 
-      // Calculate Technical Input Recommendation (Passo 5)
+    return clientsSource.map(d => {
+      const vpmTotal = (d.vpmTotalCentavos || 0) / 100;
+      
+      const relevantFaturamento = faturamentoList.filter(f => f.id_ctv === d.ctvId || f.id_ctv === "CTV01");
+      const realized = relevantFaturamento.length > 0 
+        ? relevantFaturamento.reduce((acc, curr) => acc + (curr.valor_realizado_centavos || 0), 0) / 100 / 10
+        : (MONTHLY_MASTER_BASE.filter(m => m.ctvId === "CTV01" && m.mes === "05").reduce((acc, curr) => acc + curr.realizado, 0) / 10);
+
+      const sojaHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'SOJA')?.areaHa || 0;
+      const milhoHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'MILHO')?.areaHa || 0;
+      const algodaoHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'ALGODAO')?.areaHa || 0;
+      const canaHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'CANA')?.areaHa || 0;
+      const cafeHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'CAFE')?.areaHa || 0;
+
       const recommendedInputs = 
-        (d.areas.soja * 1800) + 
-        (d.areas.milho * 1200) + 
-        (d.areas.algodao * 3500) + 
-        (d.areas.cana * 2000) + 
-        (d.areas.cafe * 2500);
+        (sojaHa * 1800) + 
+        (milhoHa * 1200) + 
+        (algodaoHa * 3500) + 
+        (canaHa * 2000) + 
+        (cafeHa * 2500);
       
       const deficitTecnico = Math.max(0, recommendedInputs - realized);
 
       return {
         id: d.id,
         name: d.name,
-        city: `${d.city} - ${d.uf}`,
+        city: `${d.city} - ${d.state || d.uf || ''}`,
         vpmTotal: vpmTotal,
         realizedMonth: realized,
         toGoMonth: Math.max(0, vpmTotal - realized),
-        pareto: d.rating === 'A' ? "AZUL" as const : "VERDE" as const,
+        pareto: d.performanceBand === 'AZUL' || d.rating === 'A' ? "AZUL" as const : "VERDE" as const,
         deficitTecnico
       };
     });
-  }, []);
+  }, [dbClients, faturamentoList]);
 
   const handleUpload = async (file: File) => {
     setIsProcessing(true);
@@ -104,12 +144,33 @@ export default function WorkspacePage() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = e.target?.result as string;
-      // Use dynamic dictionary from tenant instead of hardcoded array
-      const anomalies = IngestionMapper.identifyAnomalies(text, invertedMap);
+      const mapObj = new Map(Object.entries(invertedMap));
+      const anomalies = IngestionMapper.identifyAnomalies(text, mapObj);
       
       if (anomalies.length > 0) {
         setUnmappedSegments(anomalies);
         setShowReconciliation(true);
+      } else {
+        const { data: aggregatedData } = IngestionMapper.aggregateBilling(text, mapObj);
+        try {
+          const response = await fetch("/api/faturamento", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(aggregatedData.map(item => ({
+              mes: "05",
+              ctvId: item.ctvId || "CTV01",
+              segmentId: item.segmentId,
+              realizedValue: item.realizedValue || 0,
+              targetValue: (item.realizedValue || 0) * 1.2
+            })))
+          });
+          if (response.ok) {
+            const updatedFat = await fetch("/api/faturamento").then(r => r.json());
+            setFaturamentoList(updatedFat);
+          }
+        } catch (err) {
+          console.error("Error saving faturamento:", err);
+        }
       }
       
       setTimeout(() => {
