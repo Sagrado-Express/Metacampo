@@ -17,48 +17,23 @@ const FALLBACK_FILE_PATH = path.join(process.cwd(), 'src/data/local_customers.js
 function getLocalCustomers(): any[] {
   try {
     if (fs.existsSync(FALLBACK_FILE_PATH)) {
-      return JSON.parse(fs.readFileSync(FALLBACK_FILE_PATH, 'utf-8'));
+      const data = JSON.parse(fs.readFileSync(FALLBACK_FILE_PATH, 'utf-8'));
+      // Handle both raw array format and object format
+      return Array.isArray(data) ? data : (data.customers || []);
     }
   } catch (err) {
     console.warn('[Clientes API] Failed to read fallback file:', err);
   }
-  return [
-    {
-      id: "pedro-id",
-      tenant_id: "00000000-0000-0000-0000-000000000000",
-      ctv_id: "ctv-mock-id",
-      name: "Pedro",
-      city: "Carmo do Paranaíba",
-      state: "MG",
-      region: "Cerrado Mineiro",
-      areas: [
-        { id: "area-1", cropName: "Café", areaHa: 6000, valorPorHectareCentavos: 890000, vpmCentavos: 5340000000 }
-      ],
-      vpmTotalCentavos: 5340000000
-    },
-    {
-      id: "paulo-id",
-      tenant_id: "00000000-0000-0000-0000-000000000000",
-      ctv_id: "ctv-mock-id",
-      name: "Paulo",
-      city: "Carmo do Paranaíba",
-      state: "MG",
-      region: "Cerrado Mineiro",
-      areas: [
-        { id: "area-2", cropName: "Soja", areaHa: 1000, valorPorHectareCentavos: 350000, vpmCentavos: 350000000 }
-      ],
-      vpmTotalCentavos: 350000000
-    }
-  ];
+  return [];
 }
 
-function saveLocalCustomers(data: any[]) {
+function saveLocalCustomers(customers: any[]) {
   try {
     const dir = path.dirname(FALLBACK_FILE_PATH);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(FALLBACK_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(FALLBACK_FILE_PATH, JSON.stringify({ customers }, null, 2), 'utf-8');
   } catch (err) {
     console.warn('[Clientes API] Failed to write fallback file:', err);
   }
@@ -68,7 +43,7 @@ export async function GET(request: Request) {
   const { error, session } = await checkAuth();
   if (error) return error;
 
-  const tenantId = session?.user?.app_metadata?.tenant_id;
+  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
 
   try {
     // 1. Fetch all customers for this tenant
@@ -87,13 +62,11 @@ export async function GET(request: Request) {
 
     if (areasError) throw areasError;
 
-    // 3. Fetch all IT configurations (Índice Tecnológico)
-    const { data: indices, error: indicesError } = await supabase
+    // 3. Fetch all IT configurations
+    const { data: indices } = await supabase
       .from('it_se_configurations')
       .select('*')
       .eq('tenant_id', tenantId);
-
-    if (indicesError) throw indicesError;
 
     // 4. Map customers and calculate VPM
     const result = (customers || []).map(cust => {
@@ -104,7 +77,7 @@ export async function GET(request: Request) {
         const index = (indices || []).find(
           ind => ind.crop_name.toUpperCase() === area.crop_name.toUpperCase()
         );
-        const valuePerHectare = index ? Number(index.value_per_hectare) : 0;
+        const valuePerHectare = index ? Number(index.value_per_hectare) : 350000;
         const areaHa = Number(area.area_ha);
         const areaVpm = Math.round(areaHa * valuePerHectare);
         vpmTotalCentavos += areaVpm;
@@ -118,31 +91,52 @@ export async function GET(request: Request) {
         };
       });
 
+      // Root level cultivo mapping for Sprint 0.5 view compatibility
+      const mainArea = mappedAreas[0];
+
       return {
         id: cust.id,
         tenantId: cust.tenant_id,
         ctvId: cust.ctv_id,
         name: cust.name,
-        document: cust.document,
+        document: cust.document || '',
         city: cust.city,
         state: cust.state,
         region: cust.region,
-        performanceBand: cust.performance_band,
-        confidenceLevel: cust.confidence_level,
-        creditRating: cust.credit_rating,
-        walletShare: cust.wallet_share,
-        qualitativeWeight: cust.qualitative_weight,
-        createdAt: cust.created_at,
+        cultivo: mainArea ? mainArea.cropName : '-',
+        area_hectares: mainArea ? mainArea.areaHa : 0,
         areas: mappedAreas,
-        vpmTotalCentavos
+        vpmTotalCentavos: vpmTotalCentavos || Number(cust.vpm_total_centavos || 0),
+        vpm_total_centavos: vpmTotalCentavos || Number(cust.vpm_total_centavos || 0)
       };
     });
 
     return NextResponse.json(result);
   } catch (err: any) {
-    console.warn('Database error, falling back to local file store:', err.message);
+    console.warn('[Clientes API] Supabase GET failed, falling back to local file. Error:', err.message);
     const localStore = getLocalCustomers();
-    const filteredLocal = localStore.filter(c => c.tenantId === tenantId || c.tenant_id === tenantId);
+    const filteredLocal = localStore.filter(c => c.tenantId === tenantId || c.tenant_id === tenantId).map(c => {
+      // Map properties to ensure consistency
+      const cropName = c.cultivo || (c.areas?.[0]?.cropName) || 'Soja';
+      const areaHa = Number(c.area_hectares || c.areas?.[0]?.areaHa || 0);
+      const mappedAreas = c.areas || [
+        {
+          id: `area-0-${c.id}`,
+          cropName,
+          areaHa,
+          vpmCentavos: Number(c.vpm_total_centavos || c.vpmTotalCentavos || 0)
+        }
+      ];
+
+      return {
+        ...c,
+        cultivo: cropName,
+        area_hectares: areaHa,
+        areas: mappedAreas,
+        vpm_total_centavos: Number(c.vpm_total_centavos || c.vpmTotalCentavos || 0),
+        vpmTotalCentavos: Number(c.vpm_total_centavos || c.vpmTotalCentavos || 0)
+      };
+    });
     return NextResponse.json(filteredLocal);
   }
 }
@@ -151,15 +145,26 @@ export async function POST(request: Request) {
   const { error, session } = await checkAuth();
   if (error) return error;
 
-  const tenantId = session?.user?.app_metadata?.tenant_id;
+  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const ctvId = session?.user?.id || 'mock-ctv-uuid-001';
 
   try {
     const body = await request.json();
-    const { ctvId, name, document, city, state, region, areas } = body;
+    const { name, city, state, cultivo, area_hectares } = body;
 
-    if (!ctvId || !name || !city || !state || !region) {
+    if (!name || !city || !state || !cultivo || !area_hectares) {
       return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
     }
+
+    const IT_BASE: Record<string, number> = {
+      'Café': 890000,
+      'Soja': 400000,
+      'Milho': 300000,
+      'HF': 3000000,
+      'Algodão': 1000000
+    };
+    const valuePerHectare = IT_BASE[cultivo] || 400000;
+    const vpmCentavos = Math.round(Number(area_hectares) * valuePerHectare);
 
     // 1. Insert customer
     const { data: customer, error: custError } = await supabase
@@ -168,124 +173,89 @@ export async function POST(request: Request) {
         tenant_id: tenantId,
         ctv_id: ctvId,
         name,
-        document,
         city,
         state,
-        region
+        region: 'Região Geral',
+        document: `doc-${Date.now()}`
       })
       .select()
       .single();
 
     if (custError) throw custError;
 
-    // 2. Insert crop areas if provided
-    const insertedAreas = [];
-    if (areas && Array.isArray(areas)) {
-      for (const area of areas) {
-        const { cropName, areaHa } = area;
-        if (cropName && areaHa !== undefined) {
-          const { data: areaData, error: areaError } = await supabase
-            .from('customer_crop_areas')
-            .insert({
-              tenant_id: tenantId,
-              customer_id: customer.id,
-              crop_name: cropName,
-              area_ha: areaHa
-            })
-            .select()
-            .single();
+    // 2. Insert crop area
+    const { data: areaData, error: areaError } = await supabase
+      .from('customer_crop_areas')
+      .insert({
+        tenant_id: tenantId,
+        customer_id: customer.id,
+        crop_name: cultivo,
+        area_ha: Number(area_hectares)
+      })
+      .select()
+      .single();
 
-          if (areaError) throw areaError;
-          insertedAreas.push(areaData);
-        }
-      }
-    }
+    if (areaError) throw areaError;
 
-    // 3. Fetch indices to calculate returning VPM
-    const { data: indices } = await supabase
-      .from('it_se_configurations')
-      .select('*')
-      .eq('tenant_id', tenantId);
-
-    let vpmTotalCentavos = 0;
-    const mappedAreas = insertedAreas.map(area => {
-      const index = (indices || []).find(
-        ind => ind.crop_name.toUpperCase() === area.crop_name.toUpperCase()
-      );
-      const valuePerHectare = index ? Number(index.value_per_hectare) : 0;
-      const areaHa = Number(area.area_ha);
-      const areaVpm = Math.round(areaHa * valuePerHectare);
-      vpmTotalCentavos += areaVpm;
-
-      return {
-        id: area.id,
-        cropName: area.crop_name,
-        areaHa: areaHa,
-        valorPorHectareCentavos: valuePerHectare,
-        vpmCentavos: areaVpm
-      };
-    });
-
-    return NextResponse.json({
+    const returnedClient = {
       id: customer.id,
       tenantId: customer.tenant_id,
       ctvId: customer.ctv_id,
       name: customer.name,
-      document: customer.document,
       city: customer.city,
       state: customer.state,
-      region: customer.region,
-      areas: mappedAreas,
-      vpmTotalCentavos
-    });
+      cultivo,
+      area_hectares: Number(area_hectares),
+      areas: [{ id: areaData.id, cropName: cultivo, areaHa: Number(area_hectares), vpmCentavos }],
+      vpm_total_centavos: vpmCentavos,
+      vpmTotalCentavos: vpmCentavos
+    };
+
+    return NextResponse.json(returnedClient, { status: 201 });
   } catch (err: any) {
-    console.warn('Database error on POST, falling back to local memory store:', err.message);
+    console.warn('[Clientes API] Supabase POST failed, fallback to local. Error:', err.message);
     const body = await request.json().catch(() => ({}));
-    const { ctvId, name, document, city, state, region, areas } = body;
+    const { name, city, state, cultivo, area_hectares } = body;
 
-    const mockCustomerId = "mock-id-" + Math.random().toString(36).substr(2, 9);
-    
-    // Default mock crop prices: Café: R$ 8.900/ha, Soja: R$ 3.500/ha
-    const mockIndices = [
-      { crop: 'CAFÉ', value: 890000 },
-      { crop: 'SOJA', value: 350000 }
-    ];
+    const IT_BASE: Record<string, number> = {
+      'Café': 890000,
+      'Soja': 400000,
+      'Milho': 300000,
+      'HF': 3000000,
+      'Algodão': 1000000
+    };
+    const valuePerHectare = IT_BASE[cultivo] || 400000;
+    const vpmCentavos = Math.round(Number(area_hectares || 0) * valuePerHectare);
 
-    let vpmTotalCentavos = 0;
-    const mappedAreas = (areas || []).map((area: any, idx: number) => {
-      const cropName = area.cropName || area.crop_name || 'SOJA';
-      const areaHa = Number(area.areaHa || area.area_ha || 0);
-      const matchedIdx = mockIndices.find(m => m.crop === cropName.toUpperCase());
-      const valuePerHectare = matchedIdx ? matchedIdx.value : 350000;
-      const areaVpm = Math.round(areaHa * valuePerHectare);
-      vpmTotalCentavos += areaVpm;
-
-      return {
-        id: "mock-area-id-" + idx,
-        cropName,
-        areaHa,
-        valorPorHectareCentavos: valuePerHectare,
-        vpmCentavos: areaVpm
-      };
-    });
-
-    const newMockCustomer = {
-      id: mockCustomerId,
+    const mockId = `cliente-${Date.now()}`;
+    const newLocalCustomer = {
+      id: mockId,
       tenant_id: tenantId,
-      ctv_id: ctvId || "ctv-mock-id",
+      tenantId: tenantId,
+      ctv_id: ctvId,
       name,
-      document,
       city,
       state,
-      region,
-      areas: mappedAreas,
-      vpmTotalCentavos
+      region: 'Região Geral',
+      cultivo,
+      area_hectares: Number(area_hectares),
+      areas: [
+        {
+          id: `area-${mockId}`,
+          cropName: cultivo,
+          areaHa: Number(area_hectares),
+          vpmCentavos
+        }
+      ],
+      vpm_total_centavos: vpmCentavos,
+      vpmTotalCentavos: vpmCentavos
     };
 
     const localStore = getLocalCustomers();
-    localStore.push(newMockCustomer);
+    localStore.push(newLocalCustomer);
     saveLocalCustomers(localStore);
-    return NextResponse.json(newMockCustomer);
+
+    return NextResponse.json(newLocalCustomer, { status: 201 });
   }
 }
 
@@ -303,7 +273,17 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, city, state, region, areas } = body;
+    const { name, city, state, cultivo, area_hectares } = body;
+
+    const IT_BASE: Record<string, number> = {
+      'Café': 890000,
+      'Soja': 400000,
+      'Milho': 300000,
+      'HF': 3000000,
+      'Algodão': 1000000
+    };
+    const valuePerHectare = IT_BASE[cultivo] || 400000;
+    const vpmCentavos = Math.round(Number(area_hectares || 0) * valuePerHectare);
 
     // 1. Update customer in DB
     const { data: customer, error: custError } = await supabase
@@ -312,7 +292,6 @@ export async function PATCH(request: Request) {
         name,
         city,
         state,
-        region: region || 'Região Geral',
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -322,71 +301,74 @@ export async function PATCH(request: Request) {
 
     if (custError) throw custError;
 
-    // 2. Update areas in DB if provided
-    if (areas && Array.isArray(areas)) {
-      // Delete old areas first
-      await supabase
-        .from('customer_crop_areas')
-        .delete()
-        .eq('customer_id', id)
-        .eq('tenant_id', tenantId);
+    // 2. Update area in DB
+    await supabase
+      .from('customer_crop_areas')
+      .delete()
+      .eq('customer_id', id)
+      .eq('tenant_id', tenantId);
 
-      for (const area of areas) {
-        const { cropName, areaHa } = area;
-        if (cropName && areaHa !== undefined) {
-          await supabase
-            .from('customer_crop_areas')
-            .insert({
-              tenant_id: tenantId,
-              customer_id: id,
-              crop_name: cropName,
-              area_ha: areaHa
-            });
-        }
-      }
-    }
+    const { data: areaData, error: areaError } = await supabase
+      .from('customer_crop_areas')
+      .insert({
+        tenant_id: tenantId,
+        customer_id: id,
+        crop_name: cultivo,
+        area_ha: Number(area_hectares)
+      })
+      .select()
+      .single();
 
-    return NextResponse.json({ success: true, customer });
+    if (areaError) throw areaError;
+
+    return NextResponse.json({
+      id: customer.id,
+      tenantId: customer.tenant_id,
+      name: customer.name,
+      city: customer.city,
+      state: customer.state,
+      cultivo,
+      area_hectares: Number(area_hectares),
+      areas: [{ id: areaData.id, cropName: cultivo, areaHa: Number(area_hectares), vpmCentavos }],
+      vpm_total_centavos: vpmCentavos,
+      vpmTotalCentavos: vpmCentavos
+    });
   } catch (err: any) {
-    console.warn('[Clientes API] DB Update failed, falling back to local file store. Error:', err.message);
+    console.warn('[Clientes API] Supabase PATCH failed, fallback to local. Error:', err.message);
     const body = await request.json().catch(() => ({}));
-    const { name, city, state, region, areas } = body;
+    const { name, city, state, cultivo, area_hectares } = body;
+
+    const IT_BASE: Record<string, number> = {
+      'Café': 890000,
+      'Soja': 400000,
+      'Milho': 300000,
+      'HF': 3000000,
+      'Algodão': 1000000
+    };
+    const valuePerHectare = IT_BASE[cultivo] || 400000;
+    const vpmCentavos = Math.round(Number(area_hectares || 0) * valuePerHectare);
 
     const localData = getLocalCustomers();
     const idx = localData.findIndex(c => c.id === id && (c.tenantId === tenantId || c.tenant_id === tenantId));
     
     if (idx !== -1) {
-      const mockIndices = [
-        { crop: 'CAFÉ', value: 890000 },
-        { crop: 'SOJA', value: 350000 }
-      ];
-
-      let vpmTotalCentavos = 0;
-      const mappedAreas = (areas || []).map((area: any, indexIdx: number) => {
-        const cropName = area.cropName || area.crop_name || 'SOJA';
-        const areaHa = Number(area.areaHa || area.area_ha || 0);
-        const matchedIdx = mockIndices.find(m => m.crop === cropName.toUpperCase());
-        const valuePerHectare = matchedIdx ? matchedIdx.value : 350000;
-        const areaVpm = Math.round(areaHa * valuePerHectare);
-        vpmTotalCentavos += areaVpm;
-
-        return {
-          id: `mock-area-id-${id}-${indexIdx}`,
-          cropName,
-          areaHa,
-          valorPorHectareCentavos: valuePerHectare,
-          vpmCentavos: areaVpm
-        };
-      });
-
       localData[idx] = {
         ...localData[idx],
         name: name || localData[idx].name,
         city: city || localData[idx].city,
         state: state || localData[idx].state,
-        region: region || localData[idx].region || 'Região Geral',
-        areas: areas ? mappedAreas : localData[idx].areas,
-        vpmTotalCentavos: areas ? vpmTotalCentavos : localData[idx].vpmTotalCentavos
+        cultivo: cultivo || localData[idx].cultivo,
+        area_hectares: area_hectares !== undefined ? Number(area_hectares) : localData[idx].area_hectares,
+        areas: [
+          {
+            id: `area-${id}`,
+            cropName: cultivo || localData[idx].cultivo,
+            areaHa: area_hectares !== undefined ? Number(area_hectares) : localData[idx].area_hectares,
+            vpmCentavos
+          }
+        ],
+        vpm_total_centavos: vpmCentavos,
+        vpmTotalCentavos: vpmCentavos
       };
 
       saveLocalCustomers(localData);
@@ -420,7 +402,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.warn('[Clientes API] DB Delete failed, deleting from local fallback. Error:', err.message);
+    console.warn('[Clientes API] Supabase DELETE failed, fallback to local. Error:', err.message);
     const localData = getLocalCustomers();
     const filtered = localData.filter(c => !(c.id === id && (c.tenantId === tenantId || c.tenant_id === tenantId)));
     saveLocalCustomers(filtered);
