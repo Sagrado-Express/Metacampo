@@ -77,9 +77,11 @@ export async function GET(request: Request) {
         const index = (indices || []).find(
           ind => ind.crop_name.toUpperCase() === area.crop_name.toUpperCase()
         );
-        const valuePerHectare = index ? Number(index.value_per_hectare) : 350000;
+        // Rule: no IT configured → VPM = 0 (never use a fictitious default)
+        const valuePerHectare = index ? Number(index.value_per_hectare) : 0;
         const areaHa = Number(area.area_ha);
-        const areaVpm = Math.round(areaHa * valuePerHectare);
+        // Rule: area = 0 → VPM = 0 regardless of IT value
+        const areaVpm = areaHa > 0 && valuePerHectare > 0 ? Math.round(areaHa * valuePerHectare) : 0;
         vpmTotalCentavos += areaVpm;
 
         return {
@@ -87,7 +89,8 @@ export async function GET(request: Request) {
           cropName: area.crop_name,
           areaHa: areaHa,
           valorPorHectareCentavos: valuePerHectare,
-          vpmCentavos: areaVpm
+          vpmCentavos: areaVpm,
+          indiceTecnologicoDefinido: !!index
         };
       });
 

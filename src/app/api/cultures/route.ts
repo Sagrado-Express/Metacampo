@@ -42,12 +42,40 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { tenantId, customName, displayOrder } = body;
+    const { tenantId, customName, displayOrder, id, isActive } = body;
 
     if (!tenantId || !customName) {
       return NextResponse.json({ error: 'tenantId and customName are required' }, { status: 400 });
     }
 
+    // If id is present, this is a toggle/update, not a create
+    if (id && isActive !== undefined) {
+      if (isActive === false) {
+        await SegmentDictionaryService.deactivateCultura(supabase, tenantId, id);
+      } else {
+        // Reactivate: update is_active back to true
+        try {
+          const { error: dbError } = await supabase
+            .from('tenant_config_culturas')
+            .update({ is_active: true })
+            .eq('id', id)
+            .eq('tenant_id', tenantId);
+          if (dbError) throw dbError;
+        } catch (err: any) {
+          // Fallback: update local dictionary
+          console.warn('[Cultures API] Supabase reactivate failed, using fallback:', err.message);
+          const dict = getLocalDictionary();
+          const culture = (dict.cultures || []).find((c: any) => c.id === id);
+          if (culture) {
+            culture.isActive = true;
+            saveDictionary(dict);
+          }
+        }
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    // Create new cultura
     const newCult = await SegmentDictionaryService.createCultura(supabase, tenantId, {
       customName,
       displayOrder,
@@ -73,5 +101,13 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+function saveDictionary(dict: any) {
+  try {
+    fs.writeFileSync(DICT_PATH, JSON.stringify(dict, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('[Cultures API] Failed to save local dictionary:', err);
   }
 }

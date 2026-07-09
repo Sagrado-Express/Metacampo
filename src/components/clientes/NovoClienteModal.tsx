@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Loader2, Save } from 'lucide-react';
 
 interface NovoClienteModalProps {
@@ -11,10 +11,45 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
   const [name, setName] = useState(clienteToEdit?.name || '');
   const [city, setCity] = useState(clienteToEdit?.city || '');
   const [state, setState] = useState(clienteToEdit?.state || 'MG');
-  const [cropName, setCropName] = useState(clienteToEdit?.areas?.[0]?.cropName || 'Soja');
+  const [cropName, setCropName] = useState(clienteToEdit?.areas?.[0]?.cropName || '');
   const [areaHa, setAreaHa] = useState(clienteToEdit?.areas?.[0]?.areaHa || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [activeCultures, setActiveCultures] = useState<{customName: string; internalKey: string}[]>([]);
+
+  // Fetch active cultures dynamically from API
+  useEffect(() => {
+    const tenantId = '00000000-0000-0000-0000-000000000000';
+    fetch(`/api/cultures?tenantId=${tenantId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setActiveCultures(data);
+          if (!cropName && data.length > 0) {
+            setCropName(data[0].customName);
+          }
+        } else {
+          // Fallback to defaults if API returns empty
+          const fallback = [
+            { customName: 'Soja', internalKey: 'SOJA' },
+            { customName: 'Milho', internalKey: 'MILHO' },
+            { customName: 'Café', internalKey: 'CAFE' },
+          ];
+          setActiveCultures(fallback);
+          if (!cropName) setCropName('Soja');
+        }
+      })
+      .catch(() => {
+        const fallback = [
+          { customName: 'Soja', internalKey: 'SOJA' },
+          { customName: 'Milho', internalKey: 'MILHO' },
+          { customName: 'Café', internalKey: 'CAFE' },
+        ];
+        setActiveCultures(fallback);
+        if (!cropName) setCropName('Soja');
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,8 +172,8 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
                 onChange={(e) => setCropName(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
               >
-                {['Soja', 'Milho', 'Café', 'Algodão', 'HF'].map(crop => (
-                  <option key={crop} value={crop}>{crop}</option>
+                {activeCultures.map(culture => (
+                  <option key={culture.internalKey} value={culture.customName}>{culture.customName}</option>
                 ))}
               </select>
             </div>

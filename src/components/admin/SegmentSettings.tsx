@@ -245,6 +245,20 @@ export function SegmentSettings({
             Adicionar
           </button>
         </div>
+
+        {/* Totalizador */}
+        {culturas.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              <strong className="text-foreground">{culturas.filter(c => c.isActive).length}</strong> cultura{culturas.filter(c => c.isActive).length !== 1 ? "s" : ""} ativa{culturas.filter(c => c.isActive).length !== 1 ? "s" : ""} de <strong className="text-foreground">{culturas.length}</strong> total
+            </span>
+            {culturas.some(c => !c.isActive) && (
+              <span className="text-amber-600 font-medium">
+                {culturas.filter(c => !c.isActive).length} desabilitada{culturas.filter(c => !c.isActive).length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+        )}
       </motion.section>
       )}
 
@@ -324,7 +338,7 @@ export function SegmentSettings({
                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
                       >
                         <Tag size={10} />
-                        {root.aliases.length} alias{root.aliases.length !== 1 && "es"}
+                        {root.aliases.length} apelido{root.aliases.length !== 1 && "s"}
                       </button>
                       <button
                         onClick={() => handleToggleActive(root)}
@@ -350,7 +364,7 @@ export function SegmentSettings({
                       >
                         <div className="px-4 pb-3 pt-1 border-t border-border/30">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-bold">
-                            Aliases (nomes alternativos para matching do CSV/ERP)
+                            Apelidos (nomes alternativos para matching do CSV/ERP)
                           </p>
                           <div className="flex flex-wrap gap-1.5 mb-2">
                             {root.aliases.map((alias) => (
@@ -381,7 +395,7 @@ export function SegmentSettings({
                               onKeyDown={(e) =>
                                 e.key === "Enter" && handleAddAlias(root)
                               }
-                              placeholder="Novo alias..."
+                              placeholder="Novo apelido..."
                               className="flex-1 px-3 py-1.5 rounded-lg border border-border/30 bg-white/50 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30"
                             />
                             <button

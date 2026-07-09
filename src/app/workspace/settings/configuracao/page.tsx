@@ -129,16 +129,16 @@ export default function ConfiguracaoPage() {
   // ============================================================
 
   const handleSaveCultura = async (item: any) => {
-    if (item.isActive === false) {
-      return handleDeleteCultura(item.id);
-    }
+    // Toggle isActive: update the culture's active state without deleting
     const response = await fetch("/api/cultures", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tenantId,
+        id: item.id,
         customName: item.customName,
         displayOrder: item.displayOrder,
+        isActive: item.isActive,
       }),
     });
     if (!response.ok) {
@@ -245,7 +245,7 @@ export default function ConfiguracaoPage() {
                   ? "Class."
                   : tab.id === "cultivos"
                   ? "Cult."
-                  : "IT-SE"}
+                  : "IT"}
               </span>
             </button>
           );

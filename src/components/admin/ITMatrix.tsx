@@ -44,7 +44,9 @@ function parseBRL(raw: string): number {
   const cleaned = raw.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
   const parsed = parseFloat(cleaned);
   if (isNaN(parsed)) return 0;
-  return Math.round(parsed * 100); // Store as centavos
+  // Block decimals: round to nearest integer before converting to centavos
+  const rounded = Math.round(parsed);
+  return rounded * 100; // Store as centavos (always whole R$)
 }
 
 function cellKey(cultivo: string, segmento: string): string {
@@ -163,7 +165,7 @@ export function ITMatrix({
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground text-sm gap-2">
         <Loader2 size={16} className="animate-spin" />
-        Carregando configurações de IT-SE...
+        Carregando Índice Tecnológico...
       </div>
     );
   }
@@ -194,7 +196,7 @@ export function ITMatrix({
             <TrendingUp size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Índice Tecnológico (IT-SE)</h2>
+            <h2 className="text-lg font-semibold">Índice Tecnológico</h2>
             <p className="text-xs text-muted-foreground">
               Valor de referência R$/ha por cultivo × classificação — Safra{" "}
               <span className="font-medium text-foreground">{safra}</span>
@@ -260,6 +262,9 @@ export function ITMatrix({
                   </div>
                 </th>
               ))}
+              <th className="px-3 py-3 font-semibold text-center text-xs uppercase tracking-wider border-b border-border/40 min-w-[100px] text-violet-600">
+                Total
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -343,9 +348,53 @@ export function ITMatrix({
                     </td>
                   );
                 })}
+
+                {/* Row total */}
+                <td className="px-2 py-2 border-b border-border/20 text-center">
+                  <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2 py-1.5 rounded-lg inline-block min-w-[90px]">
+                    {formatBRL(
+                      activeSegmentos.reduce((sum, seg) => {
+                        const key = cellKey(cultura.customName, seg.customName);
+                        return sum + (draft[key] ?? 0);
+                      }, 0)
+                    )}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className="bg-violet-50/60 border-t-2 border-violet-200">
+              <td className="px-4 py-3 font-bold text-xs uppercase tracking-wider text-violet-700">
+                Total
+              </td>
+              {activeSegmentos.map((seg) => {
+                const colTotal = activeCulturas.reduce((sum, cultura) => {
+                  const key = cellKey(cultura.customName, seg.customName);
+                  return sum + (draft[key] ?? 0);
+                }, 0);
+                return (
+                  <td key={`total-${seg.id}`} className="px-2 py-3 text-center">
+                    <span className="text-xs font-bold text-violet-700">
+                      {formatBRL(colTotal)}
+                    </span>
+                  </td>
+                );
+              })}
+              <td className="px-2 py-3 text-center">
+                <span className="text-xs font-black text-violet-900 bg-violet-100 px-3 py-1.5 rounded-lg inline-block">
+                  {formatBRL(
+                    activeCulturas.reduce((grandTotal, cultura) => {
+                      return grandTotal + activeSegmentos.reduce((sum, seg) => {
+                        const key = cellKey(cultura.customName, seg.customName);
+                        return sum + (draft[key] ?? 0);
+                      }, 0);
+                    }, 0)
+                  )}
+                </span>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
