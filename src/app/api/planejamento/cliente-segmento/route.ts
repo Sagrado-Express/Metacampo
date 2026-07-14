@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+﻿import { NextResponse } from 'next/server';
+import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
 
 export async function GET(request: Request) {
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'Não foi possível carregar os dados do banco. Tente novamente em instantes.',
+        message: 'NÃ£o foi possÃ­vel carregar os dados do banco. Tente novamente em instantes.',
       },
       { status: 503 }
     );
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const { cliente_id, cultivo, segmento, valor_planejado_centavos, share_percentual } = body;
 
     if (!cliente_id || !cultivo || !segmento) {
-      return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
+      return NextResponse.json({ error: 'Campos obrigatÃ³rios ausentes' }, { status: 400 });
     }
 
     const payload = {
@@ -77,9 +77,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'Não foi possível salvar os dados no banco. Tente novamente em instantes.',
+        message: 'NÃ£o foi possÃ­vel salvar os dados no banco. Tente novamente em instantes.',
       },
       { status: 503 }
     );
   }
 }
+
