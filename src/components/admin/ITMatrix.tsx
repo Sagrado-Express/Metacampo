@@ -11,6 +11,7 @@ import {
   Info,
 } from "lucide-react";
 import { useITConfigurations, UpsertITConfigInput } from "@/hooks/useITConfigurations";
+import { useQueryClient } from "@tanstack/react-query";
 import { TenantCultura, TenantClassificacao } from "@/types/schema";
 
 // ============================================================
@@ -73,10 +74,11 @@ export function ITMatrix({
   const {
     getCellValue,
     upsertConfig,
-    isLoading,
+    isLoading: isLoadingIT,
     isError,
     isUpserting,
   } = useITConfigurations();
+  const queryClient = useQueryClient();
 
   // Active classifications only (roots)
   const activeSegmentos = classificacoes.filter(
@@ -148,6 +150,10 @@ export function ITMatrix({
 
       await Promise.all(ops);
 
+      // Invalidate VPM-dependent queries so other pages refetch with new IT values
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      queryClient.invalidateQueries({ queryKey: ['planejamento'] });
+
       setSavedKeys(new Set(dirtyKeys));
       setDirtyKeys(new Set());
     } catch (err: any) {
@@ -161,7 +167,7 @@ export function ITMatrix({
   // Render
   // ============================================================
 
-  if (isLoading) {
+  if (isLoadingIT) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground text-sm gap-2">
         <Loader2 size={16} className="animate-spin" />

@@ -1,33 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
-import fs from 'fs';
-import path from 'path';
-
-const FALLBACK_FILE_PATH = path.join(process.cwd(), 'src/data/local_planejamento.json');
-
-function getLocalPlanejamento(): any[] {
-  try {
-    if (fs.existsSync(FALLBACK_FILE_PATH)) {
-      return JSON.parse(fs.readFileSync(FALLBACK_FILE_PATH, 'utf-8'));
-    }
-  } catch (err) {
-    console.warn('[Planejamento API] Failed to read fallback file:', err);
-  }
-  return [];
-}
-
-function saveLocalPlanejamento(data: any[]) {
-  try {
-    const dir = path.dirname(FALLBACK_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(FALLBACK_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[Planejamento API] Failed to write fallback file:', err);
-  }
-}
 
 export async function GET(request: Request) {
   const session = await getSession();
@@ -56,9 +29,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json(mapped);
   } catch (err: any) {
-    console.warn('[Planejamento API] Supabase fetch failed, falling back to local file. Error:', err.message);
-    const localData = getLocalPlanejamento().filter(p => p.tenant_id === tenantId || p.tenantId === tenantId);
-    return NextResponse.json(localData);
+    console.error('[api/planejamento/cliente-segmento] Supabase error (GET):', err);
+    return NextResponse.json(
+      {
+        error: 'DATA_SOURCE_UNAVAILABLE',
+        message: 'Não foi possível carregar os dados do banco. Tente novamente em instantes.',
+      },
+      { status: 503 }
+    );
   }
 }
 
@@ -87,52 +65,21 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString()
     };
 
-    try {
-      const { data, error } = await supabase
-        .from('planejamento_cliente_segmento')
-        .upsert([payload], { onConflict: 'tenant_id,cliente_id,cultivo,segmento' })
-        .select();
+    const { data, error } = await supabase
+      .from('planejamento_cliente_segmento')
+      .upsert([payload], { onConflict: 'tenant_id,cliente_id,cultivo,segmento' })
+      .select();
 
-      if (error) throw error;
-      return NextResponse.json(data);
-    } catch (dbErr: any) {
-      console.warn('[Planejamento API] Supabase upsert failed, saving to local fallback file. Error:', dbErr.message);
-      const localData = getLocalPlanejamento();
-      const existingIdx = localData.findIndex(
-        p => (p.tenant_id === tenantId || p.tenantId === tenantId) &&
-             (p.cliente_id === cliente_id || p.clienteId === cliente_id) &&
-             p.cultivo === cultivo &&
-             p.segmento === segmento
-      );
-
-      const localItem = {
-        id: existingIdx !== -1 ? localData[existingIdx].id : `plan-${cliente_id}-${cultivo}-${segmento}`,
-        tenantId: tenantId,
-        tenant_id: tenantId,
-        ctvId: ctvId,
-        ctv_id: ctvId,
-        clienteId: cliente_id,
-        cliente_id: cliente_id,
-        cultivo,
-        segmento,
-        valorPlanejadoCentavos: payload.valor_planejado_centavos,
-        valor_planejado_centavos: payload.valor_planejado_centavos,
-        sharePercentual: payload.share_percentual,
-        share_percentual: payload.share_percentual,
-        status: 'draft',
-        updated_at: new Date().toISOString()
-      };
-
-      if (existingIdx !== -1) {
-        localData[existingIdx] = { ...localData[existingIdx], ...localItem };
-      } else {
-        localData.push(localItem);
-      }
-
-      saveLocalPlanejamento(localData);
-      return NextResponse.json(localItem);
-    }
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (error) throw error;
+    return NextResponse.json(data);
+  } catch (dbErr: any) {
+    console.error('[api/planejamento/cliente-segmento] Supabase error (POST):', dbErr);
+    return NextResponse.json(
+      {
+        error: 'DATA_SOURCE_UNAVAILABLE',
+        message: 'Não foi possível salvar os dados no banco. Tente novamente em instantes.',
+      },
+      { status: 503 }
+    );
   }
 }

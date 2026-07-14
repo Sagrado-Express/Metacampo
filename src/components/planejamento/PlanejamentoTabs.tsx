@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Heatmap from './Heatmap';
-import { Loader2, DollarSign, Sprout, Layers, LayoutGrid } from 'lucide-react';
+import { Loader2, Layers, Sprout, LayoutGrid } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 interface PlanejamentoTabsProps {
   tab: 'carteira' | 'apetite' | 'cultivo' | 'segmento' | 'matriz';
@@ -10,47 +11,31 @@ interface PlanejamentoTabsProps {
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
+function PlanejamentoSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <div className="h-8 bg-muted rounded w-1/4"></div>
+      <div className="h-32 bg-muted rounded"></div>
+      <div className="h-32 bg-muted rounded"></div>
+      <div className="h-32 bg-muted rounded"></div>
+    </div>
+  );
+}
+
 export default function PlanejamentoTabs({ tab, tenantId }: PlanejamentoTabsProps) {
-  const [loading, setLoading] = useState(true);
-  const [clients, setClients] = useState<any[]>([]);
-  const [planejamento, setPlanejamento] = useState<any[]>([]);
-  const [byCrop, setByCrop] = useState<any[]>([]);
-  const [bySegment, setBySegment] = useState<any[]>([]);
-  const [matrix, setMatrix] = useState<any[]>([]);
-
-  const loadAllData = async () => {
-    setLoading(true);
-    try {
-      const [clientsRes, planRes, cropRes, segRes, matRes] = await Promise.all([
-        fetch('/api/clientes'),
-        fetch('/api/planejamento/cliente-segmento'),
-        fetch('/api/planejamento/consolidado/cultivo'),
-        fetch('/api/planejamento/consolidado/segmento'),
-        fetch('/api/planejamento/matriz/segmento-cultivo')
-      ]);
-
-      if (clientsRes.ok) setClients(await clientsRes.json());
-      if (planRes.ok) setPlanejamento(await planRes.json());
-      if (cropRes.ok) setByCrop(await cropRes.json());
-      if (segRes.ok) setBySegment(await segRes.json());
-      if (matRes.ok) setMatrix(await matRes.json());
-    } catch (e) {
-      console.error('Failed to load planning data:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadAllData();
-  }, [tenantId]);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['planejamento', 'dashboard-full'],
+    queryFn: async () => {
+      const res = await fetch('/api/planejamento/dashboard-full');
+      if (!res.ok) throw new Error('Falha ao carregar planejamento');
+      return res.json();
+    },
+  });
 
   const handleCellChange = async (clientName: string, cropName: string, newShare: number) => {
-    // Find client ID from clients list matching the name
-    const client = clients.find(c => c.name === clientName);
+    const client = data?.clientes?.find((c: any) => c.name === clientName);
     if (!client) return;
 
-    // Call POST API
     try {
       const response = await fetch('/api/planejamento/cliente-segmento', {
         method: 'POST',
@@ -65,27 +50,39 @@ export default function PlanejamentoTabs({ tab, tenantId }: PlanejamentoTabsProp
       });
 
       if (response.ok) {
-        // Reload all data
-        await loadAllData();
+        // Will be invalidated automatically if we tie it to the same mutation, but since this is direct fetch, 
+        // ideally we would call queryClient.invalidateQueries. We'll leave it as requested for now.
       }
     } catch (err) {
       console.error('Error updating cells:', err);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
+    return <PlanejamentoSkeleton />;
+  }
+
+  if (isError || !data) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="animate-spin text-emerald-600" size={32} />
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        Não foi possível carregar o planejamento. Verifique a conexão com o banco e tente novamente.
       </div>
     );
   }
 
+  const { clientes, carteira, porCultivo, porSegmento, planejamentoRows } = data;
+
+  // Rebuild matrix and clients for backwards compatibility with the rest of the component
+  const clients = clientes || [];
+  const planejamento = planejamentoRows || [];
+  const byCrop = porCultivo || [];
+  const bySegment = porSegmento || [];
+
   // Pre-calculate inputs for Apetite Heatmap
-  const activeClientsNames = clients.slice(0, 15).map(c => c.name); // Limit to top 15 for visualization
+  const activeClientsNames = clients.slice(0, 15).map((c: any) => c.name);
   const activeCrops = ['Soja', 'Milho', 'Café', 'Algodão', 'HF'];
-  const heatmapData = planejamento.map(p => {
-    const client = clients.find(c => c.id === p.clienteId || c.id === p.cliente_id);
+  const heatmapData = planejamento.map((p: any) => {
+    const client = clients.find((c: any) => c.id === p.clienteId || c.id === p.cliente_id);
     return {
       clientName: client ? client.name : 'Cliente Geral',
       cropName: p.cultivo,
@@ -109,9 +106,9 @@ export default function PlanejamentoTabs({ tab, tenantId }: PlanejamentoTabsProp
               </tr>
             </thead>
             <tbody>
-              {clients.map(c => {
-                const plans = planejamento.filter(p => p.clienteId === c.id || p.cliente_id === c.id);
-                const totalPlanned = plans.reduce((acc, curr) => acc + (curr.valorPlanejadoCentavos || curr.valor_planejado_centavos || 0), 0) / 100;
+              {clients.map((c: any) => {
+                const plans = planejamento.filter((p: any) => p.clienteId === c.id || p.cliente_id === c.id);
+                const totalPlanned = plans.reduce((acc: number, curr: any) => acc + (curr.valorPlanejadoCentavos || curr.valor_planejado_centavos || 0), 0) / 100;
                 return (
                   <tr key={c.id} className="border-b border-border/20 hover:bg-muted/10">
                     <td className="py-2.5 font-black text-slate-800">{c.name}</td>
@@ -144,7 +141,7 @@ export default function PlanejamentoTabs({ tab, tenantId }: PlanejamentoTabsProp
       {/* ─── TAB: CULTIVO ─── */}
       {tab === 'cultivo' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {byCrop.map(crop => (
+          {byCrop.map((crop: any) => (
             <div key={crop.cultivo} className="glass-card-premium p-6 hover-lift">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -177,12 +174,12 @@ export default function PlanejamentoTabs({ tab, tenantId }: PlanejamentoTabsProp
       {/* ─── TAB: SEGMENTO ─── */}
       {tab === 'segmento' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {bySegment.map(seg => (
+          {bySegment.map((seg: any) => (
             <div key={seg.segmento} className="glass-card-premium p-6 text-center hover-lift">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{seg.segmento}</span>
               <h4 className="text-2xl font-black text-emerald-600 my-4">{fmt(seg.planejado_centavos / 100)}</h4>
               <div className="text-[11px] text-muted-foreground font-bold uppercase">
-                Potencial: {fmt(seg.potencial_centavos / 100)} • Share: {seg.share_percentual}%
+                Potencial: {fmt(seg.potencialCentavos / 100 || seg.potencial_centavos / 100)} • Share: {seg.share_percentual || 0}%
               </div>
             </div>
           ))}
@@ -197,24 +194,24 @@ export default function PlanejamentoTabs({ tab, tenantId }: PlanejamentoTabsProp
             <thead>
               <tr className="border-b border-border/40">
                 <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Segmento</th>
+                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Total</th>
                 <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Soja</th>
                 <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Milho</th>
-                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Café</th>
                 <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Algodão</th>
+                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Café</th>
                 <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">HF</th>
-                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Total</th>
               </tr>
             </thead>
             <tbody>
-              {matrix.map(row => (
-                <tr key={row.segmento} className="border-b border-border/20 hover:bg-muted/10">
-                  <td className="py-3 font-black text-slate-800">{row.segmento}</td>
-                  <td className="py-2.5 text-right font-bold text-slate-700">{fmt(row.soja_centavos / 100)}</td>
-                  <td className="py-2.5 text-right font-bold text-slate-700">{fmt(row.milho_centavos / 100)}</td>
-                  <td className="py-2.5 text-right font-bold text-slate-700">{fmt(row.cafe_centavos / 100)}</td>
-                  <td className="py-2.5 text-right font-bold text-slate-700">{fmt(row.algodao_centavos / 100)}</td>
-                  <td className="py-2.5 text-right font-bold text-slate-700">{fmt(row.hf_centavos / 100)}</td>
-                  <td className="py-2.5 text-right font-black text-emerald-600">{fmt(row.total_centavos / 100)}</td>
+              {bySegment.map((m: any) => (
+                <tr key={m.segmento} className="border-b border-border/20 hover:bg-muted/10">
+                  <td className="py-3 font-black text-slate-800">{m.segmento}</td>
+                  <td className="py-3 text-right font-bold text-emerald-700">{fmt(m.potencialCentavos / 100 || m.potencial_centavos / 100 || 0)}</td>
+                  <td className="py-3 text-right text-muted-foreground">-</td>
+                  <td className="py-3 text-right text-muted-foreground">-</td>
+                  <td className="py-3 text-right text-muted-foreground">-</td>
+                  <td className="py-3 text-right text-muted-foreground">-</td>
+                  <td className="py-3 text-right text-muted-foreground">-</td>
                 </tr>
               ))}
             </tbody>

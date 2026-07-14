@@ -186,43 +186,7 @@ export class SegmentDictionaryService {
       if (error) throw error;
       return mapRowToClassificacao(data);
     } catch (err: any) {
-      if (err.message && (err.message.includes('já existe') || err.message.includes('não encontrada ou inativa'))) {
-        throw err;
-      }
-      console.warn(`[SegmentDictionaryService] Supabase createClassificacao failed, falling back to local file. Error:`, err);
-      
-      const store = getFallbackData();
-      const existing = store.classifications.find(c => c.tenantId === tenantId && c.internalKey === internalKey);
-      if (existing) {
-        throw new Error(`Classificação com chave "${internalKey}" já existe para este tenant.`);
-      }
-
-      if (input.parentKey) {
-        const parent = store.classifications.find(c => c.tenantId === tenantId && c.internalKey === input.parentKey && c.isActive);
-        if (!parent) {
-          throw new Error(`Classificação pai "${input.parentKey}" não encontrada ou inativa.`);
-        }
-      }
-
-      const count = store.classifications.filter(c => c.tenantId === tenantId).length;
-      const colorIndex = count % DEFAULT_COLORS.length;
-      const defaultColor = input.color || DEFAULT_COLORS[colorIndex];
-
-      const newCls: TenantClassificacao = {
-        id: crypto.randomUUID(),
-        tenantId,
-        internalKey,
-        parentKey: input.parentKey || null,
-        customName: input.customName,
-        aliases: input.aliases || [],
-        isActive: true,
-        displayOrder: input.displayOrder ?? 0,
-        color: defaultColor,
-      };
-
-      store.classifications.push(newCls);
-      saveFallbackData(store);
-      return newCls;
+      throw err;
     }
   }
 
@@ -256,24 +220,7 @@ export class SegmentDictionaryService {
       if (error) throw error;
       return mapRowToClassificacao(data);
     } catch (err: any) {
-      console.warn(`[SegmentDictionaryService] Supabase updateClassificacao failed, falling back to local file. Error:`, err);
-      
-      const store = getFallbackData();
-      const idx = store.classifications.findIndex(c => c.id === id && c.tenantId === tenantId);
-      if (idx === -1) {
-        throw new Error(`Classificação com ID "${id}" não encontrada.`);
-      }
-
-      const item = store.classifications[idx];
-      if (input.customName !== undefined) item.customName = input.customName;
-      if (input.aliases !== undefined) item.aliases = input.aliases;
-      if (input.isActive !== undefined) item.isActive = input.isActive;
-      if (input.displayOrder !== undefined) item.displayOrder = input.displayOrder;
-      if (input.color !== undefined) item.color = input.color;
-
-      store.classifications[idx] = item;
-      saveFallbackData(store);
-      return item;
+      throw err;
     }
   }
 
@@ -294,16 +241,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
     } catch (err: any) {
-      console.warn(`[SegmentDictionaryService] Supabase deactivateClassificacao failed, falling back to local file. Error:`, err);
-      
-      const store = getFallbackData();
-      const idx = store.classifications.findIndex(c => c.id === id && c.tenantId === tenantId);
-      if (idx !== -1) {
-        store.classifications[idx].isActive = false;
-        saveFallbackData(store);
-      } else {
-        throw new Error(`Classificação com ID "${id}" não encontrada.`);
-      }
+      throw err;
     }
   }
 
@@ -345,25 +283,7 @@ export class SegmentDictionaryService {
       const updatedAliases = [...currentAliases, normalizedAlias];
       return this.updateClassificacao(supabase, tenantId, id, { aliases: updatedAliases });
     } catch (err: any) {
-      console.warn(`[SegmentDictionaryService] Supabase addAlias failed, falling back to local file. Error:`, err);
-      
-      const store = getFallbackData();
-      const idx = store.classifications.findIndex(c => c.id === id && c.tenantId === tenantId);
-      if (idx === -1) {
-        throw new Error(`Classificação com ID "${id}" não encontrada.`);
-      }
-
-      const item = store.classifications[idx];
-      const currentAliases = item.aliases || [];
-      const normalizedAlias = newAlias.trim();
-
-      if (!currentAliases.some(a => a.toLowerCase() === normalizedAlias.toLowerCase())) {
-        item.aliases = [...currentAliases, normalizedAlias];
-        store.classifications[idx] = item;
-        saveFallbackData(store);
-      }
-
-      return item;
+      throw err;
     }
   }
 
@@ -384,12 +304,8 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return (data || []).map(mapRowToClassificacao);
-    } catch (err) {
-      console.warn(`[SegmentDictionaryService] Supabase getActiveClassificacoes failed, falling back to local file. Error:`, err);
-      const store = getFallbackData();
-      return store.classifications
-        .filter(c => c.tenantId === tenantId && c.isActive)
-        .sort((a, b) => a.displayOrder - b.displayOrder);
+    } catch (err: any) {
+      throw err;
     }
   }
 
@@ -409,12 +325,8 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return (data || []).map(mapRowToClassificacao);
-    } catch (err) {
-      console.warn(`[SegmentDictionaryService] Supabase getAllClassificacoes failed, falling back to local file. Error:`, err);
-      const store = getFallbackData();
-      return store.classifications
-        .filter(c => c.tenantId === tenantId)
-        .sort((a, b) => a.displayOrder - b.displayOrder);
+    } catch (err: any) {
+      throw err;
     }
   }
 
@@ -500,27 +412,7 @@ export class SegmentDictionaryService {
       if (error) throw error;
       return mapRowToCultura(data);
     } catch (err: any) {
-      if (err.message && err.message.includes('já existe')) throw err;
-      console.warn(`[SegmentDictionaryService] Supabase createCultura failed, falling back to local file. Error:`, err);
-      
-      const store = getFallbackData();
-      const existing = store.cultures.find(c => c.tenantId === tenantId && c.internalKey === internalKey);
-      if (existing) {
-        throw new Error(`Cultura com chave "${internalKey}" já existe para este tenant.`);
-      }
-
-      const newCult: TenantCultura = {
-        id: crypto.randomUUID(),
-        tenantId,
-        internalKey,
-        customName: input.customName,
-        isActive: true,
-        displayOrder: input.displayOrder ?? 0,
-      };
-
-      store.cultures.push(newCult);
-      saveFallbackData(store);
-      return newCult;
+      throw err;
     }
   }
 
@@ -541,12 +433,8 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return (data || []).map(mapRowToCultura);
-    } catch (err) {
-      console.warn(`[SegmentDictionaryService] Supabase getActiveCulturas failed, falling back to local file. Error:`, err);
-      const store = getFallbackData();
-      return store.cultures
-        .filter(c => c.tenantId === tenantId && c.isActive)
-        .sort((a, b) => a.displayOrder - b.displayOrder);
+    } catch (err: any) {
+      throw err;
     }
   }
 
@@ -567,16 +455,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
     } catch (err: any) {
-      console.warn(`[SegmentDictionaryService] Supabase deactivateCultura failed, falling back to local file. Error:`, err);
-      
-      const store = getFallbackData();
-      const idx = store.cultures.findIndex(c => c.id === id && c.tenantId === tenantId);
-      if (idx !== -1) {
-        store.cultures[idx].isActive = false;
-        saveFallbackData(store);
-      } else {
-        throw new Error(`Cultura com ID "${id}" não encontrada.`);
-      }
+      throw err;
     }
   }
 }
@@ -610,123 +489,5 @@ function mapRowToCultura(row: any): TenantCultura {
     displayOrder: row.display_order,
     createdAt: row.created_at ? new Date(row.created_at) : undefined,
   };
-}
-
-// ============================================================
-// Local JSON File Fallback Manager
-// ============================================================
-
-const FALLBACK_FILE_PATH = path.join(process.cwd(), 'src/data/local_dictionary.json');
-
-interface FallbackStore {
-  classifications: TenantClassificacao[];
-  cultures: TenantCultura[];
-}
-
-function getFallbackData(): FallbackStore {
-  try {
-    if (fs.existsSync(FALLBACK_FILE_PATH)) {
-      const content = fs.readFileSync(FALLBACK_FILE_PATH, 'utf-8');
-      return JSON.parse(content);
-    }
-  } catch (err) {
-    console.warn('[SegmentDictionaryService] Failed to read fallback file:', err);
-  }
-
-  // Default seed data matching MONTHLY_MASTER_BASE and MOCK_TEST_DATA
-  const defaultData: FallbackStore = {
-    classifications: [
-      {
-        id: 'mock-seeds-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'SEMENTES',
-        parentKey: null,
-        customName: 'Sementes',
-        aliases: ['sementes', 'seeds'],
-        isActive: true,
-        displayOrder: 0,
-        color: '#22C55E',
-      },
-      {
-        id: 'mock-fertilizers-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'FERTILIZANTES',
-        parentKey: null,
-        customName: 'Fertilizantes',
-        aliases: ['fertilizantes', 'adubos'],
-        isActive: true,
-        displayOrder: 1,
-        color: '#3B82F6',
-      },
-      {
-        id: 'mock-agrochemicals-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'AGROQUIMICOS',
-        parentKey: null,
-        customName: 'Defensivos',
-        aliases: ['defensivos', 'mata-mato', 'agroquimicos'],
-        isActive: true,
-        displayOrder: 2,
-        color: '#F59E0B',
-      },
-    ],
-    cultures: [
-      {
-        id: 'mock-soja-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'SOJA',
-        customName: 'Soja',
-        isActive: true,
-        displayOrder: 0,
-      },
-      {
-        id: 'mock-milho-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'MILHO',
-        customName: 'Milho',
-        isActive: true,
-        displayOrder: 1,
-      },
-      {
-        id: 'mock-algodao-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'ALGODAO',
-        customName: 'Algodão',
-        isActive: true,
-        displayOrder: 2,
-      },
-      {
-        id: 'mock-cana-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'CANA',
-        customName: 'Cana',
-        isActive: true,
-        displayOrder: 3,
-      },
-      {
-        id: 'mock-cafe-id',
-        tenantId: '00000000-0000-0000-0000-000000000000',
-        internalKey: 'CAFE',
-        customName: 'Café',
-        isActive: true,
-        displayOrder: 4,
-      },
-    ],
-  };
-
-  saveFallbackData(defaultData);
-  return defaultData;
-}
-
-function saveFallbackData(data: FallbackStore) {
-  try {
-    const dir = path.dirname(FALLBACK_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(FALLBACK_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[SegmentDictionaryService] Failed to write fallback file:', err);
-  }
 }
 

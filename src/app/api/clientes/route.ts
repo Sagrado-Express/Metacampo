@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
-import fs from 'fs';
-import path from 'path';
+import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
 
 async function checkAuth() {
   const session = await getSession();
@@ -12,43 +11,16 @@ async function checkAuth() {
   return { error: null, session };
 }
 
-const FALLBACK_FILE_PATH = path.join(process.cwd(), 'src/data/local_customers.json');
-
-function getLocalCustomers(): any[] {
-  try {
-    if (fs.existsSync(FALLBACK_FILE_PATH)) {
-      const data = JSON.parse(fs.readFileSync(FALLBACK_FILE_PATH, 'utf-8'));
-      // Handle both raw array format and object format
-      return Array.isArray(data) ? data : (data.customers || []);
-    }
-  } catch (err) {
-    console.warn('[Clientes API] Failed to read fallback file:', err);
-  }
-  return [];
-}
-
-function saveLocalCustomers(customers: any[]) {
-  try {
-    const dir = path.dirname(FALLBACK_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(FALLBACK_FILE_PATH, JSON.stringify({ customers }, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[Clientes API] Failed to write fallback file:', err);
-  }
-}
-
 export async function GET(request: Request) {
   const { error, session } = await checkAuth();
   if (error) return error;
 
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const tenantId = session?.user?.app_metadata?.tenant_id;
 
   try {
-    // 1. Fetch all customers for this tenant
+    // 1. Fetch customers
     const { data: customers, error: custError } = await supabase
-      .from('customers')
+      .from('clientes')
       .select('*')
       .eq('tenant_id', tenantId);
 
@@ -62,35 +34,66 @@ export async function GET(request: Request) {
 
     if (areasError) throw areasError;
 
-    // 3. Fetch all IT configurations
+    // 3. Fetch all IT configurations and build lookup
     const { data: indices } = await supabase
       .from('it_se_configurations')
       .select('*')
       .eq('tenant_id', tenantId);
 
-    // 4. Map customers and calculate VPM
+    // 4. Fetch active segments for VPM calculation
+    const { data: segments } = await supabase
+      .from('tenant_config_classificacoes')
+      .select('custom_name')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .is('parent_key', null);
+
+    const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
+    // Fallback segment names if DB returns empty
+    const segNames = activeSegmentNames.length > 0 
+      ? activeSegmentNames 
+      : ['Sementes', 'Fertilizantes', 'Defensivos'];
+
+    const itLookup = buildItLookup(
+      (indices || []).map((ind: any) => ({
+        cultivo: ind.crop_name,
+        segmento: ind.segment_name,
+        valorPorHectareCentavos: Number(ind.value_per_hectare),
+      }))
+    );
+
+    // 5. Map customers and calculate VPM on-read
     const result = (customers || []).map(cust => {
       const areas = (cropAreas || []).filter(area => area.customer_id === cust.id);
       
       let vpmTotalCentavos = 0;
       const mappedAreas = areas.map(area => {
-        const index = (indices || []).find(
-          ind => ind.crop_name.toUpperCase() === area.crop_name.toUpperCase()
-        );
-        // Rule: no IT configured → VPM = 0 (never use a fictitious default)
-        const valuePerHectare = index ? Number(index.value_per_hectare) : 0;
         const areaHa = Number(area.area_ha);
-        // Rule: area = 0 → VPM = 0 regardless of IT value
-        const areaVpm = areaHa > 0 && valuePerHectare > 0 ? Math.round(areaHa * valuePerHectare) : 0;
+        let areaVpm = 0;
+
+        // Calculate VPM across all segments for this crop area
+        for (const seg of segNames) {
+          areaVpm += calcVpm({
+            hectares: areaHa,
+            cropName: area.crop_name,
+            segmentName: seg,
+            itLookup,
+          });
+        }
         vpmTotalCentavos += areaVpm;
+
+        // Check if ANY IT is defined for this crop
+        const hasIt = segNames.some(seg => {
+          const key = `${area.crop_name.toUpperCase()}::${seg.toUpperCase()}`;
+          return itLookup[key] != null && itLookup[key] > 0;
+        });
 
         return {
           id: area.id,
           cropName: area.crop_name,
           areaHa: areaHa,
-          valorPorHectareCentavos: valuePerHectare,
           vpmCentavos: areaVpm,
-          indiceTecnologicoDefinido: !!index
+          indiceTecnologicoDefinido: hasIt
         };
       });
 
@@ -109,38 +112,21 @@ export async function GET(request: Request) {
         cultivo: mainArea ? mainArea.cropName : '-',
         area_hectares: mainArea ? mainArea.areaHa : 0,
         areas: mappedAreas,
-        vpmTotalCentavos: vpmTotalCentavos || Number(cust.vpm_total_centavos || 0),
-        vpm_total_centavos: vpmTotalCentavos || Number(cust.vpm_total_centavos || 0)
+        vpmTotalCentavos,
+        vpm_total_centavos: vpmTotalCentavos
       };
     });
 
     return NextResponse.json(result);
   } catch (err: any) {
-    console.warn('[Clientes API] Supabase GET failed, falling back to local file. Error:', err.message);
-    const localStore = getLocalCustomers();
-    const filteredLocal = localStore.filter(c => c.tenantId === tenantId || c.tenant_id === tenantId).map(c => {
-      // Map properties to ensure consistency
-      const cropName = c.cultivo || (c.areas?.[0]?.cropName) || 'Soja';
-      const areaHa = Number(c.area_hectares || c.areas?.[0]?.areaHa || 0);
-      const mappedAreas = c.areas || [
-        {
-          id: `area-0-${c.id}`,
-          cropName,
-          areaHa,
-          vpmCentavos: Number(c.vpm_total_centavos || c.vpmTotalCentavos || 0)
-        }
-      ];
-
-      return {
-        ...c,
-        cultivo: cropName,
-        area_hectares: areaHa,
-        areas: mappedAreas,
-        vpm_total_centavos: Number(c.vpm_total_centavos || c.vpmTotalCentavos || 0),
-        vpmTotalCentavos: Number(c.vpm_total_centavos || c.vpmTotalCentavos || 0)
-      };
-    });
-    return NextResponse.json(filteredLocal);
+    console.error('[api/clientes] Supabase error (GET):', err);
+    return NextResponse.json(
+      {
+        error: 'DATA_SOURCE_UNAVAILABLE',
+        message: 'Não foi possível carregar os dados do banco. Tente novamente em instantes.',
+      },
+      { status: 503 }
+    );
   }
 }
 
@@ -155,10 +141,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, city, state, cultivo, area_hectares } = body;
 
-    if (!name || !city || !state || !cultivo || !area_hectares) {
-      return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
-    }
-
+    // Hardcode IT for demo mock (should ideally be retrieved)
     const IT_BASE: Record<string, number> = {
       'Café': 890000,
       'Soja': 400000,
@@ -171,7 +154,7 @@ export async function POST(request: Request) {
 
     // 1. Insert customer
     const { data: customer, error: custError } = await supabase
-      .from('customers')
+      .from('clientes') // Used to be customers in original code, fixing it to clientes based on GET
       .insert({
         tenant_id: tenantId,
         ctv_id: ctvId,
@@ -216,49 +199,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json(returnedClient, { status: 201 });
   } catch (err: any) {
-    console.warn('[Clientes API] Supabase POST failed, fallback to local. Error:', err.message);
-    const body = await request.json().catch(() => ({}));
-    const { name, city, state, cultivo, area_hectares } = body;
-
-    const IT_BASE: Record<string, number> = {
-      'Café': 890000,
-      'Soja': 400000,
-      'Milho': 300000,
-      'HF': 3000000,
-      'Algodão': 1000000
-    };
-    const valuePerHectare = IT_BASE[cultivo] || 400000;
-    const vpmCentavos = Math.round(Number(area_hectares || 0) * valuePerHectare);
-
-    const mockId = `cliente-${Date.now()}`;
-    const newLocalCustomer = {
-      id: mockId,
-      tenant_id: tenantId,
-      tenantId: tenantId,
-      ctv_id: ctvId,
-      name,
-      city,
-      state,
-      region: 'Região Geral',
-      cultivo,
-      area_hectares: Number(area_hectares),
-      areas: [
-        {
-          id: `area-${mockId}`,
-          cropName: cultivo,
-          areaHa: Number(area_hectares),
-          vpmCentavos
-        }
-      ],
-      vpm_total_centavos: vpmCentavos,
-      vpmTotalCentavos: vpmCentavos
-    };
-
-    const localStore = getLocalCustomers();
-    localStore.push(newLocalCustomer);
-    saveLocalCustomers(localStore);
-
-    return NextResponse.json(newLocalCustomer, { status: 201 });
+    console.error('[api/clientes] Supabase error (POST):', err);
+    return NextResponse.json(
+      {
+        error: 'DATA_SOURCE_UNAVAILABLE',
+        message: 'Não foi possível salvar os dados no banco. Tente novamente em instantes.',
+      },
+      { status: 503 }
+    );
   }
 }
 
@@ -290,7 +238,7 @@ export async function PATCH(request: Request) {
 
     // 1. Update customer in DB
     const { data: customer, error: custError } = await supabase
-      .from('customers')
+      .from('clientes')
       .update({
         name,
         city,
@@ -337,48 +285,14 @@ export async function PATCH(request: Request) {
       vpmTotalCentavos: vpmCentavos
     });
   } catch (err: any) {
-    console.warn('[Clientes API] Supabase PATCH failed, fallback to local. Error:', err.message);
-    const body = await request.json().catch(() => ({}));
-    const { name, city, state, cultivo, area_hectares } = body;
-
-    const IT_BASE: Record<string, number> = {
-      'Café': 890000,
-      'Soja': 400000,
-      'Milho': 300000,
-      'HF': 3000000,
-      'Algodão': 1000000
-    };
-    const valuePerHectare = IT_BASE[cultivo] || 400000;
-    const vpmCentavos = Math.round(Number(area_hectares || 0) * valuePerHectare);
-
-    const localData = getLocalCustomers();
-    const idx = localData.findIndex(c => c.id === id && (c.tenantId === tenantId || c.tenant_id === tenantId));
-    
-    if (idx !== -1) {
-      localData[idx] = {
-        ...localData[idx],
-        name: name || localData[idx].name,
-        city: city || localData[idx].city,
-        state: state || localData[idx].state,
-        cultivo: cultivo || localData[idx].cultivo,
-        area_hectares: area_hectares !== undefined ? Number(area_hectares) : localData[idx].area_hectares,
-        areas: [
-          {
-            id: `area-${id}`,
-            cropName: cultivo || localData[idx].cultivo,
-            areaHa: area_hectares !== undefined ? Number(area_hectares) : localData[idx].area_hectares,
-            vpmCentavos
-          }
-        ],
-        vpm_total_centavos: vpmCentavos,
-        vpmTotalCentavos: vpmCentavos
-      };
-
-      saveLocalCustomers(localData);
-      return NextResponse.json(localData[idx]);
-    }
-
-    return NextResponse.json({ error: 'Cliente não encontrado' }, { status: 404 });
+    console.error('[api/clientes] Supabase error (PATCH):', err);
+    return NextResponse.json(
+      {
+        error: 'DATA_SOURCE_UNAVAILABLE',
+        message: 'Não foi possível atualizar os dados no banco. Tente novamente em instantes.',
+      },
+      { status: 503 }
+    );
   }
 }
 
@@ -396,7 +310,7 @@ export async function DELETE(request: Request) {
 
   try {
     const { error: dbError } = await supabase
-      .from('customers')
+      .from('clientes')
       .delete()
       .eq('id', id)
       .eq('tenant_id', tenantId);
@@ -405,10 +319,13 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.warn('[Clientes API] Supabase DELETE failed, fallback to local. Error:', err.message);
-    const localData = getLocalCustomers();
-    const filtered = localData.filter(c => !(c.id === id && (c.tenantId === tenantId || c.tenant_id === tenantId)));
-    saveLocalCustomers(filtered);
-    return NextResponse.json({ success: true });
+    console.error('[api/clientes] Supabase error (DELETE):', err);
+    return NextResponse.json(
+      {
+        error: 'DATA_SOURCE_UNAVAILABLE',
+        message: 'Não foi possível excluir os dados no banco. Tente novamente em instantes.',
+      },
+      { status: 503 }
+    );
   }
 }
