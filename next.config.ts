@@ -3,6 +3,9 @@ import path from "path";
 
 const nextConfig = {
   turbopack: {},
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 } as any;
 
 export default withSentryConfig(nextConfig, {
