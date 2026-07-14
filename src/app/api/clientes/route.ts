@@ -139,7 +139,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, city, state, cultivo, area_hectares } = body;
+    const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa } = body;
+    const cultivo = areas?.[0]?.cropName || bodyCultivo;
+    const area_hectares = areas?.[0]?.areaHa || bodyAreaHa;
 
     // Hardcode IT for demo mock (should ideally be retrieved)
     const IT_BASE: Record<string, number> = {
@@ -224,7 +226,9 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, city, state, cultivo, area_hectares } = body;
+    const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa } = body;
+    const cultivo = areas?.[0]?.cropName || bodyCultivo;
+    const area_hectares = areas?.[0]?.areaHa || bodyAreaHa;
 
     const IT_BASE: Record<string, number> = {
       'Café': 890000,
