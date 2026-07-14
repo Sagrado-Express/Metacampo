@@ -7,7 +7,7 @@
 //   • Respostas com códigos HTTP corretos e mensagens amigáveis
 
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit, getRetryAfter } from '@/lib/rateLimiter'
 
 /** Helper: extrai IP real mesmo atrás de CDN */
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   // ------------------------------------------------------------------
   // Parse & sanitização do payload
   // ------------------------------------------------------------------
-  let payload: { name?: string; email?: string; password?: string; captchaToken?: string }
+  let payload: { name?: string; email?: string; password?: string; captchaToken?: string; inviteToken?: string }
   try {
     payload = await req.json()
   } catch {
@@ -74,9 +74,44 @@ export async function POST(req: Request) {
   const email = payload.email?.trim().toLowerCase() ?? ''
   const password = payload.password ?? ''
   const captchaToken = payload.captchaToken ?? ''
+  const inviteToken = payload.inviteToken ?? ''
 
   if (!name || !email || !password || !captchaToken) {
     return NextResponse.json({ message: 'Todos os campos são obrigatórios.' }, { status: 400 })
+  }
+
+  // FAIL-CLOSED: Convite é obrigatório
+  if (!inviteToken) {
+    return NextResponse.json(
+      { message: 'Cadastro requer convite válido. Solicite um convite ao administrador do seu tenant.' },
+      { status: 403 }
+    )
+  }
+
+  // ------------------------------------------------------------------
+  // Validar convite antes de prosseguir
+  // ------------------------------------------------------------------
+  const { data: invite, error: inviteError } = await supabase
+    .from('tenant_invites')
+    .select('*')
+    .eq('token', inviteToken)
+    .is('used_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .single()
+
+  if (inviteError || !invite) {
+    return NextResponse.json(
+      { message: 'Convite inválido ou expirado.' },
+      { status: 403 }
+    )
+  }
+
+  // Email do convite deve coincidir
+  if (invite.email.toLowerCase() !== email.toLowerCase()) {
+    return NextResponse.json(
+      { message: 'Este convite foi emitido para outro e-mail.' },
+      { status: 403 }
+    )
   }
 
   // ------------------------------------------------------------------
@@ -88,7 +123,7 @@ export async function POST(req: Request) {
   }
 
   // ------------------------------------------------------------------
-  // Supabase signup – cria usuário e (opcional) liga ao tenant default
+  // Supabase signup – cria usuário e vincula ao tenant do convite
   // ------------------------------------------------------------------
   try {
     const { data, error } = await supabase.auth.signUp({
@@ -108,8 +143,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: msg }, { status: 400 })
     }
 
-    // Opcional: associar usuário ao tenant padrão – aqui exemplo rápido
-    // await supabase.from('user_tenants').insert({ user_id: data.user?.id, tenant_id: DEFAULT_TENANT_ID })
+    if (!data.user?.id) {
+      return NextResponse.json({ message: 'Falha ao criar usuário.' }, { status: 500 })
+    }
+
+    // Vincular usuário ao tenant do convite (FAIL-CLOSED)
+    const { error: linkError } = await supabaseAdmin
+      .from('user_tenants')
+      .insert({
+        user_id: data.user.id,
+        tenant_id: invite.tenant_id
+      })
+
+    if (linkError) {
+      console.error('[auth/register] Falha ao vincular usuario ao tenant:', linkError)
+      return NextResponse.json({ message: 'Erro ao vincular usuário ao tenant.' }, { status: 500 })
+    }
+
+    // Marcar convite como usado
+    const { error: updateError } = await supabaseAdmin
+      .from('tenant_invites')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', invite.id)
+
+    if (updateError) {
+      console.warn('[auth/register] Aviso ao marcar convite como usado:', updateError)
+      // Não falha a requisição, user foi criado
+    }
 
     return NextResponse.json({ message: 'Conta criada com sucesso.' }, { status: 200 })
   } catch (e) {

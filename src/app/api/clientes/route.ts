@@ -143,16 +143,42 @@ export async function POST(request: Request) {
     const cultivo = areas?.[0]?.cropName || bodyCultivo;
     const area_hectares = areas?.[0]?.areaHa || bodyAreaHa;
 
-    // Hardcode IT for demo mock (should ideally be retrieved)
-    const IT_BASE: Record<string, number> = {
-      'Café': 890000,
-      'Soja': 400000,
-      'Milho': 300000,
-      'HF': 3000000,
-      'Algodão': 1000000
-    };
-    const valuePerHectare = IT_BASE[cultivo] || 400000;
-    const vpmCentavos = Math.round(Number(area_hectares) * valuePerHectare);
+    // Fetch IT configurations from database for this tenant
+    const { data: indices } = await supabase
+      .from('it_se_configurations')
+      .select('*')
+      .eq('tenant_id', tenantId);
+
+    const itLookup = buildItLookup(
+      (indices || []).map((ind: any) => ({
+        cultivo: ind.crop_name,
+        segmento: ind.segment_name,
+        valorPorHectareCentavos: Number(ind.value_per_hectare),
+      }))
+    );
+
+    // Fetch active segments to calculate VPM across all of them
+    const { data: segments } = await supabase
+      .from('tenant_config_classificacoes')
+      .select('custom_name')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .is('parent_key', null);
+
+    const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
+
+    // Calculate VPM for all segments
+    let vpmCentavos = 0;
+    if (activeSegmentNames.length > 0) {
+      for (const seg of activeSegmentNames) {
+        vpmCentavos += calcVpm({
+          hectares: Number(area_hectares),
+          cropName: cultivo,
+          segmentName: seg,
+          itLookup,
+        });
+      }
+    }
 
     // 1. Insert customer
     const { data: customer, error: custError } = await supabase
@@ -230,15 +256,42 @@ export async function PATCH(request: Request) {
     const cultivo = areas?.[0]?.cropName || bodyCultivo;
     const area_hectares = areas?.[0]?.areaHa || bodyAreaHa;
 
-    const IT_BASE: Record<string, number> = {
-      'Café': 890000,
-      'Soja': 400000,
-      'Milho': 300000,
-      'HF': 3000000,
-      'Algodão': 1000000
-    };
-    const valuePerHectare = IT_BASE[cultivo] || 400000;
-    const vpmCentavos = Math.round(Number(area_hectares || 0) * valuePerHectare);
+    // Fetch IT configurations from database for this tenant
+    const { data: indices } = await supabase
+      .from('it_se_configurations')
+      .select('*')
+      .eq('tenant_id', tenantId);
+
+    const itLookup = buildItLookup(
+      (indices || []).map((ind: any) => ({
+        cultivo: ind.crop_name,
+        segmento: ind.segment_name,
+        valorPorHectareCentavos: Number(ind.value_per_hectare),
+      }))
+    );
+
+    // Fetch active segments
+    const { data: segments } = await supabase
+      .from('tenant_config_classificacoes')
+      .select('custom_name')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .is('parent_key', null);
+
+    const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
+
+    // Calculate VPM for all segments
+    let vpmCentavos = 0;
+    if (activeSegmentNames.length > 0) {
+      for (const seg of activeSegmentNames) {
+        vpmCentavos += calcVpm({
+          hectares: Number(area_hectares || 0),
+          cropName: cultivo,
+          segmentName: seg,
+          itLookup,
+        });
+      }
+    }
 
     // 1. Update customer in DB
     const { data: customer, error: custError } = await supabase

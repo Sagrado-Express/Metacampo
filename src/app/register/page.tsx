@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -22,10 +22,24 @@ const Recaptcha = ({ onVerify }: { onVerify: (token: string) => void }) => {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [inviteToken, setInviteToken] = useState("");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [captchaToken, setCaptchaToken] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "no_invite">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Extrair token da URL no mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("invite");
+      if (token) {
+        setInviteToken(token);
+      } else {
+        setStatus("no_invite");
+      }
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -37,13 +51,17 @@ export default function RegisterPage() {
       setErrorMsg("Por favor, complete o reCAPTCHA.");
       return;
     }
+    if (!inviteToken) {
+      setErrorMsg("Token de convite inválido ou expirado.");
+      return;
+    }
     setStatus("loading");
     setErrorMsg("");
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, captchaToken }),
+        body: JSON.stringify({ ...form, captchaToken, inviteToken }),
       });
       if (res.ok) {
         setStatus("success");
@@ -58,6 +76,32 @@ export default function RegisterPage() {
       setStatus("error");
     }
   };
+
+  if (status === "no_invite") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-primary/5 to-primary/10 p-4">
+        <motion.div
+          className="w-full max-w-md rounded-2xl bg-white/80 backdrop-blur-md shadow-xl p-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex flex-col items-center">
+            <AlertCircle size={48} className="text-amber-600 mb-4" />
+            <h2 className="text-2xl font-bold text-center text-slate-800 mb-4">
+              Cadastro por Convite
+            </h2>
+            <p className="text-center text-slate-600 text-sm">
+              O cadastro de novos usuários está disponível apenas mediante convite válido.
+            </p>
+            <p className="text-center text-slate-500 text-xs mt-4">
+              Se você recebeu um convite, clique no link fornecido no e-mail.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-primary/5 to-primary/10 p-4">

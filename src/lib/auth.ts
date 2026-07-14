@@ -109,3 +109,18 @@ export function csrfToken() {
   // In a real Next.js env you would use `cookies().set` but here we just return.
   return { token, cookie };
 }
+
+/**
+ * Get tenant_id from session or throw error if missing.
+ * FAIL-CLOSED: Never returns default/fallback tenant.
+ * Used by API routes that require tenant context.
+ */
+export async function getTenantIdOrFail(): Promise<string> {
+  const session = await getSession();
+
+  if (!session?.user?.app_metadata?.tenant_id) {
+    throw new Error('MISSING_TENANT_ID');
+  }
+
+  return session.user.app_metadata.tenant_id;
+}
