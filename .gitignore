@@ -48,6 +48,8 @@ next-env.d.ts
 
 # Temporary testing artifacts
 cookies.txt
+cookies_prod.txt
+*.cookies.txt
 /node_modules_old
 /node_modules_old/
 /C

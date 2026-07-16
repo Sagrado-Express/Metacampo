@@ -1,12 +1,9 @@
 import { withSentryConfig } from "@sentry/nextjs";
-import path from "path";
+import type { NextConfig } from "next";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   turbopack: {},
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-} as any;
+};
 
 export default withSentryConfig(nextConfig, {
   org: "metacampo",
@@ -14,4 +11,4 @@ export default withSentryConfig(nextConfig, {
   silent: true,
   disableServerWebpackPlugin: true,
   disableClientWebpackPlugin: true,
-} as any);
+});
