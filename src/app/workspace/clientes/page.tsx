@@ -6,12 +6,15 @@ import { useState } from 'react';
 import NovoClienteModal from '@/components/clientes/NovoClienteModal';
 import { Loader2, Plus, Edit2, Trash2, Users2, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRetryMutation } from '@/hooks/useRetryMutation';
+import { useToast } from '@/components/Toast/ToastContext';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
 export default function ClientesPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
+  const { addToast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editClient, setEditClient] = useState<any>(null);
 
@@ -27,18 +30,28 @@ export default function ClientesPage() {
     enabled: !!tenantId
   });
 
-  const handleDelete = async (id: string) => {
+  const deleteMutation = useRetryMutation(
+    async (id: string) => {
+      const res = await fetch(`/api/clientes?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Falha ao deletar');
+      return res.json();
+    },
+    {
+      maxAttempts: 3,
+      baseDelayMs: 500,
+      onSuccess: () => {
+        addToast('Produtor excluído com sucesso', 'success');
+        refetch();
+      },
+      onError: () => {
+        addToast('Erro ao excluir produtor. Tente novamente.', 'error', 5000);
+      },
+    }
+  );
+
+  const handleDelete = (id: string) => {
     if (confirm('Deseja realmente excluir este produtor?')) {
-      try {
-        const res = await fetch(`/api/clientes?id=${id}`, {
-          method: 'DELETE'
-        });
-        if (res.ok) {
-          refetch();
-        }
-      } catch (err) {
-        console.error('Failed to delete:', err);
-      }
+      deleteMutation.mutate(id);
     }
   };
 
@@ -130,10 +143,15 @@ export default function ClientesPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(c.id)}
-                          className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition-all"
+                          disabled={deleteMutation.isPending}
+                          className="p-1.5 hover:bg-red-50 text-slate-500 hover:text-red-600 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Excluir"
                         >
-                          <Trash2 size={14} />
+                          {deleteMutation.isPending ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
                         </button>
                       </td>
                     </tr>

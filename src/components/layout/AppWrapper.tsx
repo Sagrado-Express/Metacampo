@@ -4,16 +4,21 @@ import React from "react";
 import { Sidebar } from "./Sidebar";
 import { SidebarProvider, useSidebar } from "@/providers/SidebarProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { ToastProvider } from "@/components/Toast/ToastContext";
+import { ToastContainer } from "@/components/Toast/ToastContainer";
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <SidebarProvider>
-        <div className="flex">
-          <Sidebar />
-          <LayoutContent>{children}</LayoutContent>
-        </div>
-      </SidebarProvider>
+      <ToastProvider>
+        <SidebarProvider>
+          <div className="flex">
+            <Sidebar />
+            <LayoutContent>{children}</LayoutContent>
+          </div>
+        </SidebarProvider>
+        <ToastContainer />
+      </ToastProvider>
     </QueryProvider>
   );
 }
