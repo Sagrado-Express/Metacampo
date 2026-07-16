@@ -148,3 +148,47 @@ CREATE POLICY tenant_isolation ON public.setup_budgets USING (tenant_id = (auth.
 CREATE POLICY tenant_isolation ON public.customer_forecasts USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 CREATE POLICY tenant_isolation ON public.faturamento_snapshots USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
+-- 11. Tabela de Configurações de Culturas por Tenant
+CREATE TABLE IF NOT EXISTS public.tenant_config_culturas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    custom_name TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, custom_name)
+);
+
+-- 12. Tabela de Configurações de Classificações (Segmentos) por Tenant
+CREATE TABLE IF NOT EXISTS public.tenant_config_classificacoes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    custom_name TEXT NOT NULL,
+    parent_key TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, custom_name)
+);
+
+-- 13. Tabela de Planejamento por Cliente e Segmento
+CREATE TABLE IF NOT EXISTS public.planejamento_cliente_segmento (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    customer_id UUID NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
+    segmento TEXT NOT NULL,
+    mes CHAR(2),
+    status TEXT DEFAULT 'RASCUNHO',
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.tenant_config_culturas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenant_config_classificacoes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.planejamento_cliente_segmento ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY tenant_isolation ON public.tenant_config_culturas USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY tenant_isolation ON public.tenant_config_classificacoes USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY tenant_isolation ON public.planejamento_cliente_segmento USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+

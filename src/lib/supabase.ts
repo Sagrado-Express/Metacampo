@@ -1,4 +1,5 @@
-﻿import { createClient } from '@supabase/supabase-js'
+﻿import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
@@ -17,3 +18,24 @@ export const supabaseAdmin = createClient(
   supabaseUrl || 'https://placeholder-project.supabase.co',
   supabaseServiceKey || supabaseAnonKey || 'placeholder-key'
 )
+
+export async function getSupabaseClientWithSession(): Promise<SupabaseClient> {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('sb-access-token')?.value
+
+  if (!token) {
+    throw new Error('No authentication token found')
+  }
+
+  return createClient(
+    supabaseUrl || 'https://placeholder-project.supabase.co',
+    supabaseAnonKey || 'placeholder-key',
+    {
+      global: {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  )
+}

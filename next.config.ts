@@ -9,6 +9,4 @@ export default withSentryConfig(nextConfig, {
   org: "metacampo",
   project: "metacampo-front",
   silent: true,
-  disableServerWebpackPlugin: true,
-  disableClientWebpackPlugin: true,
 });
