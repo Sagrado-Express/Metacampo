@@ -16,13 +16,17 @@ export async function GET(request: Request) {
   if (error) return error;
 
   const tenantId = session?.user?.app_metadata?.tenant_id;
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 1000);
+  const offset = parseInt(searchParams.get('offset') || '0');
 
   try {
-    // 1. Fetch customers
-    const { data: customers, error: custError } = await supabase
+    // 1. Fetch customers (with pagination)
+    const { data: customers, error: custError, count } = await supabase
       .from('clientes')
-      .select('*')
-      .eq('tenant_id', tenantId);
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .range(offset, offset + limit - 1);
 
     if (custError) throw custError;
 
@@ -117,7 +121,15 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      data: result,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    });
   } catch (err: any) {
     console.error('[api/clientes] Supabase error (GET):', err);
     return NextResponse.json(

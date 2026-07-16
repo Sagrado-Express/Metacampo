@@ -5,15 +5,27 @@ import { getSession } from '@/lib/auth';
 export async function GET(request: Request) {
   const session = await getSession();
   const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(parseInt(searchParams.get('limit') || '500'), 5000);
+  const offset = parseInt(searchParams.get('offset') || '0');
 
   try {
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('faturamento_snapshots')
-      .select('*')
-      .eq('tenant_id', tenantId);
+      .select('*', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
-    return NextResponse.json(data);
+    return NextResponse.json({
+      data,
+      pagination: {
+        total: count || 0,
+        limit,
+        offset,
+        hasMore: offset + limit < (count || 0),
+      },
+    });
   } catch (err: any) {
     console.error('[Billing API] Supabase error (GET):', err);
     return NextResponse.json(
