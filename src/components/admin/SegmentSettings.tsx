@@ -17,6 +17,7 @@ import {
   Save,
   X,
 } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 // ============================================================
 // Types (local to this component, mirrors TenantClassificacao)
@@ -63,13 +64,13 @@ interface SegmentSettingsProps {
 
 /**
  * SegmentSettings: Tenant Parametrization Admin Page
- * 
+ *
  * "Passo 0" — the tenant configures their product classifications
  * and crops here before any commercial setup.
- * 
+ *
  * Per meeting Daniel × Marco Polo (16/06/2026):
  * "Como você quer chamar esse campo? O cara dá o nome."
- * 
+ *
  * Design: Morning Dew (Glass cards, Framer Motion micro-animations)
  * UI Label: "Classificação de Produtos" (not "Segmento")
  */
@@ -91,6 +92,8 @@ export function SegmentSettings({
   const [newSubClassName, setNewSubClassName] = useState<Record<string, string>>({});
   const [newCulturaName, setNewCulturaName] = useState("");
   const [editingAliases, setEditingAliases] = useState<Record<string, string>>({});
+  const [renaming, setRenaming] = useState<{ kind: "classificacao" | "cultura"; id: string } | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
 
   // Separate roots and children
   const roots = classificacoes.filter((c) => c.parentKey === null);
@@ -108,21 +111,36 @@ export function SegmentSettings({
 
   const handleCreateClassificacao = async () => {
     if (!newClassName.trim()) return;
-    await onCreateClassificacao(newClassName.trim());
-    setNewClassName("");
+    try {
+      await onCreateClassificacao(newClassName.trim());
+      setNewClassName("");
+      toast.success("Classificação criada");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao criar classificação");
+    }
   };
 
   const handleCreateSubClassificacao = async (parentKey: string) => {
     const name = newSubClassName[parentKey]?.trim();
     if (!name) return;
-    await onCreateClassificacao(name, parentKey);
-    setNewSubClassName((prev) => ({ ...prev, [parentKey]: "" }));
+    try {
+      await onCreateClassificacao(name, parentKey);
+      setNewSubClassName((prev) => ({ ...prev, [parentKey]: "" }));
+      toast.success("Sub-classificação criada");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao criar sub-classificação");
+    }
   };
 
   const handleCreateCultura = async () => {
     if (!newCulturaName.trim()) return;
-    await onCreateCultura(newCulturaName.trim());
-    setNewCulturaName("");
+    try {
+      await onCreateCultura(newCulturaName.trim());
+      setNewCulturaName("");
+      toast.success("Cultura criada");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao criar cultura");
+    }
   };
 
   const handleAddAlias = async (item: ClassificacaoItem) => {
@@ -130,22 +148,99 @@ export function SegmentSettings({
     if (!alias) return;
 
     const updatedAliases = [...item.aliases, alias];
-    await onSaveClassificacao({ ...item, aliases: updatedAliases });
-    setEditingAliases((prev) => ({ ...prev, [item.id]: "" }));
+    try {
+      await onSaveClassificacao({ ...item, aliases: updatedAliases });
+      setEditingAliases((prev) => ({ ...prev, [item.id]: "" }));
+      toast.success("Apelido adicionado");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao adicionar apelido");
+    }
   };
 
   const handleRemoveAlias = async (item: ClassificacaoItem, aliasToRemove: string) => {
     const updatedAliases = item.aliases.filter((a) => a !== aliasToRemove);
-    await onSaveClassificacao({ ...item, aliases: updatedAliases });
+    try {
+      await onSaveClassificacao({ ...item, aliases: updatedAliases });
+      toast.success("Apelido removido");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao remover apelido");
+    }
   };
 
   const handleToggleActive = async (item: ClassificacaoItem) => {
-    await onSaveClassificacao({ ...item, isActive: !item.isActive });
+    try {
+      await onSaveClassificacao({ ...item, isActive: !item.isActive });
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao atualizar");
+    }
   };
 
   const handleColorChange = async (item: ClassificacaoItem, color: string) => {
-    await onSaveClassificacao({ ...item, color });
+    try {
+      await onSaveClassificacao({ ...item, color });
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao alterar cor");
+    }
   };
+
+  // ─── Renomeação inline ───
+  const startRename = (kind: "classificacao" | "cultura", id: string, currentName: string) => {
+    setRenaming({ kind, id });
+    setRenameDraft(currentName);
+  };
+
+  const commitRename = async (item: ClassificacaoItem | CulturaItem) => {
+    const name = renameDraft.trim();
+    setRenaming(null);
+    if (!name || name === item.customName) return;
+    try {
+      if (renaming?.kind === "cultura") {
+        await onSaveCultura({ ...(item as CulturaItem), customName: name });
+      } else {
+        await onSaveClassificacao({ ...(item as ClassificacaoItem), customName: name });
+      }
+      toast.success("Nome atualizado");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao renomear");
+    }
+  };
+
+  // ─── Exclusão com confirmação ───
+  const handleDeleteCulturaClick = async (cultura: CulturaItem) => {
+    if (!window.confirm(`Excluir a cultura "${cultura.customName}"?\nEssa ação não pode ser desfeita.`)) return;
+    try {
+      await onDeleteCultura(cultura.id);
+      toast.success("Cultura excluída");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao excluir cultura");
+    }
+  };
+
+  const handleDeleteClassificacaoClick = async (item: ClassificacaoItem) => {
+    if (!window.confirm(`Excluir a classificação "${item.customName}"?\nEssa ação não pode ser desfeita.`)) return;
+    try {
+      await onDeleteClassificacao(item.id);
+      toast.success("Classificação excluída");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao excluir classificação");
+    }
+  };
+
+  // Input de renomeação reutilizável
+  const renderRenameInput = (item: ClassificacaoItem | CulturaItem) => (
+    <input
+      autoFocus
+      type="text"
+      value={renameDraft}
+      onChange={(e) => setRenameDraft(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commitRename(item);
+        else if (e.key === "Escape") setRenaming(null);
+      }}
+      onBlur={() => commitRename(item)}
+      className="px-2 py-1 rounded-lg border-2 border-primary/60 bg-white text-sm font-medium outline-none w-44"
+    />
+  );
 
   // ============================================================
   // Render
@@ -203,7 +298,17 @@ export function SegmentSettings({
             >
               <div className="flex items-center gap-3">
                 <GripVertical size={14} className="text-muted-foreground/40 cursor-grab" />
-                <span className="font-medium text-sm">{cultura.customName}</span>
+                {renaming?.kind === "cultura" && renaming.id === cultura.id ? (
+                  renderRenameInput(cultura)
+                ) : (
+                  <span
+                    className="font-medium text-sm cursor-text hover:bg-amber-50 rounded px-1 -mx-1 transition-colors"
+                    title="Duplo clique para renomear"
+                    onDoubleClick={() => startRename("cultura", cultura.id, cultura.customName)}
+                  >
+                    {cultura.customName}
+                  </span>
+                )}
                 <span className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full">
                   {cultura.internalKey}
                 </span>
@@ -220,6 +325,13 @@ export function SegmentSettings({
                   ) : (
                     <ToggleLeft size={20} />
                   )}
+                </button>
+                <button
+                  onClick={() => handleDeleteCulturaClick(cultura)}
+                  className="text-muted-foreground/50 hover:text-destructive transition-colors"
+                  title="Excluir cultura"
+                >
+                  <Trash2 size={15} />
                 </button>
               </div>
             </motion.div>
@@ -314,7 +426,17 @@ export function SegmentSettings({
                         className="w-5 h-5 rounded-full border-0 cursor-pointer p-0"
                         title="Cor nos gráficos"
                       />
-                      <span className="font-medium text-sm">{root.customName}</span>
+                      {renaming?.kind === "classificacao" && renaming.id === root.id ? (
+                        renderRenameInput(root)
+                      ) : (
+                        <span
+                          className="font-medium text-sm cursor-text hover:bg-blue-50 rounded px-1 -mx-1 transition-colors"
+                          title="Duplo clique para renomear"
+                          onDoubleClick={() => startRename("classificacao", root.id, root.customName)}
+                        >
+                          {root.customName}
+                        </span>
+                      )}
                       <span className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full">
                         {root.internalKey}
                       </span>
@@ -349,6 +471,13 @@ export function SegmentSettings({
                         ) : (
                           <ToggleLeft size={20} />
                         )}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClassificacaoClick(root)}
+                        className="text-muted-foreground/50 hover:text-destructive transition-colors"
+                        title="Excluir classificação"
+                      >
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -438,21 +567,40 @@ export function SegmentSettings({
                               }
                               className="w-4 h-4 rounded-full border-0 cursor-pointer p-0"
                             />
-                            <span className="text-sm">{child.customName}</span>
+                            {renaming?.kind === "classificacao" && renaming.id === child.id ? (
+                              renderRenameInput(child)
+                            ) : (
+                              <span
+                                className="text-sm cursor-text hover:bg-blue-50 rounded px-1 -mx-1 transition-colors"
+                                title="Duplo clique para renomear"
+                                onDoubleClick={() => startRename("classificacao", child.id, child.customName)}
+                              >
+                                {child.customName}
+                              </span>
+                            )}
                             <span className="text-[9px] text-muted-foreground font-mono bg-muted/30 px-1.5 py-0.5 rounded-full">
                               {child.internalKey}
                             </span>
                           </div>
-                          <button
-                            onClick={() => handleToggleActive(child)}
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {child.isActive ? (
-                              <ToggleRight size={16} className="text-green-500" />
-                            ) : (
-                              <ToggleLeft size={16} />
-                            )}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleActive(child)}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {child.isActive ? (
+                                <ToggleRight size={16} className="text-green-500" />
+                              ) : (
+                                <ToggleLeft size={16} />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClassificacaoClick(child)}
+                              className="text-muted-foreground/50 hover:text-destructive transition-colors"
+                              title="Excluir sub-classificação"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
                         </div>
                       ))}
 

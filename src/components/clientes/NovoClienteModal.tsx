@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Save } from 'lucide-react';
+import { X, Loader2, Save, Plus, Trash2 } from 'lucide-react';
+import { toast } from '@/lib/toast';
+import { useSession } from '@/hooks/useSession';
 
 interface NovoClienteModalProps {
   onClose: () => void;
@@ -7,54 +9,67 @@ interface NovoClienteModalProps {
   clienteToEdit?: any;
 }
 
+interface AreaRow {
+  cropName: string;
+  areaHa: string; // string no form, convertido no submit
+}
+
+/**
+ * Cadastro de cliente com MÚLTIPLOS cultivos por produtor.
+ *
+ * Motivo da mudança: na operação real, um mesmo cliente costuma plantar mais
+ * de uma cultura (ex: Soja + Milho safrinha + Café). O formulário antigo só
+ * aceitava 1 cultivo/área por cliente, então cadastrar a carteira real exigia
+ * duplicar o cliente por cultivo — o que quebra o cálculo de VPM total e a
+ * visão de carteira. Agora é uma lista de linhas Cultivo × Hectares.
+ */
 export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: NovoClienteModalProps) {
   const [name, setName] = useState(clienteToEdit?.name || '');
   const [city, setCity] = useState(clienteToEdit?.city || '');
   const [state, setState] = useState(clienteToEdit?.state || 'MG');
-  const [cropName, setCropName] = useState(clienteToEdit?.areas?.[0]?.cropName || '');
-  const [areaHa, setAreaHa] = useState(clienteToEdit?.areas?.[0]?.areaHa || '');
+  const [areaRows, setAreaRows] = useState<AreaRow[]>(
+    clienteToEdit?.areas?.length
+      ? clienteToEdit.areas.map((a: any) => ({ cropName: a.cropName, areaHa: String(a.areaHa) }))
+      : [{ cropName: '', areaHa: '' }]
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [activeCultures, setActiveCultures] = useState<{customName: string; internalKey: string}[]>([]);
+  const [activeCultures, setActiveCultures] = useState<{ customName: string; internalKey: string }[]>([]);
+  const { data: sessionData } = useSession();
 
-  // Fetch active cultures dynamically from API
+  // Cultivos ativos vêm da configuração do tenant (Regra #6: nada hardcoded no fluxo principal).
   useEffect(() => {
-    const tenantId = '00000000-0000-0000-0000-000000000000';
-    fetch(`/api/cultures?tenantId=${tenantId}`)
+    if (!sessionData?.tenantId) return;
+    fetch(`/api/cultures?tenantId=${sessionData.tenantId}`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setActiveCultures(data);
-          if (!cropName && data.length > 0) {
-            setCropName(data[0].customName);
-          }
-        } else {
-          // Fallback to defaults if API returns empty
-          const fallback = [
-            { customName: 'Soja', internalKey: 'SOJA' },
-            { customName: 'Milho', internalKey: 'MILHO' },
-            { customName: 'Café', internalKey: 'CAFE' },
-          ];
-          setActiveCultures(fallback);
-          if (!cropName) setCropName('Soja');
+        const list = Array.isArray(data) && data.length > 0 ? data : [];
+        setActiveCultures(list);
+        if (list.length > 0 && areaRows[0].cropName === '') {
+          setAreaRows(prev => prev.map(r => (r.cropName ? r : { ...r, cropName: list[0].customName })));
         }
       })
-      .catch(() => {
-        const fallback = [
-          { customName: 'Soja', internalKey: 'SOJA' },
-          { customName: 'Milho', internalKey: 'MILHO' },
-          { customName: 'Café', internalKey: 'CAFE' },
-        ];
-        setActiveCultures(fallback);
-        if (!cropName) setCropName('Soja');
-      });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      .catch(() => setActiveCultures([]));
+  }, [sessionData?.tenantId]);
+
+  const addRow = () => {
+    setAreaRows(prev => [...prev, { cropName: activeCultures[0]?.customName || '', areaHa: '' }]);
+  };
+
+  const removeRow = (index: number) => {
+    setAreaRows(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateRow = (index: number, patch: Partial<AreaRow>) => {
+    setAreaRows(prev => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !city || !state || !cropName || !areaHa) {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+
+    const validRows = areaRows.filter(r => r.cropName && r.areaHa && parseFloat(r.areaHa) > 0);
+    if (!name || !city || !state || validRows.length === 0) {
+      setError('Preencha nome, município, UF e ao menos um cultivo com área.');
       return;
     }
 
@@ -67,27 +82,20 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
         city,
         state,
         region: 'Região Geral',
-        areas: [
-          {
-            cropName,
-            areaHa: parseFloat(areaHa)
-          }
-        ]
+        areas: validRows.map(r => ({ cropName: r.cropName, areaHa: parseFloat(r.areaHa) })),
       };
 
-      const url = clienteToEdit 
-        ? `/api/clientes?id=${clienteToEdit.id}`
-        : '/api/clientes';
-
+      const url = clienteToEdit ? `/api/clientes?id=${clienteToEdit.id}` : '/api/clientes';
       const method = clienteToEdit ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
+        toast.success(clienteToEdit ? 'Cliente atualizado' : 'Cliente cadastrado');
         onSuccess();
       } else {
         const err = await res.json();
@@ -102,7 +110,7 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white/95 rounded-3xl w-full max-w-md shadow-2xl border border-white/60 p-6 space-y-6 relative overflow-hidden">
+      <div className="bg-white/95 rounded-3xl w-full max-w-lg shadow-2xl border border-white/60 p-6 space-y-6 relative overflow-hidden max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground hover:bg-muted/30 p-2 rounded-xl transition-all"
@@ -115,7 +123,7 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
             {clienteToEdit ? '✎ Editar Cliente' : '✨ Novo Cliente'}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Cadastre os dados de cultivo para cálculo automático de VPM.
+            Cadastre cada cultivo e sua área para cálculo automático de VPM.
           </p>
         </div>
 
@@ -164,30 +172,49 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-1">Cultivo Principal</label>
-              <select
-                value={cropName}
-                onChange={(e) => setCropName(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
-              >
-                {activeCultures.map(culture => (
-                  <option key={culture.internalKey} value={culture.customName}>{culture.customName}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-1">Área (ha)</label>
-              <input
-                type="number"
-                value={areaHa}
-                onChange={(e) => setAreaHa(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
-                placeholder="Ex: 500"
-                required
-              />
-            </div>
+          {/* Lista de cultivos × área — múltiplas linhas por cliente */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-1">
+              Cultivos & Áreas
+            </label>
+            {areaRows.map((row, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <select
+                  value={row.cropName}
+                  onChange={(e) => updateRow(i, { cropName: e.target.value })}
+                  className="flex-1 px-3 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
+                >
+                  <option value="" disabled>Selecione…</option>
+                  {activeCultures.map(culture => (
+                    <option key={culture.internalKey} value={culture.customName}>{culture.customName}</option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min="0"
+                  value={row.areaHa}
+                  onChange={(e) => updateRow(i, { areaHa: e.target.value })}
+                  className="w-28 px-3 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
+                  placeholder="ha"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeRow(i)}
+                  disabled={areaRows.length === 1}
+                  className="p-2 rounded-xl text-muted-foreground/60 hover:text-destructive hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Remover cultivo"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addRow}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-emerald-300 text-emerald-700 text-xs font-black uppercase tracking-wider hover:bg-emerald-50 transition-colors"
+            >
+              <Plus size={14} /> Adicionar cultivo
+            </button>
           </div>
 
           <div className="pt-2 flex gap-3">

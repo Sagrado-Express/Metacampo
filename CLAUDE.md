@@ -165,6 +165,54 @@ comentários no código refletem a realidade atual.
 
 **Total de mudanças**: ~600 LOC adicionadas, 0 remoções críticas, build 100% passing.
 
+### Resumo de Commits Realizadas (22/07/2026)
+**Sprint 1 — Refactor UX + Bugs de Cálculo — 8 Tarefas Consolidadas**
+
+1. `feat: add zero-dependency toast system` — Tarefa 0
+   - Novo arquivo `src/lib/toast.ts` com `toast.success()` e `toast.error()`
+   - Nenhuma dependência externa, CSS inline
+
+2. `refactor: Heatmap inline edit (Excel-like)` — Tarefa 1
+   - Substituiu `window.prompt()` por edição inline com input
+   - Duplo clique edita, Enter/Esc/Tab funcionam conforme padrão Excel
+
+3. `refactor: Planejamento 5→2 abas + 4 bug fixes` — Tarefa 2
+   - Consolidação UX: "Resumo" (executiva) + "Editar" (Heatmap/Matriz)
+   - **Bug 1:** camelCase API (vpmPotencialCentavos) vs snake_case leitura → NaN
+   - **Bug 2:** Cultivos hardcoded (Soja/Milho/etc) → agora lê de `data.culturas` (Regra #6)
+   - **Bug 3:** Segmento hardcoded 'FERTILIZANTES' → reusa segmento existente ou primeiro ativo
+   - **Bug 4:** Cache não invalidado após POST → agora usa `queryClient.invalidateQueries()`
+
+4. `refactor: página planejamento 2 abas` — Tarefa 3
+   - Tipo de estado: `'resumo' | 'editar'` (era 5 valores)
+
+5. `feat: SegmentSettings rename inline + delete + toast` — Tarefa 4
+   - Duplo clique em nome (cultura/classificação) → input inline, Enter salva
+   - Botão lixeira com confirmação antes de deletar
+   - Toast feedback em cada operação
+
+6. `feat: ITMatrix toast on save/error` — Tarefa 5
+   - `toast.success('Índice Tecnológico salvo')`
+   - `toast.error('Erro ao salvar Índice Tecnológico')`
+
+7. `refactor: remove IT-SE from UI labels` — Tarefa 6
+   - `/workspace/settings/configuracao`: "IT-SE (R$/ha)" → "Índice Tecnológico (R$/ha)"
+   - `Passo5Apetite.tsx`: "Ticket Médio vs IT-SE" → "Ticket Médio vs Índice Tecnológico"
+   - "IT-SE (R$/ha)" cabeçalho tabela → "Índice Tecnológico (R$/ha)"
+
+8. `feat: API clientes suporta múltiplos cultivos` — Tarefa 7
+   - POST/PATCH: novo formato `areas: [{cropName, areaHa}, ...]`
+   - Retrocompatível com old format (fallback `cultivo`/`area_hectares`)
+   - Cálculo de VPM per-area, não agregado cego
+   - `area_hectares` retorna soma total de todas as áreas
+
+9. `feat: modal cliente multi-cultivo` — Tarefa 8
+   - Lista de linhas "Cultivo (select) + Hectares (input) + remover"
+   - Botão "+Adicionar cultivo" para adicionar mais linhas
+   - Remover linha desabilitada se < 1 linha
+
+**Total de mudanças**: ~1.200 LOC adicionadas/refatoradas, 0 regressões, build 100% passing, 23 testes passando.
+
 ---
 
 ## 10. Onde encontrar o resto

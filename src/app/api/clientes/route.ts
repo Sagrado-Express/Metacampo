@@ -54,8 +54,8 @@ export async function GET(request: Request) {
 
     const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
     // Fallback segment names if DB returns empty
-    const segNames = activeSegmentNames.length > 0 
-      ? activeSegmentNames 
+    const segNames = activeSegmentNames.length > 0
+      ? activeSegmentNames
       : ['Sementes', 'Fertilizantes', 'Defensivos'];
 
     const itLookup = buildItLookup(
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     // 5. Map customers and calculate VPM on-read
     const result = (customers || []).map(cust => {
       const areas = (cropAreas || []).filter(area => area.customer_id === cust.id);
-      
+
       let vpmTotalCentavos = 0;
       const mappedAreas = areas.map(area => {
         const areaHa = Number(area.area_ha);
@@ -103,6 +103,8 @@ export async function GET(request: Request) {
 
       // Root level cultivo mapping for Sprint 0.5 view compatibility
       const mainArea = mappedAreas[0];
+      // Sum all areas for area_hectares
+      const totalAreaHa = mappedAreas.reduce((acc, a) => acc + a.areaHa, 0);
 
       return {
         id: cust.id,
@@ -114,7 +116,7 @@ export async function GET(request: Request) {
         state: cust.state,
         region: cust.region,
         cultivo: mainArea ? mainArea.cropName : '-',
-        area_hectares: mainArea ? mainArea.areaHa : 0,
+        area_hectares: totalAreaHa,
         areas: mappedAreas,
         vpmTotalCentavos,
         vpm_total_centavos: vpmTotalCentavos
@@ -152,8 +154,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa } = body;
-    const cultivo = areas?.[0]?.cropName || bodyCultivo;
-    const area_hectares = areas?.[0]?.areaHa || bodyAreaHa;
+
+    // Parse areas list: support new multi-crop format and fallback to old single-crop format
+    const areaList: { cropName: string; areaHa: number }[] =
+      Array.isArray(areas) && areas.length > 0
+        ? areas
+            .map((a: any) => ({ cropName: a.cropName, areaHa: Number(a.areaHa) }))
+            .filter((a) => a.cropName && a.areaHa > 0)
+        : bodyCultivo && bodyAreaHa
+          ? [{ cropName: bodyCultivo, areaHa: Number(bodyAreaHa) }]
+          : [];
+
+    if (areaList.length === 0) {
+      return NextResponse.json({ error: 'Informe ao menos um cultivo com área.' }, { status: 400 });
+    }
 
     // Fetch IT configurations from database for this tenant
     const { data: indices } = await supabase
@@ -178,23 +192,21 @@ export async function POST(request: Request) {
       .is('parent_key', null);
 
     const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
+    const segNames = activeSegmentNames.length > 0 ? activeSegmentNames : ['Sementes', 'Fertilizantes', 'Defensivos'];
 
-    // Calculate VPM for all segments
-    let vpmCentavos = 0;
-    if (activeSegmentNames.length > 0) {
-      for (const seg of activeSegmentNames) {
-        vpmCentavos += calcVpm({
-          hectares: Number(area_hectares),
-          cropName: cultivo,
-          segmentName: seg,
-          itLookup,
-        });
+    // Calculate VPM per area
+    const vpmPorArea = areaList.map((a) => {
+      let vpm = 0;
+      for (const seg of segNames) {
+        vpm += calcVpm({ hectares: a.areaHa, cropName: a.cropName, segmentName: seg, itLookup });
       }
-    }
+      return vpm;
+    });
+    const vpmCentavos = vpmPorArea.reduce((acc, v) => acc + v, 0);
 
     // 1. Insert customer
     const { data: customer, error: custError } = await supabase
-      .from('clientes') // Used to be customers in original code, fixing it to clientes based on GET
+      .from('clientes')
       .insert({
         tenant_id: tenantId,
         ctv_id: ctvId,
@@ -209,17 +221,18 @@ export async function POST(request: Request) {
 
     if (custError) throw custError;
 
-    // 2. Insert crop area
-    const { data: areaData, error: areaError } = await supabase
+    // 2. Insert crop areas (all of them)
+    const { data: areasData, error: areaError } = await supabase
       .from('customer_crop_areas')
-      .insert({
-        tenant_id: tenantId,
-        customer_id: customer.id,
-        crop_name: cultivo,
-        area_ha: Number(area_hectares)
-      })
-      .select()
-      .single();
+      .insert(
+        areaList.map((a, idx) => ({
+          tenant_id: tenantId,
+          customer_id: customer.id,
+          crop_name: a.cropName,
+          area_ha: a.areaHa
+        }))
+      )
+      .select();
 
     if (areaError) throw areaError;
 
@@ -230,9 +243,14 @@ export async function POST(request: Request) {
       name: customer.name,
       city: customer.city,
       state: customer.state,
-      cultivo,
-      area_hectares: Number(area_hectares),
-      areas: [{ id: areaData.id, cropName: cultivo, areaHa: Number(area_hectares), vpmCentavos }],
+      cultivo: areaList[0].cropName,
+      area_hectares: areaList.reduce((sum, a) => sum + a.areaHa, 0),
+      areas: areasData.map((area: any, idx: number) => ({
+        id: area.id,
+        cropName: area.crop_name,
+        areaHa: Number(area.area_ha),
+        vpmCentavos: vpmPorArea[idx]
+      })),
       vpm_total_centavos: vpmCentavos,
       vpmTotalCentavos: vpmCentavos
     };
@@ -265,8 +283,20 @@ export async function PATCH(request: Request) {
   try {
     const body = await request.json();
     const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa } = body;
-    const cultivo = areas?.[0]?.cropName || bodyCultivo;
-    const area_hectares = areas?.[0]?.areaHa || bodyAreaHa;
+
+    // Parse areas list: support new multi-crop format and fallback to old single-crop format
+    const areaList: { cropName: string; areaHa: number }[] =
+      Array.isArray(areas) && areas.length > 0
+        ? areas
+            .map((a: any) => ({ cropName: a.cropName, areaHa: Number(a.areaHa) }))
+            .filter((a) => a.cropName && a.areaHa > 0)
+        : bodyCultivo && bodyAreaHa
+          ? [{ cropName: bodyCultivo, areaHa: Number(bodyAreaHa) }]
+          : [];
+
+    if (areaList.length === 0) {
+      return NextResponse.json({ error: 'Informe ao menos um cultivo com área.' }, { status: 400 });
+    }
 
     // Fetch IT configurations from database for this tenant
     const { data: indices } = await supabase
@@ -291,19 +321,17 @@ export async function PATCH(request: Request) {
       .is('parent_key', null);
 
     const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
+    const segNames = activeSegmentNames.length > 0 ? activeSegmentNames : ['Sementes', 'Fertilizantes', 'Defensivos'];
 
-    // Calculate VPM for all segments
-    let vpmCentavos = 0;
-    if (activeSegmentNames.length > 0) {
-      for (const seg of activeSegmentNames) {
-        vpmCentavos += calcVpm({
-          hectares: Number(area_hectares || 0),
-          cropName: cultivo,
-          segmentName: seg,
-          itLookup,
-        });
+    // Calculate VPM per area
+    const vpmPorArea = areaList.map((a) => {
+      let vpm = 0;
+      for (const seg of segNames) {
+        vpm += calcVpm({ hectares: a.areaHa, cropName: a.cropName, segmentName: seg, itLookup });
       }
-    }
+      return vpm;
+    });
+    const vpmCentavos = vpmPorArea.reduce((acc, v) => acc + v, 0);
 
     // 1. Update customer in DB
     const { data: customer, error: custError } = await supabase
@@ -321,23 +349,24 @@ export async function PATCH(request: Request) {
 
     if (custError) throw custError;
 
-    // 2. Update area in DB
+    // 2. Delete old areas and insert new ones
     await supabase
       .from('customer_crop_areas')
       .delete()
       .eq('customer_id', id)
       .eq('tenant_id', tenantId);
 
-    const { data: areaData, error: areaError } = await supabase
+    const { data: areasData, error: areaError } = await supabase
       .from('customer_crop_areas')
-      .insert({
-        tenant_id: tenantId,
-        customer_id: id,
-        crop_name: cultivo,
-        area_ha: Number(area_hectares)
-      })
-      .select()
-      .single();
+      .insert(
+        areaList.map((a) => ({
+          tenant_id: tenantId,
+          customer_id: id,
+          crop_name: a.cropName,
+          area_ha: a.areaHa
+        }))
+      )
+      .select();
 
     if (areaError) throw areaError;
 
@@ -347,9 +376,14 @@ export async function PATCH(request: Request) {
       name: customer.name,
       city: customer.city,
       state: customer.state,
-      cultivo,
-      area_hectares: Number(area_hectares),
-      areas: [{ id: areaData.id, cropName: cultivo, areaHa: Number(area_hectares), vpmCentavos }],
+      cultivo: areaList[0].cropName,
+      area_hectares: areaList.reduce((sum, a) => sum + a.areaHa, 0),
+      areas: areasData.map((area: any, idx: number) => ({
+        id: area.id,
+        cropName: area.crop_name,
+        areaHa: Number(area.area_ha),
+        vpmCentavos: vpmPorArea[idx]
+      })),
       vpm_total_centavos: vpmCentavos,
       vpmTotalCentavos: vpmCentavos
     });

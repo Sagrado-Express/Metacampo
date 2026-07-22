@@ -32,7 +32,7 @@ export function Passo5Apetite({ apetites }: Passo5Props) {
         <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/50 flex gap-3">
           <Info className="w-5 h-5 text-blue-400 shrink-0" />
           <p className="text-xs text-slate-300">
-            <strong>Ticket Médio vs IT-SE:</strong> Indica se a ambição está proporcional ao potencial.
+            <strong>Ticket Médio vs Índice Tecnológico:</strong> Indica se a ambição está proporcional ao potencial.
           </p>
         </div>
         <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/50 flex gap-3">
@@ -56,7 +56,7 @@ export function Passo5Apetite({ apetites }: Passo5Props) {
               <th className="px-4 py-3 font-bold rounded-tl-xl">Cliente</th>
               <th className="px-4 py-3 font-bold">Cultivo</th>
               <th className="px-4 py-3 font-bold text-right">Planejado (R$/ha)</th>
-              <th className="px-4 py-3 font-bold text-right">IT-SE (R$/ha)</th>
+              <th className="px-4 py-3 font-bold text-right">Índice Tecnológico (R$/ha)</th>
               <th className="px-4 py-3 font-bold text-center">Qtd. Segmentos</th>
               <th className="px-4 py-3 font-bold text-right rounded-tr-xl">Share %</th>
             </tr>

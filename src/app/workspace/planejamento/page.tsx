@@ -6,9 +6,16 @@ import PlanejamentoTabs from '@/components/planejamento/PlanejamentoTabs';
 import Link from 'next/link';
 import { ChevronLeft, BarChart3 } from 'lucide-react';
 
+/**
+ * Planejamento — consolidado de 5 abas para 2 (decisão de UX 07/2026):
+ *  - Resumo: visão executiva (o que já foi planejado)
+ *  - Editar: superfície única de edição (Heatmap) + Matriz consolidada
+ * As antigas abas Carteira / Por Cultivo / Por Segmento foram absorvidas
+ * pelo Resumo; a lista completa da carteira vive em /workspace/clientes.
+ */
 export default function PlanejamentoPage() {
   const { data: sessionData, isLoading } = useSession();
-  const [tab, setTab] = useState<'carteira' | 'apetite' | 'cultivo' | 'segmento' | 'matriz'>('carteira');
+  const [tab, setTab] = useState<'resumo' | 'editar'>('resumo');
 
   const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
 
@@ -34,17 +41,17 @@ export default function PlanejamentoPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <BarChart3 size={20} className="text-emerald-600" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#3E2723]">Planejamento — Cubo Multidimensional</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#3E2723]">Planejamento</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Acompanhe o potencial de mercado e distribua seu apetite comercial por cliente, cultivo e segmento.
+            Veja o resumo do seu planejamento e edite o apetite comercial por cliente e cultivo.
           </p>
         </div>
       </div>
 
-      {/* Tabs list */}
-      <div className="flex gap-1 p-1 bg-muted/30 rounded-2xl border border-border/40 overflow-x-auto">
-        {(['carteira', 'apetite', 'cultivo', 'segmento', 'matriz'] as const).map(t => (
+      {/* Tabs list — 2 abas */}
+      <div className="flex gap-1 p-1 bg-muted/30 rounded-2xl border border-border/40">
+        {(['resumo', 'editar'] as const).map(t => (
           <button
             key={t}
             id={`tab-${t}`}
@@ -55,18 +62,15 @@ export default function PlanejamentoPage() {
                 : 'text-muted-foreground hover:text-foreground hover:bg-white/50'
             }`}
           >
-            {t === 'carteira' && 'Carteira'}
-            {t === 'apetite' && 'Apetite Comercial'}
-            {t === 'cultivo' && 'Por Cultivo'}
-            {t === 'segmento' && 'Por Segmento'}
-            {t === 'matriz' && 'Matriz'}
+            {t === 'resumo' && 'Resumo'}
+            {t === 'editar' && 'Editar'}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
       <div className="glass-card p-6 min-h-[300px]">
-        <PlanejamentoTabs tab={tab} tenantId={tenantId} />
+        <PlanejamentoTabs tab={tab} tenantId={tenantId} onGoToEditar={() => setTab('editar')} />
       </div>
     </div>
   );

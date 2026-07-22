@@ -46,7 +46,7 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: str
   },
   {
     id: "it-se",
-    label: "IT-SE (R$/ha)",
+    label: "Índice Tecnológico (R$/ha)",
     icon: TrendingUp,
     color: "text-violet-600",
   },

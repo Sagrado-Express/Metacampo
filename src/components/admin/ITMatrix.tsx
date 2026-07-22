@@ -13,6 +13,7 @@ import {
 import { useITConfigurations, UpsertITConfigInput } from "@/hooks/useITConfigurations";
 import { useQueryClient } from "@tanstack/react-query";
 import { TenantCultura, TenantClassificacao } from "@/types/schema";
+import { toast } from "@/lib/toast";
 
 // ============================================================
 // Types
@@ -156,8 +157,10 @@ export function ITMatrix({
 
       setSavedKeys(new Set(dirtyKeys));
       setDirtyKeys(new Set());
+      toast.success('Índice Tecnológico salvo');
     } catch (err: any) {
       setError(err.message || "Erro ao salvar configurações.");
+      toast.error('Erro ao salvar Índice Tecnológico');
     } finally {
       setSavingAll(false);
     }
