@@ -69,22 +69,26 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { id, customName, aliases, isActive, displayOrder, color, newAlias } = body;
+    const { id, customName, aliases, isActive, displayOrder, color, newAlias, promoverAlias } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
     const result =
-      newAlias !== undefined
-        ? await SegmentDictionaryService.addAlias(ctx.supabase, ctx.tenantId, id, newAlias)
-        : await SegmentDictionaryService.updateClassificacao(ctx.supabase, ctx.tenantId, id, {
-            customName,
-            aliases,
-            isActive,
-            displayOrder,
-            color,
-          });
+      // Promove um apelido a nome de exibição: troca com o custom_name atual,
+      // que passa a ser apelido para o matching de CSV/ERP não quebrar.
+      promoverAlias !== undefined
+        ? await SegmentDictionaryService.promoverAliasParaNome(ctx.supabase, ctx.tenantId, id, promoverAlias)
+        : newAlias !== undefined
+          ? await SegmentDictionaryService.addAlias(ctx.supabase, ctx.tenantId, id, newAlias)
+          : await SegmentDictionaryService.updateClassificacao(ctx.supabase, ctx.tenantId, id, {
+              customName,
+              aliases,
+              isActive,
+              displayOrder,
+              color,
+            });
 
     return NextResponse.json(result);
   } catch (error: any) {

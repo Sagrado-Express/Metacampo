@@ -16,6 +16,7 @@ import {
   Layers,
   Save,
   X,
+  Check,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 
@@ -47,6 +48,8 @@ interface SegmentSettingsProps {
   classificacoes: ClassificacaoItem[];
   culturas: CulturaItem[];
   onSaveClassificacao: (item: ClassificacaoItem) => Promise<void>;
+  /** Troca um apelido com o nome de exibição atual. */
+  onPromoteAlias: (id: string, alias: string) => Promise<void>;
   onCreateClassificacao: (customName: string, parentKey?: string | null) => Promise<void>;
   onDeleteClassificacao: (id: string) => Promise<void>;
   onSaveCultura: (item: CulturaItem) => Promise<void>;
@@ -79,6 +82,7 @@ export function SegmentSettings({
   classificacoes,
   culturas,
   onSaveClassificacao,
+  onPromoteAlias,
   onCreateClassificacao,
   onDeleteClassificacao,
   onSaveCultura,
@@ -154,6 +158,24 @@ export function SegmentSettings({
       toast.success("Apelido adicionado");
     } catch (err: any) {
       toast.error(err?.message || "Erro ao adicionar apelido");
+    }
+  };
+
+  const handlePromoteAlias = async (item: ClassificacaoItem, alias: string) => {
+    if (
+      !window.confirm(
+        `Usar "${alias}" como nome desta classificação?\n\n` +
+          `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
+          `O código interno (${item.internalKey}) não muda.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await onPromoteAlias(item.id, alias);
+      toast.success(`"${alias}" agora é o nome`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao trocar o nome");
     }
   };
 
@@ -495,22 +517,41 @@ export function SegmentSettings({
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-bold">
                             Apelidos (nomes alternativos para matching do CSV/ERP)
                           </p>
-                          <div className="flex flex-wrap gap-1.5 mb-2">
+                          <div className="flex flex-wrap gap-1.5 mb-1">
+                            {/* O nome em uso aparece junto dos apelidos para deixar
+                                claro qual dos rótulos está valendo hoje. */}
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                              <Check size={10} />
+                              {root.customName}
+                              <span className="font-normal opacity-70">em uso</span>
+                            </span>
                             {root.aliases.map((alias) => (
                               <span
                                 key={alias}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted/40 text-[11px]"
+                                className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-muted/40 text-[11px]"
                               >
                                 {alias}
                                 <button
+                                  onClick={() => handlePromoteAlias(root, alias)}
+                                  className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                  title={`Usar "${alias}" como nome desta classificação`}
+                                >
+                                  usar como nome
+                                </button>
+                                <button
                                   onClick={() => handleRemoveAlias(root, alias)}
                                   className="text-muted-foreground hover:text-destructive transition-colors"
+                                  title="Remover apelido"
                                 >
                                   <X size={10} />
                                 </button>
                               </span>
                             ))}
                           </div>
+                          <p className="text-[10px] text-muted-foreground mb-2">
+                            Trocar o nome mantém o código interno e move o nome anterior para
+                            os apelidos, preservando o reconhecimento de arquivos já importados.
+                          </p>
                           <div className="flex gap-1.5">
                             <input
                               type="text"

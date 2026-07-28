@@ -193,6 +193,12 @@ export class SegmentDictionaryService {
   /**
    * Updates an existing product classification.
    * If customName changes, internal_key is NOT regenerated (stability guarantee).
+   *
+   * Renomear propaga o novo nome para as tabelas que referenciam o segmento
+   * por NOME, não por internal_key: `it_se_configurations.segment_name` e
+   * `planejamento_cliente_segmento.segmento`. Sem essa propagação, renomear
+   * um segmento órfã o Índice Tecnológico e o VPM da carteira cai a zero
+   * silenciosamente (verificado: 10.000.000 → 0 após um rename).
    */
   static async updateClassificacao(
     supabase: SupabaseClient,
@@ -209,6 +215,17 @@ export class SegmentDictionaryService {
       if (input.displayOrder !== undefined) updatePayload.display_order = input.displayOrder;
       if (input.color !== undefined) updatePayload.color = input.color;
 
+      // Nome anterior, necessário para localizar as linhas dependentes
+      let nomeAnterior: string | null = null;
+      if (input.customName !== undefined) {
+        const { data: atual } = await supabase
+          .from('tenant_config_classificacoes')
+          .select('custom_name')
+          .eq('id', id)
+          .maybeSingle();
+        nomeAnterior = atual?.custom_name ?? null;
+      }
+
       const { data, error } = await supabase
         .from('tenant_config_classificacoes')
         .update(updatePayload)
@@ -218,10 +235,68 @@ export class SegmentDictionaryService {
         .single();
 
       if (error) throw error;
+
+      if (input.customName && nomeAnterior && nomeAnterior !== input.customName) {
+        await supabase
+          .from('it_se_configurations')
+          .update({ segment_name: input.customName })
+          .eq('tenant_id', tenantId)
+          .eq('segment_name', nomeAnterior);
+
+        await supabase
+          .from('planejamento_cliente_segmento')
+          .update({ segmento: input.customName })
+          .eq('tenant_id', tenantId)
+          .eq('segmento', nomeAnterior);
+      }
+
       return mapRowToClassificacao(data);
     } catch (err: any) {
       throw err;
     }
+  }
+
+  /**
+   * Promove um apelido a nome de exibição.
+   *
+   * É uma troca, não uma substituição: o apelido escolhido passa a ser o
+   * custom_name e o nome anterior entra na lista de apelidos, para o matching
+   * de CSV/ERP continuar reconhecendo os arquivos já existentes.
+   * O internal_key permanece o mesmo (garantia de estabilidade).
+   */
+  static async promoverAliasParaNome(
+    supabase: SupabaseClient,
+    tenantId: string,
+    id: string,
+    alias: string
+  ): Promise<TenantClassificacao> {
+    const { data: atual, error: fetchError } = await supabase
+      .from('tenant_config_classificacoes')
+      .select('custom_name, aliases')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const novoNome = alias.trim();
+    if (!novoNome) throw new Error('Apelido vazio não pode virar nome.');
+
+    const nomeAnterior: string = atual.custom_name;
+    if (novoNome === nomeAnterior) return this.updateClassificacao(supabase, tenantId, id, {});
+
+    const restantes: string[] = (atual.aliases || []).filter(
+      (a: string) => a.toLowerCase() !== novoNome.toLowerCase()
+    );
+
+    // O nome antigo passa a ser apelido, sem duplicar caso já esteja lá
+    const jaTem = restantes.some((a) => a.toLowerCase() === nomeAnterior.toLowerCase());
+    const novosAliases = jaTem ? restantes : [...restantes, nomeAnterior];
+
+    return this.updateClassificacao(supabase, tenantId, id, {
+      customName: novoNome,
+      aliases: novosAliases,
+    });
   }
 
   /**
@@ -436,6 +511,71 @@ export class SegmentDictionaryService {
     } catch (err: any) {
       throw err;
     }
+  }
+
+  /**
+   * Renomeia uma cultura.
+   *
+   * O internal_key não é regerado (mesma garantia de estabilidade das
+   * classificações). O novo nome é propagado para as tabelas que referenciam
+   * a cultura por NOME: `it_se_configurations.crop_name`,
+   * `customer_crop_areas.crop_name` e `planejamento_cliente_segmento.cultivo`.
+   *
+   * Sem essa propagação, renomear zerava o VPM e ainda fazia as áreas dos
+   * produtores aparecerem como "cultura não cadastrada".
+   */
+  static async updateCultura(
+    supabase: SupabaseClient,
+    tenantId: string,
+    id: string,
+    input: { customName?: string; displayOrder?: number; isActive?: boolean }
+  ): Promise<TenantCultura> {
+    const updatePayload: Record<string, any> = {};
+    if (input.customName !== undefined) updatePayload.custom_name = input.customName;
+    if (input.displayOrder !== undefined) updatePayload.display_order = input.displayOrder;
+    if (input.isActive !== undefined) updatePayload.is_active = input.isActive;
+
+    let nomeAnterior: string | null = null;
+    if (input.customName !== undefined) {
+      const { data: atual } = await supabase
+        .from('tenant_config_culturas')
+        .select('custom_name')
+        .eq('id', id)
+        .maybeSingle();
+      nomeAnterior = atual?.custom_name ?? null;
+    }
+
+    const { data, error } = await supabase
+      .from('tenant_config_culturas')
+      .update(updatePayload)
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    if (input.customName && nomeAnterior && nomeAnterior !== input.customName) {
+      await supabase
+        .from('it_se_configurations')
+        .update({ crop_name: input.customName })
+        .eq('tenant_id', tenantId)
+        .eq('crop_name', nomeAnterior);
+
+      await supabase
+        .from('customer_crop_areas')
+        .update({ crop_name: input.customName })
+        .eq('tenant_id', tenantId)
+        .eq('crop_name', nomeAnterior);
+
+      await supabase
+        .from('planejamento_cliente_segmento')
+        .update({ cultivo: input.customName })
+        .eq('tenant_id', tenantId)
+        .eq('cultivo', nomeAnterior);
+    }
+
+    return mapRowToCultura(data);
   }
 
   /**

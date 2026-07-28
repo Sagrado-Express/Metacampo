@@ -96,6 +96,19 @@ export default function ConfiguracaoPage() {
     invalidateClassifications();
   };
 
+  const handlePromoteAlias = async (id: string, alias: string) => {
+    const response = await fetch("/api/classifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, promoverAlias: alias }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao trocar o nome");
+    }
+    invalidateClassifications();
+  };
+
   const handleCreateClassificacao = async (
     customName: string,
     parentKey?: string | null
@@ -202,7 +215,7 @@ export default function ConfiguracaoPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Settings2 size={20} className="text-muted-foreground" />
-            <h1 className="text-2xl font-bold tracking-tight">Configuração do Tenant</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
           </div>
           <p className="text-sm text-muted-foreground">
             Defina suas classificações de produto, cultivos e Índice Tecnológico (R$/ha).
@@ -252,19 +265,18 @@ export default function ConfiguracaoPage() {
         })}
       </div>
 
-      {/* Tab content */}
-      <AnimatePresence mode="wait">
-        {isInitialLoading ? (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse"
-          >
-            Carregando configurações…
-          </motion.div>
-        ) : (
+      {/* Tab content
+          O loading fica FORA do AnimatePresence de propósito. Antes, o spinner e
+          o conteúdo eram dois filhos de um <AnimatePresence mode="wait">: quando
+          a animação de saída do spinner não completava, o conteúdo nunca entrava
+          e a tela ficava presa em "Carregando configurações…" para sempre, mesmo
+          com as requisições respondendo 200. */}
+      {isInitialLoading ? (
+        <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">
+          Carregando configurações…
+        </div>
+      ) : (
+        <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 8 }}
@@ -280,6 +292,7 @@ export default function ConfiguracaoPage() {
                   classificacoes={classifications}
                   culturas={cultures}
                   onSaveClassificacao={handleSaveClassificacao}
+                  onPromoteAlias={handlePromoteAlias}
                   onCreateClassificacao={handleCreateClassificacao}
                   onDeleteClassificacao={handleDeleteClassificacao}
                   onSaveCultura={handleSaveCultura}
@@ -298,6 +311,7 @@ export default function ConfiguracaoPage() {
                   classificacoes={classifications}
                   culturas={cultures}
                   onSaveClassificacao={handleSaveClassificacao}
+                  onPromoteAlias={handlePromoteAlias}
                   onCreateClassificacao={handleCreateClassificacao}
                   onDeleteClassificacao={handleDeleteClassificacao}
                   onSaveCultura={handleSaveCultura}
@@ -319,8 +333,8 @@ export default function ConfiguracaoPage() {
               </div>
             )}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      )}
     </div>
   );
 }

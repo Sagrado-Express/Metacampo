@@ -35,18 +35,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { customName, displayOrder, id, isActive } = body;
 
-    // Toggle de ativo/inativo em um registro existente
-    if (id && isActive !== undefined) {
-      if (isActive === false) {
-        await SegmentDictionaryService.deactivateCultura(ctx.supabase, ctx.tenantId, id);
-      } else {
-        const { error: dbError } = await ctx.supabase
-          .from('tenant_config_culturas')
-          .update({ is_active: true })
-          .eq('id', id);
-        if (dbError) throw dbError;
-      }
-      return NextResponse.json({ success: true });
+    // Atualização de um registro existente.
+    // Antes, qualquer corpo com { id, isActive } caía no toggle e o customName
+    // era descartado: renomear uma cultura respondia 200 { success: true } sem
+    // alterar nada. Agora rename e toggle são tratados na mesma atualização.
+    if (id) {
+      const atualizada = await SegmentDictionaryService.updateCultura(
+        ctx.supabase,
+        ctx.tenantId,
+        id,
+        { customName, displayOrder, isActive }
+      );
+      return NextResponse.json(atualizada);
     }
 
     if (!customName) {
