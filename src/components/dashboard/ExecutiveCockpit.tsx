@@ -80,8 +80,16 @@ export function ExecutiveCockpit() {
           fetch("/api/clientes"),
           fetch("/api/faturamento")
         ]);
-        if (cRes.ok) setDbClients(await cRes.json());
-        if (fRes.ok) setFaturamentoList(await fRes.json());
+        // As duas rotas respondem { data, pagination } desde a paginação;
+        // guardar o envelope quebrava .length e .map mais abaixo.
+        if (cRes.ok) {
+          const c = await cRes.json();
+          setDbClients(Array.isArray(c) ? c : c?.data ?? []);
+        }
+        if (fRes.ok) {
+          const f = await fRes.json();
+          setFaturamentoList(Array.isArray(f) ? f : f?.data ?? []);
+        }
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
       }

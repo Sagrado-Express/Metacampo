@@ -47,13 +47,17 @@ export default function WorkspacePage() {
             fetch("/api/clientes"),
             fetch("/api/faturamento")
           ]);
+          // Ambas as rotas respondem { data, pagination } desde a paginação.
+          // Antes se guardava o envelope inteiro no estado: dbClients.length
+          // virava undefined (caindo no mock) e faturamentoList.filter quebrava
+          // a página com "filter is not a function".
           if (clientsRes.ok) {
             const clientsData = await clientsRes.json();
-            setDbClients(clientsData);
+            setDbClients(Array.isArray(clientsData) ? clientsData : clientsData?.data ?? []);
           }
           if (faturamentoRes.ok) {
             const faturamentoData = await faturamentoRes.json();
-            setFaturamentoList(faturamentoData);
+            setFaturamentoList(Array.isArray(faturamentoData) ? faturamentoData : faturamentoData?.data ?? []);
           }
         } else {
           router.push("/login");
@@ -166,7 +170,7 @@ export default function WorkspacePage() {
           });
           if (response.ok) {
             const updatedFat = await fetch("/api/faturamento").then(r => r.json());
-            setFaturamentoList(updatedFat);
+            setFaturamentoList(Array.isArray(updatedFat) ? updatedFat : updatedFat?.data ?? []);
           }
         } catch (err) {
           console.error("Error saving faturamento:", err);
