@@ -2,24 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 
-// Helper to generate a mock JWT for offline testing
-function generateMockJwt(userId: string, email: string, tenantId: string, role: string) {
-  const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-  const payload = Buffer.from(JSON.stringify({
-    sub: userId,
-    email: email,
-    role: role,
-    tenant_id: tenantId,
-    app_metadata: {
-      role: role,
-      tenant_id: tenantId,
-    },
-    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24h expiration
-  })).toString('base64url');
-  const signature = 'mock-signature';
-  return `${header}.${payload}.${signature}`;
-}
-
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
@@ -28,55 +10,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    // Autenticação real no Supabase. Não existe fallback mock:
+    // um JWT falso é rejeitado pelo Supabase na validação de assinatura,
+    // o que produzia uma sessão "logada" mas sem acesso a nenhum dado (RLS).
     let sessionData = null;
-    let isOffline = false;
 
     try {
-      // 1. Try real Supabase Auth first
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      
+
       if (error) {
-        // If it's a real authentication error, we fail, unless the error is due to network connection issues
-        if (error.message.includes('FetchError') || error.message.includes('network') || error.status === 0) {
-          isOffline = true;
-        } else {
-          return NextResponse.json({ error: error.message }, { status: 400 });
-        }
-      } else if (data.session) {
-        // Success with Supabase
-        sessionData = data.session;
+        return NextResponse.json({ error: error.message }, { status: 401 });
       }
+      sessionData = data.session;
     } catch (e: any) {
-      // If network fails (e.g. DNS lookup / getaddrinfo ENOTFOUND)
-      isOffline = true;
-    }
-
-    // 2. Offline / Mock fallback if Supabase is unreachable
-    if (isOffline) {
-      console.warn('Supabase Auth offline. Falling back to local mock authentication.');
-      
-      // Determine tenant ID based on email pattern for multi-tenant testing
-      // All test users use the Piloto tenant where pedagogical data is seeded
-      let tenantId = '00000000-0000-0000-0000-000000000000'; // Piloto (dados pedagógicos)
-      let role = 'admin';
-
-      // Future multi-tenant: uncomment below when tenants have their own data
-      // if (email.includes('tenant1')) tenantId = '11111111-...';
-      // if (email.includes('tenant2')) tenantId = '22222222-...';
-
-      const mockToken = generateMockJwt('mock-user-uuid', email, tenantId, role);
-      
-      sessionData = {
-        access_token: mockToken,
-        refresh_token: 'mock-refresh-token',
-        expires_in: 3600,
-        user: {
-          id: 'mock-user-uuid',
-          email,
-          app_metadata: { role, tenant_id: tenantId },
-          user_metadata: { full_name: 'Usuário Simulado' }
-        }
-      };
+      console.error('[auth/login] Supabase inalcançável:', e?.message);
+      return NextResponse.json(
+        {
+          error: 'AUTH_SOURCE_UNAVAILABLE',
+          message: 'Não foi possível contatar o serviço de autenticação. Tente novamente em instantes.',
+        },
+        { status: 503 }
+      );
     }
 
     if (!sessionData) {

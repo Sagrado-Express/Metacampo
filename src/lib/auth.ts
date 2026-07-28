@@ -32,23 +32,31 @@ export async function getSession() {
     const token = cookieStore.get('sb-access-token')?.value;
 
     if (token) {
-      // Offline fallback: decode the JWT payload locally to extract user, role, and tenant_id
+      // Lê as claims do token para uso do lado do servidor.
+      // A autorização de verdade é feita pelo Supabase, que valida a assinatura
+      // do mesmo token em cada query — aqui só extraímos o que já foi assinado.
       const payload = decodeJwtPayload(token);
-      if (payload) {
+
+      // FAIL-CLOSED: sem tenant_id na claim não há sessão válida.
+      // Antes havia um default para o tenant Piloto, o que dava acesso a dados
+      // de outro tenant para qualquer token malformado.
+      const tenantId = payload?.app_metadata?.tenant_id || payload?.tenant_id;
+
+      if (payload && tenantId) {
         return {
           access_token: token,
           token_type: 'bearer',
           expires_in: payload.exp ? Math.max(0, payload.exp - Math.floor(Date.now() / 1000)) : 3600,
           refresh_token: cookieStore.get('sb-refresh-token')?.value || '',
           user: {
-            id: payload.sub || 'mock-user-id',
-            email: payload.email || 'piloto@metacampo.com.br',
+            id: payload.sub,
+            email: payload.email,
             app_metadata: {
-              role: payload.app_metadata?.role || payload.role || 'admin',
-              tenant_id: payload.app_metadata?.tenant_id || payload.tenant_id || '00000000-0000-0000-0000-000000000000',
+              role: payload.app_metadata?.role || payload.role || 'user',
+              tenant_id: tenantId,
             },
             user_metadata: {
-              full_name: payload.user_metadata?.full_name || 'Usuário Piloto',
+              full_name: payload.user_metadata?.full_name || payload.email,
             }
           }
         };

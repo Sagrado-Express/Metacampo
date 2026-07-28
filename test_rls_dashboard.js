@@ -1,174 +1,104 @@
 #!/usr/bin/env node
-
 /**
- * Test: RLS Isolation in dashboard-full route
- * Simulates two different tenants accessing /api/planejamento/dashboard-full
- * and validates that each tenant only sees their own data
+ * Prova de isolamento RLS entre dois tenants.
+ *
+ * Faz login REAL no Supabase Auth com dois usuários de tenants diferentes,
+ * usa os JWTs assinados que voltam e consulta as tabelas de negócio.
+ * O RLS do Postgres é quem decide o que cada um enxerga — não há filtro
+ * manual de tenant_id em nenhuma query deste teste.
+ *
+ * Uso: node test_rls_dashboard.js
  */
-
-const http = require('http');
 const fs = require('fs');
 
-// Mock JWT generator (same format as in getSession)
-function generateMockJwt(userId, email, tenantId, role) {
-  const header = Buffer.from(
-    JSON.stringify({ alg: 'HS256', typ: 'JWT' })
-  ).toString('base64url');
+const raw = fs.readFileSync('.env.local', 'utf-8');
+const env = (k) => {
+  const m = raw.match(new RegExp('^' + k + '="?([^"\\n]+)"?', 'm'));
+  return m ? m[1] : null;
+};
 
-  const payload = Buffer.from(
-    JSON.stringify({
-      sub: userId,
-      email: email,
-      role: role,
-      tenant_id: tenantId,
-      app_metadata: {
-        role: role,
-        tenant_id: tenantId,
-      },
-      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
-    })
-  ).toString('base64url');
+const URL = env('NEXT_PUBLIC_SUPABASE_URL');
+const ANON = env('NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
-  const signature = 'mock-signature';
-  return `${header}.${payload}.${signature}`;
-}
+const USERS = [
+  { label: 'Tenant A', email: 'teste1@metacampo.com', password: 'Teste123!@#', tenant: '11111111-1111-1111-1111-111111111111' },
+  { label: 'Tenant B', email: 'teste2@metacampo.com', password: 'Teste123!@#', tenant: '22222222-2222-2222-2222-222222222222' },
+];
 
-// Helper to make HTTP request
-function makeRequest(method, path, token) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'localhost',
-      port: 3000,
-      path: path,
-      method: method,
-      headers: {
-        'Cookie': `sb-access-token=${token}; sb-refresh-token=mock-refresh`,
-        'Content-Type': 'application/json',
-      },
-    };
+const TABLES = ['clientes', 'customer_crop_areas', 'tenant_config_culturas', 'tenant_config_classificacoes'];
 
-    const req = http.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      res.on('end', () => {
-        resolve({
-          status: res.statusCode,
-          body: data ? JSON.parse(data) : null,
-        });
-      });
-    });
-
-    req.on('error', reject);
-    req.end();
+async function signIn(u) {
+  const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: ANON, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: u.email, password: u.password }),
   });
+  if (!res.ok) throw new Error(`login ${u.email} falhou: ${res.status} ${(await res.text()).slice(0, 160)}`);
+  return res.json();
 }
 
-async function runTests() {
-  console.log('🧪 Testing RLS Isolation in dashboard-full route\n');
+async function queryAs(token, table) {
+  const res = await fetch(`${URL}/rest/v1/${table}?select=id,tenant_id`, {
+    headers: { apikey: ANON, Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return { error: `${res.status} ${(await res.text()).slice(0, 120)}` };
+  return { rows: await res.json() };
+}
 
-  // Create JWTs for two different tenants
-  const tenantA = '11111111-1111-1111-1111-111111111111';
-  const tenantB = '22222222-2222-2222-2222-222222222222';
+(async () => {
+  console.log('=== TESTE DE ISOLAMENTO RLS — DOIS TENANTS ===\n');
+  console.log(`Banco: ${URL}\n`);
 
-  const jwtA = generateMockJwt('user-a', 'userA@example.com', tenantA, 'admin');
-  const jwtB = generateMockJwt('user-b', 'userB@example.com', tenantB, 'admin');
-
-  console.log(`✅ Generated JWT for Tenant A: ${tenantA}`);
-  console.log(`✅ Generated JWT for Tenant B: ${tenantB}\n`);
-
-  try {
-    // Wait a bit for server to be ready
-    console.log('⏳ Waiting for server to be ready...');
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Request 1: Tenant A calls dashboard-full
-    console.log('📡 [1] Calling /api/planejamento/dashboard-full as Tenant A...');
-    const responseA = await makeRequest('GET', '/api/planejamento/dashboard-full', jwtA);
-    console.log(`   Status: ${responseA.status}`);
-
-    if (responseA.status === 503) {
-      console.log('   Note: Got 503 (DB credentials issue) - Expected in local testing');
-      console.log(`   Response: ${JSON.stringify(responseA.body)}\n`);
-    } else if (responseA.status === 200) {
-      console.log('   ✅ Data received');
-      console.log(`   Clientes count: ${responseA.body.clientes?.length || 0}`);
-      console.log(`   Carteira entries: ${responseA.body.carteira?.length || 0}\n`);
-    } else {
-      console.log(`   ⚠️  Unexpected status: ${responseA.status}`);
-      console.log(`   Body: ${JSON.stringify(responseA.body)}\n`);
+  const sessions = [];
+  for (const u of USERS) {
+    const s = await signIn(u);
+    const claims = JSON.parse(Buffer.from(s.access_token.split('.')[1], 'base64').toString());
+    const claimTenant = claims.app_metadata?.tenant_id || claims.tenant_id;
+    console.log(`${u.label} (${u.email})`);
+    console.log(`  login: OK   sub=${claims.sub}`);
+    console.log(`  claim tenant_id no JWT: ${claimTenant}`);
+    if (claimTenant !== u.tenant) {
+      console.log(`  !! claim divergente do esperado (${u.tenant})`);
     }
-
-    // Request 2: Tenant B calls dashboard-full
-    console.log('📡 [2] Calling /api/planejamento/dashboard-full as Tenant B...');
-    const responseB = await makeRequest('GET', '/api/planejamento/dashboard-full', jwtB);
-    console.log(`   Status: ${responseB.status}`);
-
-    if (responseB.status === 503) {
-      console.log('   Note: Got 503 (DB credentials issue) - Expected in local testing');
-      console.log(`   Response: ${JSON.stringify(responseB.body)}\n`);
-    } else if (responseB.status === 200) {
-      console.log('   ✅ Data received');
-      console.log(`   Clientes count: ${responseB.body.clientes?.length || 0}`);
-      console.log(`   Carteira entries: ${responseB.body.carteira?.length || 0}\n`);
-    } else {
-      console.log(`   ⚠️  Unexpected status: ${responseB.status}`);
-      console.log(`   Body: ${JSON.stringify(responseB.body)}\n`);
-    }
-
-    // Validation: Check that data is isolated (if DB is available)
-    if (responseA.status === 200 && responseB.status === 200) {
-      const dataALength = responseA.body.clientes?.length || 0;
-      const dataBLength = responseB.body.clientes?.length || 0;
-
-      if (dataALength === 0 && dataBLength === 0) {
-        console.log('✅ BOTH TENANTS: Correctly see no data (RLS working - empty DB)');
-      } else if (dataALength !== dataBLength) {
-        console.log(`✅ RLS ISOLATION VERIFIED: Tenant A sees ${dataALength} clientes, Tenant B sees ${dataBLength}`);
-      } else {
-        console.log(`⚠️  POSSIBLE RLS FAILURE: Both tenants see same data count (${dataALength})`);
-      }
-    }
-
-    // Request 3: No auth should fail
-    console.log('\n📡 [3] Calling without auth token (should fail)...');
-    const noAuthOptions = {
-      hostname: 'localhost',
-      port: 3000,
-      path: '/api/planejamento/dashboard-full',
-      method: 'GET',
-    };
-
-    const noAuthRes = await new Promise((resolve, reject) => {
-      const req = http.request(noAuthOptions, (res) => {
-        let data = '';
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-        res.on('end', () => {
-          resolve({
-            status: res.statusCode,
-            body: data ? JSON.parse(data) : null,
-          });
-        });
-      });
-      req.on('error', reject);
-      req.end();
-    });
-
-    console.log(`   Status: ${noAuthRes.status}`);
-    if (noAuthRes.status === 401) {
-      console.log('   ✅ Correctly rejected unauthenticated request');
-    } else {
-      console.log(`   ⚠️  Expected 401, got ${noAuthRes.status}`);
-    }
-
-    console.log('\n✅ RLS test suite completed!');
-  } catch (error) {
-    console.error('\n❌ Test error:', error.message);
-    process.exit(1);
+    sessions.push({ ...u, token: s.access_token, claimTenant });
   }
-}
 
-runTests();
+  console.log('\n--- Linhas visíveis por tabela (RLS decide, sem filtro manual) ---\n');
+
+  let violations = 0;
+  for (const table of TABLES) {
+    console.log(`${table}:`);
+    for (const s of sessions) {
+      const r = await queryAs(s.token, table);
+      if (r.error) {
+        console.log(`  ${s.label}: ERRO ${r.error}`);
+        violations++;
+        continue;
+      }
+      const foreign = r.rows.filter((row) => row.tenant_id && row.tenant_id !== s.tenant);
+      console.log(`  ${s.label}: ${r.rows.length} linha(s)` + (foreign.length ? `  <-- ${foreign.length} DE OUTRO TENANT` : ''));
+      if (foreign.length) violations++;
+    }
+  }
+
+  console.log('\n--- Teste negativo: token adulterado deve ser rejeitado ---\n');
+  const tampered = sessions[0].token.slice(0, -6) + 'AAAAAA';
+  const t = await queryAs(tampered, 'clientes');
+  if (t.error) {
+    console.log(`  OK — Supabase rejeitou o token adulterado (${t.error.split(' ')[0]})`);
+  } else {
+    console.log(`  FALHA — token adulterado retornou ${t.rows.length} linha(s)`);
+    violations++;
+  }
+
+  console.log('\n' + '='.repeat(60));
+  if (violations === 0) {
+    console.log('RESULTADO: isolamento CONFIRMADO — nenhum tenant enxergou dado do outro.');
+    process.exit(0);
+  }
+  console.log(`RESULTADO: ${violations} violação(ões) detectada(s). Isolamento NAO confirmado.`);
+  process.exit(1);
+})().catch((e) => {
+  console.error('\nErro no teste:', e.message);
+  process.exit(1);
+});
