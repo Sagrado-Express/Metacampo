@@ -65,11 +65,25 @@ export async function GET(request: Request) {
       .eq('is_active', true)
       .is('parent_key', null);
 
-    const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
-    // Fallback segment names if DB returns empty
-    const segNames = activeSegmentNames.length > 0
-      ? activeSegmentNames
-      : ['Sementes', 'Fertilizantes', 'Defensivos'];
+    // Sem fallback para uma lista fixa de segmentos (Regra Nº6): se o tenant
+    // não configurou segmento nenhum, o VPM é 0 e a resposta diz o porquê.
+    // A versão anterior caía em ['Sementes','Fertilizantes','Defensivos'] e
+    // calculava VPM sobre segmentos que o tenant nunca definiu.
+    const segNames: string[] = (segments || []).map((s: any) => s.custom_name);
+    const semSegmentosConfigurados = segNames.length === 0;
+
+    // 5. Culturas cadastradas do tenant — usadas para distinguir
+    //    "cultura não cadastrada" de "Índice Tecnológico não definido".
+    //    Os dois zeram o VPM, mas exigem ações diferentes do usuário.
+    const { data: culturasCfg } = await supabase
+      .from('tenant_config_culturas')
+      .select('custom_name')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true);
+
+    const culturasCadastradas = new Set(
+      (culturasCfg || []).map((c: any) => String(c.custom_name).toUpperCase())
+    );
 
     const itLookup = buildItLookup(
       (indices || []).map((ind: any) => ({
@@ -105,12 +119,26 @@ export async function GET(request: Request) {
           return itLookup[key] != null && itLookup[key] > 0;
         });
 
+        const culturaCadastrada = culturasCadastradas.has(String(area.crop_name).toUpperCase());
+
+        // Um único motivo, na ordem em que o usuário precisa resolver:
+        // não adianta pedir Índice Tecnológico de uma cultura que nem existe.
+        const aviso = !culturaCadastrada
+          ? 'CULTURA_NAO_CADASTRADA'
+          : semSegmentosConfigurados
+            ? 'SEM_SEGMENTOS_CONFIGURADOS'
+            : !hasIt
+              ? 'INDICE_TECNOLOGICO_NAO_DEFINIDO'
+              : null;
+
         return {
           id: area.id,
           cropName: area.crop_name,
           areaHa: areaHa,
           vpmCentavos: areaVpm,
-          indiceTecnologicoDefinido: hasIt
+          indiceTecnologicoDefinido: hasIt,
+          culturaCadastrada,
+          aviso,
         };
       });
 
@@ -138,6 +166,20 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       data: result,
+      // Estado da configuração do tenant, para a tela explicar VPM zerado
+      // em vez de mostrar zero sem motivo.
+      configuracao: {
+        semSegmentosConfigurados,
+        semCulturasConfiguradas: culturasCadastradas.size === 0,
+        culturasNaoCadastradas: [
+          ...new Set(
+            result
+              .flatMap((c: any) => c.areas)
+              .filter((a: any) => !a.culturaCadastrada)
+              .map((a: any) => a.cropName)
+          ),
+        ],
+      },
       pagination: {
         total: count || 0,
         limit,
@@ -202,8 +244,9 @@ export async function POST(request: Request) {
       .eq('is_active', true)
       .is('parent_key', null);
 
-    const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
-    const segNames = activeSegmentNames.length > 0 ? activeSegmentNames : ['Sementes', 'Fertilizantes', 'Defensivos'];
+    // Sem fallback para lista fixa de segmentos (Regra Nº6): tenant sem
+    // segmento configurado resulta em VPM 0, nunca em VPM sobre segmento fantasma.
+    const segNames: string[] = (segments || []).map((s: any) => s.custom_name);
 
     // Calculate VPM per area
     const vpmPorArea = areaList.map((a) => {
@@ -329,8 +372,9 @@ export async function PATCH(request: Request) {
       .eq('is_active', true)
       .is('parent_key', null);
 
-    const activeSegmentNames = (segments || []).map((s: any) => s.custom_name);
-    const segNames = activeSegmentNames.length > 0 ? activeSegmentNames : ['Sementes', 'Fertilizantes', 'Defensivos'];
+    // Sem fallback para lista fixa de segmentos (Regra Nº6): tenant sem
+    // segmento configurado resulta em VPM 0, nunca em VPM sobre segmento fantasma.
+    const segNames: string[] = (segments || []).map((s: any) => s.custom_name);
 
     // Calculate VPM per area
     const vpmPorArea = areaList.map((a) => {

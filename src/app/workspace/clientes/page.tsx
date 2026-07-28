@@ -4,7 +4,7 @@ import { useSession } from '@/hooks/useSession';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import NovoClienteModal from '@/components/clientes/NovoClienteModal';
-import { Loader2, Plus, Edit2, Trash2, Users2, ChevronLeft } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Users2, ChevronLeft, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useRetryMutation } from '@/hooks/useRetryMutation';
 import { useToast } from '@/components/Toast/ToastContext';
@@ -20,7 +20,7 @@ export default function ClientesPage() {
 
   const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
 
-  const { data: clientes = [], refetch, isLoading } = useQuery({
+  const { data: payload, refetch, isLoading } = useQuery({
     queryKey: ['clientes', tenantId],
     queryFn: async () => {
       const res = await fetch('/api/clientes');
@@ -29,6 +29,10 @@ export default function ClientesPage() {
     },
     enabled: !!tenantId
   });
+
+  // A rota responde { data, configuracao, pagination } desde a paginação.
+  const clientes: any[] = payload?.data ?? [];
+  const configuracao = payload?.configuracao;
 
   const deleteMutation = useRetryMutation(
     async (id: string) => {
@@ -96,6 +100,59 @@ export default function ClientesPage() {
         </button>
       </div>
 
+      {/* Avisos de configuração: explicam VPM zerado em vez de mostrar zero sem motivo */}
+      {configuracao?.semCulturasConfiguradas && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-bold">Nenhuma cultura cadastrada</p>
+            <p>
+              Cadastre as culturas em{' '}
+              <Link href="/workspace/settings/configuracao" className="underline font-semibold">
+                Configuração
+              </Link>{' '}
+              antes de registrar as áreas dos produtores.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {configuracao?.semSegmentosConfigurados && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-bold">Nenhum segmento cadastrado</p>
+            <p>
+              Sem segmento não é possível criar Índice Tecnológico, e o VPM fica zerado.
+              Cadastre em{' '}
+              <Link href="/workspace/settings/segments" className="underline font-semibold">
+                Segmentos
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      )}
+
+      {configuracao?.culturasNaoCadastradas?.length > 0 && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-bold">
+              Cultura não cadastrada: {configuracao.culturasNaoCadastradas.join(', ')}
+            </p>
+            <p>
+              Há áreas registradas com cultura que não existe na configuração do tenant.
+              O VPM dessas áreas não é calculado até a cultura ser cadastrada em{' '}
+              <Link href="/workspace/settings/configuracao" className="underline font-semibold">
+                Configuração
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center items-center py-20">
           <Loader2 className="animate-spin text-emerald-600" size={32} />
@@ -123,13 +180,43 @@ export default function ClientesPage() {
               ) : (
                 clientes.map((c: any) => {
                   const area = c.areas?.[0];
+                  // Mostra o primeiro motivo pendente entre as áreas do cliente.
+                  const pendencia = (c.areas || []).find((a: any) => a.aviso)?.aviso ?? null;
+                  const textoPendencia =
+                    pendencia === 'CULTURA_NAO_CADASTRADA'
+                      ? 'Cultura não cadastrada'
+                      : pendencia === 'SEM_SEGMENTOS_CONFIGURADOS'
+                        ? 'Nenhum segmento cadastrado'
+                        : pendencia === 'INDICE_TECNOLOGICO_NAO_DEFINIDO'
+                          ? 'Índice Tecnológico não definido'
+                          : null;
+
                   return (
                     <tr key={c.id} className="border-b border-border/20 hover:bg-muted/10 transition-colors">
                       <td className="py-3 pl-2 font-black text-slate-800">{c.name}</td>
                       <td className="py-3 text-muted-foreground">{c.city} - {c.state}</td>
-                      <td className="py-3 font-semibold text-slate-700">{area?.cropName || '-'}</td>
+                      <td className="py-3 font-semibold text-slate-700">
+                        <span className="inline-flex items-center gap-1.5">
+                          {area?.cropName || '-'}
+                          {pendencia === 'CULTURA_NAO_CADASTRADA' && (
+                            <AlertTriangle size={13} className="text-amber-600 shrink-0" />
+                          )}
+                        </span>
+                      </td>
                       <td className="py-3 text-right font-bold text-slate-700">{area?.areaHa ? Number(area.areaHa).toLocaleString('pt-BR') : '-'}</td>
-                      <td className="py-3 text-right font-black text-emerald-600">{fmt(c.vpmTotalCentavos / 100)}</td>
+                      <td className="py-3 text-right">
+                        {textoPendencia ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-amber-700 font-bold"
+                            title={`VPM não calculado: ${textoPendencia}`}
+                          >
+                            <AlertTriangle size={13} className="shrink-0" />
+                            {textoPendencia}
+                          </span>
+                        ) : (
+                          <span className="font-black text-emerald-600">{fmt(c.vpmTotalCentavos / 100)}</span>
+                        )}
+                      </td>
                       <td className="py-2 text-center flex items-center justify-center gap-2">
                         <button
                           onClick={() => {
