@@ -41,6 +41,9 @@ function PlanejamentoSkeleton() {
 export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: PlanejamentoTabsProps) {
   const queryClient = useQueryClient();
   const [editView, setEditView] = useState<'heatmap' | 'matriz'>('heatmap');
+  // null = ainda não escolhido; cai no primeiro segmento ativo do tenant.
+  // Não dá para inicializar com o dado aqui: os hooks rodam antes do fetch.
+  const [segmentoSelecionado, setSegmentoSelecionado] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['planejamento', 'dashboard-full'],
@@ -62,6 +65,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
   }
 
   const clients: any[] = data.clientes || [];
+  const carteira: any[] = data.carteira || [];
   const planejamento: any[] = data.planejamentoRows || [];
   const byCrop: any[] = data.porCultivo || [];
   const bySegment: any[] = data.porSegmento || [];
@@ -76,14 +80,33 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
 
   const activeClientsNames = clients.slice(0, 15).map((c: any) => c.name);
 
-  const heatmapData = planejamento.map((p: any) => {
-    const client = clients.find((c: any) => c.id === p.cliente_id || c.id === p.clienteId);
-    return {
-      clientName: client ? client.name : 'Cliente Geral',
-      cropName: p.cultivo,
-      sharePercentual: Number(p.sharePercentual ?? p.share_percentual ?? 0),
-    };
-  });
+  // O planejamento é por Cliente × Cultivo × Segmento. O heatmap é 2D, então
+  // edita-se um segmento por vez — com 10 cultivos e 5 segmentos, colunas
+  // aninhadas dariam 50 colunas.
+  const segmentoAtivo: string | undefined =
+    segmentoSelecionado ?? segmentosAtivos[0]?.custom_name;
+
+  const heatmapData = planejamento
+    .filter((p: any) => String(p.segmento ?? '') === String(segmentoAtivo ?? ''))
+    .map((p: any) => {
+      const client = clients.find((c: any) => c.id === p.cliente_id || c.id === p.clienteId);
+      return {
+        clientName: client ? client.name : 'Cliente Geral',
+        cropName: p.cultivo,
+        sharePercentual: Number(p.sharePercentual ?? p.share_percentual ?? 0),
+      };
+    });
+
+  /** VPM potencial de um cliente × cultivo × segmento, vindo de `carteira`. */
+  const vpmDaCombinacao = (clienteId: string, cultivo: string, segmento: string): number =>
+    carteira
+      .filter(
+        (l: any) =>
+          l.clienteId === clienteId &&
+          String(l.cultura).toUpperCase() === cultivo.toUpperCase() &&
+          String(l.segmento).toUpperCase() === segmento.toUpperCase()
+      )
+      .reduce((acc: number, l: any) => acc + Number(l.vpmCentavos ?? 0), 0);
 
   // Planejado por cultivo e por segmento×cultivo (client-side, a partir das linhas reais)
   const planejadoPorCultivo: Record<string, number> = {};
@@ -100,21 +123,27 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
     const client = clients.find((c: any) => c.name === clientName);
     if (!client) return;
 
-    // Reusar o segmento da linha existente deste cliente×cultivo; senão, 1º segmento ativo do tenant.
-    const existingRow = planejamento.find(
-      (p: any) =>
-        (p.cliente_id === client.id || p.clienteId === client.id) &&
-        String(p.cultivo).toUpperCase() === cropName.toUpperCase()
-    );
-    const segmento =
-      existingRow?.segmento || segmentosAtivos[0]?.custom_name;
-
+    const segmento = segmentoAtivo;
     if (!segmento) {
       toast.error('Configure ao menos uma classificação de produto antes de planejar.');
       return;
     }
 
-    const vpmTotal = Number(client.vpmTotalCentavos ?? client.vpm_total_centavos ?? 0);
+    // O valor planejado é o share sobre o VPM DAQUELA combinação
+    // cliente × cultivo × segmento, lido de `carteira`.
+    //
+    // Antes lia-se `client.vpmTotalCentavos`, campo que não existe em
+    // `data.clientes` — a rota devolve a linha crua da tabela `clientes`.
+    // O resultado era Math.round(0 * share) = 0 em toda gravação, e a Matriz
+    // ficava só com traços porque só renderiza valores maiores que zero.
+    const vpmCombinacao = vpmDaCombinacao(client.id, cropName, segmento);
+
+    if (vpmCombinacao === 0 && newShare > 0) {
+      toast.error(
+        `Sem Índice Tecnológico para ${cropName} × ${segmento}. O valor planejado ficaria zerado.`
+      );
+      return;
+    }
 
     try {
       const response = await fetch('/api/planejamento/cliente-segmento', {
@@ -124,13 +153,13 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
           cliente_id: client.id,
           cultivo: cropName,
           segmento,
-          valor_planejado_centavos: Math.round(vpmTotal * (newShare / 100)),
+          valor_planejado_centavos: Math.round(vpmCombinacao * (newShare / 100)),
           share_percentual: newShare,
         }),
       });
 
       if (response.ok) {
-        toast.success('Salvo');
+        toast.success(`Salvo · ${fmt((vpmCombinacao * (newShare / 100)) / 100)}`);
         queryClient.invalidateQueries({ queryKey: ['planejamento', 'dashboard-full'] });
       } else {
         toast.error('Erro ao salvar. Tente novamente.');
@@ -263,8 +292,41 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
 
       {editView === 'heatmap' && (
         <div className="space-y-4">
+          {/* Seletor de segmento: o planejamento é Cliente × Cultivo × Segmento,
+              e o heatmap edita um segmento por vez. */}
+          {segmentosAtivos.length === 0 ? (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800">
+              Nenhuma classificação de produto cadastrada. Configure em{' '}
+              <strong>Configurações → Classificações</strong> antes de planejar.
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-1">
+                Classificação
+              </span>
+              {segmentosAtivos.map((s: any) => {
+                const nome = s.custom_name;
+                const ativo = nome === segmentoAtivo;
+                return (
+                  <button
+                    key={nome}
+                    onClick={() => setSegmentoSelecionado(nome)}
+                    className={`px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors ${
+                      ativo
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
+                    }`}
+                  >
+                    {nome}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-800 font-semibold uppercase tracking-wider">
-            📊 Edite o Share Alvo (%) por cultivo. Duplo clique na célula · Enter salva · Esc cancela · Tab próxima.
+            📊 Share Alvo (%) em <strong>{segmentoAtivo ?? '—'}</strong>. Duplo clique na célula ·
+            Enter salva · Esc cancela · Tab próxima.
           </div>
           <Heatmap
             data={heatmapData}
