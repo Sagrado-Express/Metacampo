@@ -14,12 +14,24 @@ function unavailable(acao: string) {
   );
 }
 
-export async function GET() {
+/**
+ * GET /api/cultures            -> apenas as culturas ativas
+ * GET /api/cultures?todas=true -> ativas e inativas
+ *
+ * A aba Culturas (catálogo IBGE) precisa das inativas para mostrar o que está
+ * desligado; as telas de uso (cadastro de produtor, VPM) só querem as ativas.
+ */
+export async function GET(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
 
+  const { searchParams } = new URL(request.url);
+  const todas = searchParams.get('todas') === 'true';
+
   try {
-    const cultures = await SegmentDictionaryService.getActiveCulturas(ctx.supabase, ctx.tenantId);
+    const cultures = todas
+      ? await SegmentDictionaryService.getAllCulturas(ctx.supabase, ctx.tenantId)
+      : await SegmentDictionaryService.getActiveCulturas(ctx.supabase, ctx.tenantId);
     return NextResponse.json(cultures);
   } catch (error: any) {
     console.error('[Cultures API] Supabase error (GET):', error);
@@ -33,18 +45,18 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { customName, displayOrder, id, isActive } = body;
+    const { customName, displayOrder, id, isActive, aliases, ibgeProduto, ibgeTipo } = body;
 
     // Atualização de um registro existente.
     // Antes, qualquer corpo com { id, isActive } caía no toggle e o customName
     // era descartado: renomear uma cultura respondia 200 { success: true } sem
-    // alterar nada. Agora rename e toggle são tratados na mesma atualização.
+    // alterar nada. Agora rename, apelidos e toggle vão na mesma atualização.
     if (id) {
       const atualizada = await SegmentDictionaryService.updateCultura(
         ctx.supabase,
         ctx.tenantId,
         id,
-        { customName, displayOrder, isActive }
+        { customName, displayOrder, isActive, aliases }
       );
       return NextResponse.json(atualizada);
     }
@@ -56,12 +68,14 @@ export async function POST(request: Request) {
     const newCult = await SegmentDictionaryService.createCultura(ctx.supabase, ctx.tenantId, {
       customName,
       displayOrder,
+      aliases,
+      ibgeProduto,
+      ibgeTipo,
     });
 
     return NextResponse.json(newCult);
   } catch (error: any) {
     console.error('[Cultures API] Supabase error (POST):', error);
-    // Erro de negócio (ex.: cultura duplicada) volta como 400, não 503
     if (typeof error?.message === 'string' && error.message.includes('já existe')) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }

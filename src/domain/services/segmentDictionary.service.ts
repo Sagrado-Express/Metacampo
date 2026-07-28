@@ -40,6 +40,10 @@ export interface TenantCultura {
   tenantId: string;
   internalKey: string;
   customName: string;
+  aliases: string[];
+  /** Item do catalogo IBGE de origem. Null em culturas proprias (ex.: HF). */
+  ibgeProduto: string | null;
+  ibgeTipo: 'temporaria' | 'permanente' | null;
   isActive: boolean;
   displayOrder: number;
   createdAt?: Date;
@@ -69,6 +73,9 @@ export interface UpdateClassificacaoInput {
 export interface CreateCulturaInput {
   customName: string;
   displayOrder?: number;
+  aliases?: string[];
+  ibgeProduto?: string | null;
+  ibgeTipo?: 'temporaria' | 'permanente' | null;
 }
 
 // ============================================================
@@ -480,6 +487,9 @@ export class SegmentDictionaryService {
           internal_key: internalKey,
           custom_name: input.customName,
           display_order: input.displayOrder ?? 0,
+          aliases: input.aliases ?? [],
+          ibge_produto: input.ibgeProduto ?? null,
+          ibge_tipo: input.ibgeTipo ?? null,
         })
         .select()
         .single();
@@ -514,6 +524,24 @@ export class SegmentDictionaryService {
   }
 
   /**
+   * Todas as culturas do tenant, ativas e inativas.
+   * O catalogo precisa das inativas para mostrar o que esta desligado.
+   */
+  static async getAllCulturas(
+    supabase: SupabaseClient,
+    tenantId: string
+  ): Promise<TenantCultura[]> {
+    const { data, error } = await supabase
+      .from('tenant_config_culturas')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+    return (data || []).map(mapRowToCultura);
+  }
+
+  /**
    * Renomeia uma cultura.
    *
    * O internal_key não é regerado (mesma garantia de estabilidade das
@@ -528,12 +556,13 @@ export class SegmentDictionaryService {
     supabase: SupabaseClient,
     tenantId: string,
     id: string,
-    input: { customName?: string; displayOrder?: number; isActive?: boolean }
+    input: { customName?: string; displayOrder?: number; isActive?: boolean; aliases?: string[] }
   ): Promise<TenantCultura> {
     const updatePayload: Record<string, any> = {};
     if (input.customName !== undefined) updatePayload.custom_name = input.customName;
     if (input.displayOrder !== undefined) updatePayload.display_order = input.displayOrder;
     if (input.isActive !== undefined) updatePayload.is_active = input.isActive;
+    if (input.aliases !== undefined) updatePayload.aliases = input.aliases;
 
     let nomeAnterior: string | null = null;
     if (input.customName !== undefined) {
@@ -625,6 +654,9 @@ function mapRowToCultura(row: any): TenantCultura {
     tenantId: row.tenant_id,
     internalKey: row.internal_key,
     customName: row.custom_name,
+    aliases: row.aliases || [],
+    ibgeProduto: row.ibge_produto ?? null,
+    ibgeTipo: row.ibge_tipo ?? null,
     isActive: row.is_active,
     displayOrder: row.display_order,
     createdAt: row.created_at ? new Date(row.created_at) : undefined,

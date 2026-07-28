@@ -79,10 +79,30 @@ e nomenclatura. Isso foi a causa raiz do retrabalho.
 | Validação IBGE PAM ("hectares fantasmas") | ❌ Fora do escopo atual |
 | Gamificação (badges, trilhas) | ❌ Fora do escopo do MVP |
 | Lista fixa de segmentos/cultivos | ❌ Removida — 100% configurável por tenant |
+| Catálogo IBGE de culturas (28/07/2026) | ✅ Adicionado — é catálogo, **não** lista fixa |
 | Multi-tenant desde o dia 1 | ✅ Obrigatório |
 
 Não reabra essas discussões sem o usuário pedir explicitamente. Elas já foram
 decididas após auditoria real do código.
+
+> **Catálogo ≠ lista fixa.** A linha do catálogo IBGE acima não contradiz a
+> linha da lista fixa; a distinção é deliberada e foi pedida pelo usuário em
+> 28/07/2026:
+>
+> - **Lista fixa** (proibida): o tenant só poderia usar o que está na lista.
+> - **Catálogo** (`src/data/culturas_ibge.ts`): 31 culturas temporárias e 33
+>   permanentes que o tenant **habilita** se quiser, poupando digitação. Criar
+>   cultura fora do catálogo continua livre.
+>
+> É o que permite os dois casos reais do agronegócio: **HF** (agrupamento
+> próprio de frutas e vegetais, sem correspondência no IBGE) e **Milho safra /
+> Milho safrinha** (duas culturas comerciais apontando para o mesmo
+> `Milho (em grão)`). Por isso `tenant_config_culturas.ibge_produto` é
+> nullable e **não** é único.
+>
+> O catálogo vive em código, não em tabela: é dado de referência idêntico em
+> todos os tenants, e virar tabela significaria 64 linhas por tenant com RLS
+> para o mesmo conteúdo.
 
 ## 8. Regra Nº7 — Antes de codar, audite
 

@@ -1,16 +1,20 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import {
   Layers,
   Sprout,
   TrendingUp,
   Settings2,
   ChevronLeft,
+  Leaf,
 } from "lucide-react";
 import Link from "next/link";
 import { SegmentSettings } from "@/components/admin/SegmentSettings";
+import { CatalogoCulturas } from "@/components/admin/CatalogoCulturas";
+import type { TipoCultura } from "@/data/culturas_ibge";
 import { ITMatrix } from "@/components/admin/ITMatrix";
 import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
 import { useCultureDictionary } from "@/hooks/useCultureDictionary";
@@ -29,7 +33,7 @@ import { cn } from "@/lib/utils";
  * tenantId: resolved dynamically via useSession.
  */
 
-type Tab = "classificacoes" | "cultivos" | "it-se";
+type Tab = "classificacoes" | "culturas" | "cultivos" | "it-se";
 
 const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: string }[] = [
   {
@@ -37,6 +41,12 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: str
     label: "Classificações",
     icon: Layers,
     color: "text-blue-600",
+  },
+  {
+    id: "culturas",
+    label: "Culturas",
+    icon: Leaf,
+    color: "text-emerald-600",
   },
   {
     id: "cultivos",
@@ -70,6 +80,17 @@ export default function ConfiguracaoPage() {
     isLoading: isLoadingCultures,
     isError: isErrorCultures,
   } = useCultureDictionary(tenantId);
+
+  // O catálogo precisa também das culturas desligadas, que o hook acima não traz.
+  const { data: todasCulturas = [], refetch: refetchTodasCulturas } = useQuery({
+    queryKey: ["culturas-todas", tenantId],
+    queryFn: async () => {
+      const res = await fetch("/api/cultures?todas=true");
+      if (!res.ok) throw new Error("Falha ao carregar culturas");
+      return res.json();
+    },
+    enabled: !!tenantId,
+  });
 
   // ============================================================
   // Classification handlers
@@ -159,6 +180,64 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao salvar cultura");
     }
     invalidateCultures();
+  };
+
+  // ── Catálogo IBGE ──────────────────────────────────────────
+  // Habilitar reaproveita o registro se a cultura já existiu e foi desligada,
+  // em vez de criar outro com o mesmo internal_key (que a unique bloquearia).
+
+  const handleHabilitarDoCatalogo = async (produto: string, tipo: TipoCultura) => {
+    const existente = todasCulturas.find((c: any) => c.ibgeProduto === produto);
+
+    const response = existente
+      ? await fetch("/api/cultures", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: existente.id, isActive: true }),
+        })
+      : await fetch("/api/cultures", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ customName: produto, ibgeProduto: produto, ibgeTipo: tipo }),
+        });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao habilitar cultura");
+    }
+    invalidateCultures();
+    refetchTodasCulturas();
+  };
+
+  const handleDesabilitarDoCatalogo = async (id: string) => {
+    const response = await fetch("/api/cultures", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, isActive: false }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao desabilitar cultura");
+    }
+    invalidateCultures();
+    refetchTodasCulturas();
+  };
+
+  const handleDefinirApelidoCultura = async (id: string, apelido: string) => {
+    const atual = todasCulturas.find((c: any) => c.id === id);
+    const aliases = [...(atual?.aliases ?? []), apelido];
+
+    const response = await fetch("/api/cultures", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, aliases }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao salvar apelido");
+    }
+    invalidateCultures();
+    refetchTodasCulturas();
   };
 
   const handleCreateCultura = async (customName: string) => {
@@ -256,8 +335,10 @@ export default function ConfiguracaoPage() {
               <span className="sm:hidden">
                 {tab.id === "classificacoes"
                   ? "Class."
+                  : tab.id === "culturas"
+                  ? "Cultur."
                   : tab.id === "cultivos"
-                  ? "Cult."
+                  ? "Cultiv."
                   : "IT"}
               </span>
             </button>
@@ -276,12 +357,16 @@ export default function ConfiguracaoPage() {
           Carregando configurações…
         </div>
       ) : (
-        <AnimatePresence mode="wait">
+        /* Sem AnimatePresence aqui de propósito.
+           Com mode="wait" a troca de aba dependia da animação de saída
+           terminar; quando ela não terminava, o conteúdo novo nunca entrava
+           e a aba parecia não responder ao clique. Com a key no motion.div,
+           o React remonta e a entrada anima sozinha, sem coordenação de saída. */
+        <div>
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.18 }}
           >
             {/* ── Classificações ── */}
@@ -299,6 +384,18 @@ export default function ConfiguracaoPage() {
                   onCreateCultura={handleCreateCultura}
                   onDeleteCultura={handleDeleteCultura}
                   showOnlyClassifications
+                />
+              </div>
+            )}
+
+            {/* ── Culturas (catalogo IBGE) ── */}
+            {activeTab === "culturas" && (
+              <div className="glass-card p-6">
+                <CatalogoCulturas
+                  culturas={todasCulturas}
+                  onHabilitar={handleHabilitarDoCatalogo}
+                  onDesabilitar={handleDesabilitarDoCatalogo}
+                  onDefinirApelido={handleDefinirApelidoCultura}
                 />
               </div>
             )}
@@ -333,7 +430,7 @@ export default function ConfiguracaoPage() {
               </div>
             )}
           </motion.div>
-        </AnimatePresence>
+        </div>
       )}
     </div>
   );
