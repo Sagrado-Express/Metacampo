@@ -1,25 +1,27 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { getAuthedContext } from '@/lib/auth';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Helper to check session and return session or response error
-async function checkAuth() {
-  const session = await getSession();
-  if (!session) {
-    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), session: null };
+type AuthResult =
+  | { error: NextResponse; supabase: null; tenantId: null }
+  | { error: null; supabase: SupabaseClient; tenantId: string };
+
+// Client autenticado: o RLS filtra por tenant, o tenantId vem da claim assinada.
+async function checkAuth(): Promise<AuthResult> {
+  const ctx = await getAuthedContext();
+  if (!ctx) {
+    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), supabase: null, tenantId: null };
   }
-  return { error: null, session };
+  return { error: null, supabase: ctx.supabase, tenantId: ctx.tenantId };
 }
 
 export async function GET(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
 
-  const tenantId = session?.user?.app_metadata?.tenant_id;
-
   try {
-    // If the database client runs in the context of the user session, RLS will filter it automatically.
-    // However, since we might be offline or using standard API credentials, we explicitly filter by tenant_id.
+    // O client carrega o JWT do usuário: o RLS filtra por tenant no Postgres.
+    // O .eq(tenant_id) abaixo é redundante e fica apenas como defesa em profundidade.
     const { data, error: dbError } = await supabase
       .from('it_se_configurations')
       .select('*')
@@ -52,10 +54,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
-
-  const tenantId = session?.user?.app_metadata?.tenant_id;
 
   try {
     const body = await request.json();
@@ -101,10 +101,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
-
-  const tenantId = session?.user?.app_metadata?.tenant_id;
 
   try {
     const body = await request.json();
@@ -152,10 +150,8 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
-
-  const tenantId = session?.user?.app_metadata?.tenant_id;
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

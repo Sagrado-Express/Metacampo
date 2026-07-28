@@ -1,21 +1,34 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { getAuthedContext } from '@/lib/auth';
 import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
-async function checkAuth() {
-  const session = await getSession();
-  if (!session) {
-    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), session: null };
+type AuthResult =
+  | { error: NextResponse; supabase: null; tenantId: null; userId: null }
+  | { error: null; supabase: SupabaseClient; tenantId: string; userId: string };
+
+/**
+ * Devolve um client Supabase que carrega o JWT do usuário: o RLS filtra por
+ * tenant automaticamente. O tenantId vem da claim assinada — não há mais
+ * default para o tenant Piloto, que dava acesso a dados alheios.
+ */
+async function checkAuth(): Promise<AuthResult> {
+  const ctx = await getAuthedContext();
+  if (!ctx) {
+    return {
+      error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }),
+      supabase: null,
+      tenantId: null,
+      userId: null,
+    };
   }
-  return { error: null, session };
+  return { error: null, supabase: ctx.supabase, tenantId: ctx.tenantId, userId: ctx.userId };
 }
 
 export async function GET(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
 
-  const tenantId = session?.user?.app_metadata?.tenant_id;
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 1000);
   const offset = parseInt(searchParams.get('offset') || '0');
@@ -145,11 +158,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId, userId } = await checkAuth();
   if (error) return error;
-
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
-  const ctvId = session?.user?.id || 'mock-ctv-uuid-001';
+  const ctvId = userId;
 
   try {
     const body = await request.json();
@@ -269,10 +280,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
-
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
@@ -400,10 +409,8 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error, session } = await checkAuth();
+  const { error, supabase, tenantId } = await checkAuth();
   if (error) return error;
-
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

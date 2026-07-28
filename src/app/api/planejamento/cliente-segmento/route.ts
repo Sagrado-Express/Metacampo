@@ -1,10 +1,10 @@
 ﻿import { NextResponse } from 'next/server';
-import { supabaseAdmin as supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { getAuthedContext } from '@/lib/auth';
 
 export async function GET(request: Request) {
-  const session = await getSession();
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const ctx = await getAuthedContext();
+  if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const { supabase, tenantId } = ctx;
 
   try {
     const { data, error } = await supabase
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'NÃ£o foi possÃ­vel carregar os dados do banco. Tente novamente em instantes.',
+        message: 'Não foi possível carregar os dados do banco. Tente novamente em instantes.',
       },
       { status: 503 }
     );
@@ -41,16 +41,16 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
-  const ctvId = session?.user?.id || 'mock-ctv-uuid-001';
+  const ctx = await getAuthedContext();
+  if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const { supabase, tenantId, userId: ctvId } = ctx;
 
   try {
     const body = await request.json();
     const { cliente_id, cultivo, segmento, valor_planejado_centavos, share_percentual } = body;
 
     if (!cliente_id || !cultivo || !segmento) {
-      return NextResponse.json({ error: 'Campos obrigatÃ³rios ausentes' }, { status: 400 });
+      return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
     }
 
     const payload = {
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'NÃ£o foi possÃ­vel salvar os dados no banco. Tente novamente em instantes.',
+        message: 'Não foi possível salvar os dados no banco. Tente novamente em instantes.',
       },
       { status: 503 }
     );

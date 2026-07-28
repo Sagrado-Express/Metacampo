@@ -1,44 +1,51 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getAuthedContext } from '@/lib/auth';
 import { SegmentDictionaryService } from '@/domain/services/segmentDictionary.service';
 
+const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+
+function unavailable(acao: string) {
+  return NextResponse.json(
+    {
+      error: 'DATA_SOURCE_UNAVAILABLE',
+      message: `Não foi possível ${acao} os dados no banco. Tente novamente em instantes.`,
+    },
+    { status: 503 }
+  );
+}
+
 export async function GET(request: Request) {
+  const ctx = await getAuthedContext();
+  if (!ctx) return UNAUTHORIZED;
+
   const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get('tenantId');
-  
-  if (!tenantId) {
-    return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-  }
 
   try {
     const activeOnly = searchParams.get('activeOnly') === 'true';
     const classifications = activeOnly
-      ? await SegmentDictionaryService.getActiveClassificacoes(supabase, tenantId)
-      : await SegmentDictionaryService.getAllClassificacoes(supabase, tenantId);
-    
+      ? await SegmentDictionaryService.getActiveClassificacoes(ctx.supabase, ctx.tenantId)
+      : await SegmentDictionaryService.getAllClassificacoes(ctx.supabase, ctx.tenantId);
+
     return NextResponse.json(classifications);
   } catch (error: any) {
     console.error('[Classifications API] Supabase error (GET):', error);
-    return NextResponse.json(
-      {
-        error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'Não foi possível carregar os dados do banco. Tente novamente em instantes.',
-      },
-      { status: 503 }
-    );
+    return unavailable('carregar');
   }
 }
 
 export async function POST(request: Request) {
+  const ctx = await getAuthedContext();
+  if (!ctx) return UNAUTHORIZED;
+
   try {
     const body = await request.json();
-    const { tenantId, customName, parentKey, aliases, color, displayOrder } = body;
+    const { customName, parentKey, aliases, color, displayOrder } = body;
 
-    if (!tenantId || !customName) {
-      return NextResponse.json({ error: 'tenantId and customName are required' }, { status: 400 });
+    if (!customName) {
+      return NextResponse.json({ error: 'customName is required' }, { status: 400 });
     }
 
-    const newCls = await SegmentDictionaryService.createClassificacao(supabase, tenantId, {
+    const newCls = await SegmentDictionaryService.createClassificacao(ctx.supabase, ctx.tenantId, {
       customName,
       parentKey,
       aliases,
@@ -49,71 +56,58 @@ export async function POST(request: Request) {
     return NextResponse.json(newCls);
   } catch (error: any) {
     console.error('[Classifications API] Supabase error (POST):', error);
-    return NextResponse.json(
-      {
-        error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'Não foi possível salvar os dados no banco. Tente novamente em instantes.',
-      },
-      { status: 503 }
-    );
+    if (typeof error?.message === 'string' && (error.message.includes('já existe') || error.message.includes('não encontrada'))) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return unavailable('salvar');
   }
 }
 
 export async function PATCH(request: Request) {
+  const ctx = await getAuthedContext();
+  if (!ctx) return UNAUTHORIZED;
+
   try {
     const body = await request.json();
-    const { tenantId, id, customName, aliases, isActive, displayOrder, color, newAlias } = body;
+    const { id, customName, aliases, isActive, displayOrder, color, newAlias } = body;
 
-    if (!tenantId || !id) {
-      return NextResponse.json({ error: 'tenantId and id are required' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    let result;
-    if (newAlias !== undefined) {
-      result = await SegmentDictionaryService.addAlias(supabase, tenantId, id, newAlias);
-    } else {
-      result = await SegmentDictionaryService.updateClassificacao(supabase, tenantId, id, {
-        customName,
-        aliases,
-        isActive,
-        displayOrder,
-        color,
-      });
-    }
+    const result =
+      newAlias !== undefined
+        ? await SegmentDictionaryService.addAlias(ctx.supabase, ctx.tenantId, id, newAlias)
+        : await SegmentDictionaryService.updateClassificacao(ctx.supabase, ctx.tenantId, id, {
+            customName,
+            aliases,
+            isActive,
+            displayOrder,
+            color,
+          });
 
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('[Classifications API] Supabase error (PATCH):', error);
-    return NextResponse.json(
-      {
-        error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'Não foi possível atualizar os dados no banco. Tente novamente em instantes.',
-      },
-      { status: 503 }
-    );
+    return unavailable('atualizar');
   }
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const tenantId = searchParams.get('tenantId');
-  const id = searchParams.get('id');
+  const ctx = await getAuthedContext();
+  if (!ctx) return UNAUTHORIZED;
 
-  if (!tenantId || !id) {
-    return NextResponse.json({ error: 'tenantId and id are required' }, { status: 400 });
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (!id) {
+    return NextResponse.json({ error: 'id is required' }, { status: 400 });
   }
 
   try {
-    await SegmentDictionaryService.deactivateClassificacao(supabase, tenantId, id);
+    await SegmentDictionaryService.deactivateClassificacao(ctx.supabase, ctx.tenantId, id);
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('[Classifications API] Supabase error (DELETE):', error);
-    return NextResponse.json(
-      {
-        error: 'DATA_SOURCE_UNAVAILABLE',
-        message: 'Não foi possível excluir os dados no banco. Tente novamente em instantes.',
-      },
-      { status: 503 }
-    );
+    return unavailable('excluir');
   }
 }

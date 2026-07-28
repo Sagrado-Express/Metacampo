@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { getSession } from '@/lib/auth';
+import { getAuthedContext } from '@/lib/auth';
 
 export async function GET(request: Request) {
-  const session = await getSession();
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const ctx = await getAuthedContext();
+  if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const { supabase, tenantId } = ctx;
   const { searchParams } = new URL(request.url);
   const limit = Math.min(parseInt(searchParams.get('limit') || '500'), 5000);
   const offset = parseInt(searchParams.get('offset') || '0');
@@ -39,8 +39,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
+  const ctx = await getAuthedContext();
+  if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const { supabase, tenantId } = ctx;
 
   try {
     const body = await request.json();

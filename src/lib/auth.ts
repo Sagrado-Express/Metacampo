@@ -4,9 +4,10 @@
  * Authentication utilities for protecting admin routes and pages.
  * Assumes Supabase auth is used (adjust imports if you use a different provider).
  */
-import { supabase } from '@/lib/supabase';
+import { supabase, getSupabaseClientWithSession } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Decodes a base64url encoded JWT payload.
@@ -116,6 +117,32 @@ export function csrfToken() {
   const cookie = `csrf=${token}; Path=/; HttpOnly; SameSite=Strict; Secure`;
   // In a real Next.js env you would use `cookies().set` but here we just return.
   return { token, cookie };
+}
+
+/**
+ * Contexto autenticado para uso em API routes.
+ *
+ * Devolve um client Supabase que carrega o JWT do usuário, de modo que o RLS
+ * do Postgres decide o que a query enxerga — sem filtro manual de tenant_id
+ * (Regra Nº4). O tenantId vem da claim assinada, nunca de query param:
+ * um parâmetro na URL é controlado pelo cliente e permitiria ler outro tenant.
+ *
+ * Retorna null quando não há sessão válida — o chamador responde 401.
+ */
+export async function getAuthedContext(): Promise<
+  { supabase: SupabaseClient; tenantId: string; userId: string } | null
+> {
+  const session = await getSession();
+  const tenantId = session?.user?.app_metadata?.tenant_id;
+  const userId = session?.user?.id;
+  if (!session || !tenantId || !userId) return null;
+
+  try {
+    const client = await getSupabaseClientWithSession();
+    return { supabase: client, tenantId, userId };
+  } catch {
+    return null;
+  }
 }
 
 /**

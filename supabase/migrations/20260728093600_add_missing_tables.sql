@@ -42,13 +42,16 @@ ALTER TABLE public.tenant_config_culturas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_config_classificacoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.planejamento_cliente_segmento ENABLE ROW LEVEL SECURITY;
 
--- Create RLS Policies
+-- Create RLS Policies (idempotente: a migration 20260728110000 as substitui depois)
+DROP POLICY IF EXISTS tenant_isolation ON public.tenant_config_culturas;
 CREATE POLICY tenant_isolation ON public.tenant_config_culturas
   USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation ON public.tenant_config_classificacoes;
 CREATE POLICY tenant_isolation ON public.tenant_config_classificacoes
   USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS tenant_isolation ON public.planejamento_cliente_segmento;
 CREATE POLICY tenant_isolation ON public.planejamento_cliente_segmento
   USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
