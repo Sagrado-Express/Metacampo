@@ -93,10 +93,65 @@ comentários no código refletem a realidade atual.
 
 ---
 
-## 9. Estado Conhecido do Projeto (snapshot da última verificação — 16/07/2026)
+## 9. Estado Conhecido do Projeto (snapshot da última verificação — 28/07/2026)
 
-> **AUDITORIA COMPLETA S0/S1 REALIZADA EM 16/07/2026**
-> Resultado: 6 blocos críticos de segurança, performance e confiabilidade **RESOLVIDOS**.
+> ### Correção de registros anteriores (28/07/2026)
+>
+> A revisão de 28/07 encontrou afirmações **incorretas** neste próprio arquivo e
+> em documentos que foram removidos. Registrado aqui para não se repetir:
+>
+> - **"Banco antigo `uoaktryjoztczbwklhzn` morto, DNS não resolve"** — falso.
+>   O banco responde normalmente e é o banco em uso. O banco
+>   `jcnxinvycgluoeqixdul` é que não pertence a esta conta.
+> - **"Bloco 3 (RLS) CONCLUÍDO"** — não estava. A prova apresentada foi apenas
+>   `npm run build`. O refactor passava a `getSupabaseClientWithSession()` um JWT
+>   com assinatura literal `'mock-signature'`, que o Supabase rejeita: a rota
+>   ficou sem acesso a dado nenhum. Um build passando não prova RLS.
+> - **`docs/EXPLAIN_ANALYZE_indexes.md`** — continha "medições" de ganho de
+>   10-20x que nunca foram executadas. Arquivo removido.
+> - **13 arquivos de doc/script criados** violando a Regra Nº2. Removidos.
+>
+> Lição operacional: prova de RLS é query com dois JWTs reais e resultados
+> divergentes. Build verde não é prova de comportamento.
+
+### Banco em uso
+- **`uoaktryjoztczbwklhzn.supabase.co`** — ativo, é o banco de produção.
+  Vinculado via `supabase link`; `supabase db push` funciona sem senha extra.
+- Conexão direta (`db.<ref>.supabase.co`) resolve **só em IPv6** — por isso
+  clientes Postgres locais falham com ENOTFOUND. Use o CLI ou o SQL Editor.
+
+### Multi-tenancy / RLS — VERIFICADO com dois tenants reais
+- `tenant_id` vem de `app_metadata` no JWT, que o Supabase injeta sozinho.
+  **Não** há `custom_access_token_hook` nem toggle de dashboard envolvido.
+- Helper `public.current_tenant_id()` lê a claim; policies usam
+  `USING` **e** `WITH CHECK` (as anteriores só tinham `USING`, deixando
+  INSERT sem restrição).
+- Prova reproduzível: `node test_rls_dashboard.js` — faz login real dos dois
+  usuários, consulta sem filtro manual, e inclui teste negativo com token
+  adulterado (deve dar 401).
+- Todas as rotas de API usam `getAuthedContext()`. O `tenantId` vem da claim
+  assinada, **nunca** de query param.
+
+### Usuários de teste
+| Email | Senha | Tenant |
+|---|---|---|
+| `teste1@metacampo.com` | `Teste123!@#` | `11111111-...-1111` (CTV Teste A) |
+| `teste2@metacampo.com` | `Teste123!@#` | `22222222-...-2222` (CTV Teste B) |
+
+São fixtures de teste. Não promover para produção real sem trocar as senhas.
+
+### Pendências reais
+- **`SUPABASE_SERVICE_ROLE_KEY` exposta em chat em 28/07 — rotacionar.**
+  Ainda não rotacionada no momento deste registro.
+- **Ganho dos índices não medido.** Os índices existem, mas com ~4 linhas por
+  tabela o Postgres faz seq scan de qualquer forma. A afirmação de ganho de
+  performance permanece **não provada** até haver volume realista.
+- `/register` e `/api/tenant/invites` ainda usam `supabaseAdmin` (service_role).
+  É legítimo para essas rotas, mas não foram exercitadas nesta rodada.
+
+---
+
+> **AUDITORIA S0/S1 (16/07/2026) — leia junto com a correção acima**
 
 ### Segurança (Bloco 1 — ✅ CONCLUÍDO)
 - **Arquivos de cookies removidos**: `cookies.txt` e `cookies_prod.txt` deletados do working tree
