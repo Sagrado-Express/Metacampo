@@ -1,0 +1,36 @@
+✅ STATUS: Tabelas já foram criadas!
+
+❌ Erro anterior: Policy "tenant_isolation" já existe
+
+📝 SOLUÇÃO: Execute esta migration única que completa tudo
+
+================================================================================
+
+🔧 EXECUTE NA SQL EDITOR:
+https://app.supabase.com/project/jcnxinvycgluoeqixdul/sql/new
+
+Abra o arquivo:
+  supabase/migrations/20260728093800_fix_idempotent_migrations.sql
+
+Copie TODO o conteúdo e cole no SQL Editor → Clique em RUN
+
+================================================================================
+
+Este arquivo faz:
+✅ Remove policies existentes (sem erro)
+✅ Recria policies RLS
+✅ Garante todos os índices existem
+✅ Tudo é idempotente (seguro rodar várias vezes)
+
+================================================================================
+
+Após executar:
+
+1. Verifique que passou:
+   SELECT tablename FROM pg_tables
+   WHERE tablename LIKE 'tenant_%'
+      OR tablename = 'planejamento_cliente_segmento';
+
+2. Pronto! Build está 100% pronto para deploy
+
+================================================================================
