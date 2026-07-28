@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/providers/SidebarProvider";
 import {
-  LayoutDashboard,
+  Home,
   Users,
   Settings,
   LogOut,
@@ -37,7 +37,7 @@ export function Sidebar() {
   };
 
   const menuItems = [
-    { icon: <LayoutDashboard />, label: "Cockpit", href: "/workspace" },
+    { icon: <Home />, label: "Início", href: "/workspace" },
     { icon: <Users />, label: "Clientes", href: "/workspace/clientes" },
     { icon: <TrendingUp />, label: "Planejamento", href: "/workspace/planejamento" },
     { icon: <Settings />, label: "Configuração", href: "/workspace/settings/configuracao" },

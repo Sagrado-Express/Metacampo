@@ -1,261 +1,277 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { IngestionCenter } from "@/components/ingestion/IngestionCenter";
-import { ReconciliationModal } from "@/components/ingestion/ReconciliationModal";
-import { PacingSpeedometer } from "@/components/dashboard/PacingSpeedometer";
-import { HuntingRadar } from "@/components/dashboard/HuntingRadar";
-import { IngestionMapper } from "@/domain/services/ingestionMapper";
-import { MOCK_TEST_DATA } from "@/data/mock_database";
-import { motion } from "framer-motion";
-import { LayoutDashboard, Settings, Users, LogOut, Loader2 } from "lucide-react";
-import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
+import Link from "next/link";
+import {
+  Users2,
+  TrendingUp,
+  Settings2,
+  Loader2,
+  CheckCircle2,
+  Circle,
+  ArrowRight,
+  Sprout,
+  Tags,
+  Ruler,
+} from "lucide-react";
 
 /**
- * METACAMPO SaaS (Premium Edition) - Main Workspace
- * Assembles the Executive Cockpit and Hunting Radar.
+ * Início — porta de entrada do MetaCampo.
+ *
+ * Substitui o antigo Cockpit, que exibia orçamento, faturado YTD, ranking de
+ * gerentes e top clientes vindos de MOCK_TEST_DATA / MONTHLY_MASTER_BASE.
+ * Aqueles números eram fabricados e apareciam sem qualquer distinção dos reais
+ * (ex.: "FATURADO YTD R$ 6.580.000" com faturamento_snapshots vazio no banco).
+ *
+ * Esta tela só mostra contagens que vêm do banco do próprio tenant.
  */
-import { MONTHLY_MASTER_BASE } from "@/data/monthly_master";
 
-import { ExecutiveCockpit } from "@/components/dashboard/ExecutiveCockpit";
+type Setup = {
+  culturas: number;
+  segmentos: number;
+  indices: number;
+  clientes: number;
+};
 
-import { useEffect } from "react";
-
-export default function WorkspacePage() {
+export default function InicioPage() {
   const router = useRouter();
-  const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [showReconciliation, setShowReconciliation] = useState(false);
-  const [unmappedSegments, setUnmappedSegments] = useState<string[]>([]);
-  
-  const [dbClients, setDbClients] = useState<any[]>([]);
-  const [faturamentoList, setFaturamentoList] = useState<any[]>([]);
+  const [nome, setNome] = useState<string>("");
+  const [setup, setSetup] = useState<Setup | null>(null);
 
   useEffect(() => {
-    async function checkSession() {
+    async function carregar() {
       try {
-        const res = await fetch("/api/auth/session");
-        if (res.ok) {
-          const data = await res.json();
-          setSession(data.session);
-          
-          // Fetch real db clients and faturamento snapshots
-          const [clientsRes, faturamentoRes] = await Promise.all([
-            fetch("/api/clientes"),
-            fetch("/api/faturamento")
-          ]);
-          // Ambas as rotas respondem { data, pagination } desde a paginação.
-          // Antes se guardava o envelope inteiro no estado: dbClients.length
-          // virava undefined (caindo no mock) e faturamentoList.filter quebrava
-          // a página com "filter is not a function".
-          if (clientsRes.ok) {
-            const clientsData = await clientsRes.json();
-            setDbClients(Array.isArray(clientsData) ? clientsData : clientsData?.data ?? []);
-          }
-          if (faturamentoRes.ok) {
-            const faturamentoData = await faturamentoRes.json();
-            setFaturamentoList(Array.isArray(faturamentoData) ? faturamentoData : faturamentoData?.data ?? []);
-          }
-        } else {
+        const sessionRes = await fetch("/api/auth/session");
+        if (!sessionRes.ok) {
           router.push("/login");
+          return;
         }
-      } catch (err) {
-        router.push("/login");
+        const { session } = await sessionRes.json();
+        setNome(session?.user?.user_metadata?.full_name || session?.user?.email || "");
+
+        const [cult, clas, it, cli] = await Promise.all([
+          fetch("/api/cultures"),
+          fetch("/api/classifications?activeOnly=true"),
+          fetch("/api/indice-tecnologico"),
+          fetch("/api/clientes"),
+        ]);
+
+        const lista = async (r: Response) => {
+          if (!r.ok) return [];
+          const j = await r.json();
+          return Array.isArray(j) ? j : j?.data ?? [];
+        };
+
+        setSetup({
+          culturas: (await lista(cult)).length,
+          segmentos: (await lista(clas)).length,
+          indices: (await lista(it)).length,
+          clientes: (await lista(cli)).length,
+        });
+      } catch {
+        // Sem dados de configuração a tela ainda explica o fluxo; não trava.
+        setSetup(null);
       } finally {
         setLoading(false);
       }
     }
-    checkSession();
-  }, []);
-
-  const tenantId = session?.user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000";
-  const { classifications, invertedMap, invalidate } = useSegmentDictionary(tenantId);
-  
-  // Real data mapping for the Hunting Radar (The "Map")
-  const radarClients = useMemo(() => {
-    const clientsSource = dbClients.length > 0 ? dbClients : MOCK_TEST_DATA.map(d => {
-      const totalArea = d.areas.soja + d.areas.milho + d.areas.algodao + d.areas.cana + d.areas.cafe;
-      return {
-        id: d.id,
-        name: d.name,
-        city: d.city,
-        state: d.uf,
-        vpmTotalCentavos: totalArea * 3500 * 100,
-        areas: [
-          { cropName: "Soja", areaHa: d.areas.soja },
-          { cropName: "Milho", areaHa: d.areas.milho },
-          { cropName: "Algodão", areaHa: d.areas.algodao },
-          { cropName: "Cana", areaHa: d.areas.cana },
-          { cropName: "Café", areaHa: d.areas.cafe }
-        ],
-        performanceBand: d.rating === 'A' ? "AZUL" : "VERDE"
-      };
-    });
-
-    return clientsSource.map(d => {
-      const vpmTotal = (d.vpmTotalCentavos || 0) / 100;
-      
-      const relevantFaturamento = faturamentoList.filter(f => f.id_ctv === d.ctvId || f.id_ctv === "CTV01");
-      const realized = relevantFaturamento.length > 0 
-        ? relevantFaturamento.reduce((acc, curr) => acc + (curr.valor_realizado_centavos || 0), 0) / 100 / 10
-        : (MONTHLY_MASTER_BASE.filter(m => m.ctvId === "CTV01" && m.mes === "05").reduce((acc, curr) => acc + curr.realizado, 0) / 10);
-
-      const sojaHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'SOJA')?.areaHa || 0;
-      const milhoHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'MILHO')?.areaHa || 0;
-      const algodaoHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'ALGODAO')?.areaHa || 0;
-      const canaHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'CANA')?.areaHa || 0;
-      const cafeHa = d.areas?.find((a: any) => a.cropName?.toUpperCase() === 'CAFE')?.areaHa || 0;
-
-      const recommendedInputs = 
-        (sojaHa * 1800) + 
-        (milhoHa * 1200) + 
-        (algodaoHa * 3500) + 
-        (canaHa * 2000) + 
-        (cafeHa * 2500);
-      
-      const deficitTecnico = Math.max(0, recommendedInputs - realized);
-
-      return {
-        id: d.id,
-        name: d.name,
-        city: `${d.city} - ${d.state || d.uf || ''}`,
-        vpmTotal: vpmTotal,
-        realizedMonth: realized,
-        toGoMonth: Math.max(0, vpmTotal - realized),
-        pareto: d.performanceBand === 'AZUL' || d.rating === 'A' ? "AZUL" as const : "VERDE" as const,
-        deficitTecnico
-      };
-    });
-  }, [dbClients, faturamentoList]);
-
-  const handleUpload = async (file: File) => {
-    setIsProcessing(true);
-    setProgress(0);
-    
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(timer);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      const mapObj = new Map(Object.entries(invertedMap));
-      const anomalies = IngestionMapper.identifyAnomalies(text, mapObj);
-      
-      if (anomalies.length > 0) {
-        setUnmappedSegments(anomalies);
-        setShowReconciliation(true);
-      } else {
-        const { data: aggregatedData } = IngestionMapper.aggregateBilling(text, mapObj);
-        try {
-          const response = await fetch("/api/faturamento", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(aggregatedData.map(item => ({
-              mes: "05",
-              ctvId: item.ctvId || "CTV01",
-              segmentId: item.segmentId,
-              realizedValue: item.realizedValue || 0,
-              targetValue: (item.realizedValue || 0) * 1.2
-            })))
-          });
-          if (response.ok) {
-            const updatedFat = await fetch("/api/faturamento").then(r => r.json());
-            setFaturamentoList(Array.isArray(updatedFat) ? updatedFat : updatedFat?.data ?? []);
-          }
-        } catch (err) {
-          console.error("Error saving faturamento:", err);
-        }
-      }
-      
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 2500);
-    };
-    reader.readAsText(file);
-  };
+    carregar();
+  }, [router]);
 
   if (loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-emerald-600" size={32} />
       </div>
     );
   }
 
+  const passos = [
+    {
+      icon: <Sprout size={16} />,
+      titulo: "Cadastrar culturas",
+      descricao: "Soja, milho, algodão — o que a sua carteira atende.",
+      feito: (setup?.culturas ?? 0) > 0,
+      contagem: setup?.culturas,
+      href: "/workspace/settings/configuracao",
+    },
+    {
+      icon: <Tags size={16} />,
+      titulo: "Cadastrar segmentos",
+      descricao: "As linhas de produto que você vende em cada cultura.",
+      feito: (setup?.segmentos ?? 0) > 0,
+      contagem: setup?.segmentos,
+      href: "/workspace/settings/segments",
+    },
+    {
+      icon: <Ruler size={16} />,
+      titulo: "Definir o Índice Tecnológico",
+      descricao: "Quanto vale, por hectare, cada cultura em cada segmento.",
+      feito: (setup?.indices ?? 0) > 0,
+      contagem: setup?.indices,
+      href: "/workspace/settings/configuracao",
+    },
+    {
+      icon: <Users2 size={16} />,
+      titulo: "Cadastrar produtores",
+      descricao: "Com as áreas e culturas de cada um.",
+      feito: (setup?.clientes ?? 0) > 0,
+      contagem: setup?.clientes,
+      href: "/workspace/clientes",
+    },
+  ];
+
+  const abas = [
+    {
+      icon: <Users2 size={20} />,
+      nome: "Clientes",
+      href: "/workspace/clientes",
+      texto:
+        "Cadastro dos produtores da carteira, com as áreas e culturas de cada um. É aqui que aparece o VPM potencial por produtor — e o aviso quando a cultura informada não está cadastrada ou ainda não tem Índice Tecnológico.",
+    },
+    {
+      icon: <TrendingUp size={20} />,
+      nome: "Planejamento",
+      href: "/workspace/planejamento",
+      texto:
+        "Distribuição da meta por cliente, cultura e segmento. Parte do VPM potencial calculado na aba Clientes e permite ajustar o share que você pretende capturar em cada combinação.",
+    },
+    {
+      icon: <Settings2 size={20} />,
+      nome: "Configuração",
+      href: "/workspace/settings/configuracao",
+      texto:
+        "Culturas, segmentos e Índice Tecnológico do seu tenant. Nada é lista fixa: tudo é configurável. Esta aba é o pré-requisito das outras — sem Índice Tecnológico cadastrado, o VPM não é calculado.",
+    },
+  ];
+
+  const pendentes = passos.filter((p) => !p.feito).length;
+
   return (
-    <div className="space-y-12">
-      {/* Executive Cockpit (RLS Simulation) */}
-      <ExecutiveCockpit />
+    <div className="min-h-screen p-6 md:p-10 max-w-5xl mx-auto space-y-8">
+      {/* Boas-vindas */}
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.25em] text-emerald-600 mb-2">
+          Bem-vindo ao MetaCampo
+        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-[#3E2723]">
+          {nome ? `Olá, ${nome.split(" ")[0]}` : "Olá"}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
+          O MetaCampo organiza a gestão comercial da carteira de CTVs: você configura como
+          o seu negócio calcula valor, cadastra os produtores, e a partir daí planeja a meta
+          por cliente, cultura e segmento.
+        </p>
+      </div>
 
-      <div className="p-8 lg:p-12 space-y-16">
-        {/* Hunting Radar Section (The "Map" of Opportunities) */}
-        <section>
-          <HuntingRadar clients={radarClients} />
-        </section>
+      {/* Como o cálculo funciona */}
+      <div className="glass-card-premium p-6">
+        <h2 className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground mb-4">
+          Como o VPM é calculado
+        </h2>
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 font-semibold">
+            hectares do produtor
+          </span>
+          <span className="text-muted-foreground font-bold">×</span>
+          <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 font-semibold">
+            Índice Tecnológico (cultura × segmento)
+          </span>
+          <span className="text-muted-foreground font-bold">=</span>
+          <span className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-bold">
+            VPM potencial
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">
+          Enquanto o Índice Tecnológico não estiver cadastrado para uma cultura, o VPM dela
+          fica zerado — o sistema não estima nem preenche valor por conta própria.
+        </p>
+      </div>
 
-        {/* Ingestion & Pipeline Section */}
-        <section className="grid grid-cols-1 gap-10">
-          <div className="glass-card-premium p-10 h-full flex flex-col justify-center border-primary/5">
-            <div className="flex items-center justify-between mb-8">
-              <div className="space-y-1">
-                <h3 className="text-2xl font-black tracking-tight">Câmara de Ingestão</h3>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Processamento Memory-First • Edge Runtime</p>
-              </div>
-              <div className="px-4 py-1 bg-primary/10 text-primary text-[10px] font-black uppercase rounded-full glow-primary">Automated Pipeline</div>
-            </div>
-            <IngestionCenter 
-              onUpload={handleUpload}
-              isProcessing={isProcessing}
-              progress={progress}
-            />
+      {/* Primeiros passos, com estado real do tenant */}
+      {setup && (
+        <div className="glass-card-premium p-6">
+          <div className="flex items-baseline justify-between mb-5">
+            <h2 className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">
+              Primeiros passos
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {pendentes === 0 ? "tudo configurado" : `${pendentes} pendente(s)`}
+            </span>
           </div>
-        </section>
 
-        {/* Reconciliation Modal — Dynamic from tenant dictionary */}
-        <ReconciliationModal 
-          isOpen={showReconciliation}
-          onClose={() => setShowReconciliation(false)}
-          unmappedItems={unmappedSegments}
-          availableClassifications={classifications.filter(c => c.isActive)}
-          onMap={async (alias, classId, classKey) => {
-            console.log(`[Learning Loop] Mapping "${alias}" → ${classKey} (${classId})`);
-            try {
-              const response = await fetch("/api/classifications", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  tenantId,
-                  id: classId,
-                  newAlias: alias,
-                }),
-              });
+          <ol className="space-y-1">
+            {passos.map((p, i) => (
+              <li key={p.titulo}>
+                <Link
+                  href={p.href}
+                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/20 transition-colors group"
+                >
+                  <span className="mt-0.5 shrink-0">
+                    {p.feito ? (
+                      <CheckCircle2 size={18} className="text-emerald-600" />
+                    ) : (
+                      <Circle size={18} className="text-muted-foreground/40" />
+                    )}
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="flex items-center gap-2">
+                      <span className="text-muted-foreground/60">{p.icon}</span>
+                      <span
+                        className={`text-sm font-bold ${p.feito ? "text-slate-700" : "text-[#3E2723]"}`}
+                      >
+                        {i + 1}. {p.titulo}
+                      </span>
+                      {p.feito && (
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                          {p.contagem} cadastrado(s)
+                        </span>
+                      )}
+                    </span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      {p.descricao}
+                    </span>
+                  </span>
+                  <ArrowRight
+                    size={15}
+                    className="mt-1 shrink-0 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
-              if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Erro desconhecido");
-              }
-
-              invalidate(); // Refresh dictionary cache & UI
-            } catch (err: any) {
-              console.error("Erro ao mapear alias:", err);
-              alert(`Erro ao salvar mapeamento: ${err.message}`);
-            }
-          }}
-        />
+      {/* O que cada aba faz */}
+      <div>
+        <h2 className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground mb-4">
+          O que cada aba faz
+        </h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {abas.map((aba) => (
+            <Link
+              key={aba.nome}
+              href={aba.href}
+              className="glass-card-premium p-5 hover:border-emerald-300 transition-colors group flex flex-col"
+            >
+              <div className="flex items-center gap-2.5 mb-3 text-emerald-600">
+                {aba.icon}
+                <span className="font-black text-sm tracking-tight text-[#3E2723]">
+                  {aba.nome}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed flex-1">{aba.texto}</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                Abrir
+                <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-
-
-
