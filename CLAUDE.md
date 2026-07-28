@@ -140,9 +140,22 @@ comentários no código refletem a realidade atual.
 
 São fixtures de teste. Não promover para produção real sem trocar as senhas.
 
-### Pendências reais
-- **`SUPABASE_SERVICE_ROLE_KEY` exposta em chat em 28/07 — rotacionar.**
-  Ainda não rotacionada no momento deste registro.
+### Segredos — situação verificada em 28/07/2026
+- **Repositório `Sagrado-Express/Metacampo` é PÚBLICO.** Qualquer `.env` ou
+  chave que entre em commit vira público na hora.
+- `.env.local` **nunca** foi commitado (verificado em todo o histórico).
+- A `SUPABASE_SERVICE_ROLE_KEY` do banco em uso (`uoaktryjoztczbwklhzn`) está
+  apenas em `.env.local` (gitignored) e nas env vars da Vercel. **Não** está
+  no repositório.
+- Ela foi exposta em chat em 28/07. **Decisão do usuário: não rotacionar**,
+  por a exposição estar limitada ao transcript e não ao repositório público.
+  Decisão consciente registrada — não reabrir sem o usuário pedir.
+- **Pendente:** `scripts/create_production_users.js`,
+  `scripts/seed_pedagogical_data.{js,ts}` e `scripts/seed_pedagogical_data_s1.js`
+  têm uma `service_role` key **hardcoded e versionada no repo público**.
+  A chave é do projeto `jcnxinvycgluoeqixdul`, que não existe mais (host não
+  resolve), então hoje é inócua. O risco é o padrão: esses scripts devem ler
+  a chave de `process.env`, nunca de literal no código.
 - **Ganho dos índices não medido.** Os índices existem, mas com ~4 linhas por
   tabela o Postgres faz seq scan de qualquer forma. A afirmação de ganho de
   performance permanece **não provada** até haver volume realista.
