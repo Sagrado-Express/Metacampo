@@ -454,7 +454,7 @@ precisa ser recriada do zero — ver Seção 16.
 
 | # | Passo | Status | Onde / o que falta |
 |---|---|---|---|
-| 1 | Viabilidade (meta ÷ share = VPM necessário) | 🟡 Só API | `/api/diagnostico/viabilidade` calcula certo, sem fallback fabricado — mas nenhuma tela chama essa rota. **Priorizado em reunião 04/08/2026** (ver 16.4) |
+| 1 | Viabilidade (meta ÷ share = VPM necessário, vs apetite do CTV) | ✅ Completo | `/workspace/viabilidade` — testado 04/08/2026 (ver 16.4) |
 | 2 | Cadastro da carteira (cliente × cultivo × hectares) | ✅ Completo | `/workspace/clientes` — multi-área, VPM real, avisos de pendência |
 | 3 | Potencial por cultivo (dashboard parte 1) | ✅ Completo | Planejamento → Resumo → "Por Cultivo" |
 | 4 | Meta por segmento em cada cliente × cultivo | ✅ Completo | Apetite (heatmap por segmento), Planejamento → Editar |
@@ -471,9 +471,9 @@ precisa ser recriada do zero — ver Seção 16.
 | 15 | Método de Pareto (classificação 80/20) | ❌ Zero | Sem rota, sem tela. Tentativas órfãs (`ParetoPlanning.tsx`, `ParetoSegmentation.tsx`) removidas 04/08/2026 |
 | 16 | Frequência de visitas por cliente | ❌ Zero | `visitService.ts` estava órfão, removido 04/08/2026 |
 
-**Fechados de ponta a ponta: 6 de 16** (2, 3, 4, 6, 7, 8) — o núcleo que
-sustenta VPM e planejamento por segmento.
-**Pela metade: 4** (1, 5, 9, 12) — existe base ou API, falta tela ou a
+**Fechados de ponta a ponta: 7 de 16** (1, 2, 3, 4, 6, 7, 8) — o núcleo que
+sustenta VPM e planejamento por segmento, mais Viabilidade (04/08/2026).
+**Pela metade: 3** (5, 9, 12) — existe base ou API, falta tela ou a
 segunda metade da lógica.
 **Zero: 6** (10, 11, 13, 14, 15, 16) — sem schema, sem rota, sem tela.
 
@@ -501,13 +501,39 @@ descreve o que construir, não o estado atual.
 
 ### 16.4 Decisões da reunião Daniel × Marco Polo (04/08/2026)
 
-**Próximo passo priorizado (acordado pelos dois):** Passo 1 (Viabilidade)
-ganha uma tela — hoje só existe a API. O CTV precisa conseguir apontar, por
-produtor × cultivo × grupo de produto, onde vai realizar o VPM (comparando
-potencial do agrupamento vs seu apetite), e o sistema precisa somar esse
-apetite total e comparar contra a meta/orçamento individual do CTV — isso
-ainda não existe (nem schema, nem rota). É a continuação natural do que já
-está pronto no Passo 4/5 (apetite por segmento), não uma feature nova do zero.
+**Próximo passo priorizado (acordado pelos dois) — ✅ IMPLEMENTADO 04/08/2026:**
+Passo 1 (Viabilidade) ganhou tela em `/workspace/viabilidade`. CTV define
+meta de vendas + share estimado da safra (persistido em nova tabela
+`ctv_metas`, migration `20260805130000_ctv_metas.sql`), vê o VPM necessário
+(meta ÷ share), e compara contra o apetite total que já comprometeu no
+planejamento (soma de `planejamento_cliente_segmento.valor_planejado_centavos`
+filtrada por `ctv_id = usuário logado` — o campo já existia e já era
+preenchido com o `userId` autenticado, só faltava agregar). Também mostra o
+potencial bruto da carteira do tenant como contexto.
+
+De quebra, a troca do cálculo de potencial por `calcClientVpmTotal`/
+`buildItLookup` (helpers já testados em `VpmService.ts`, usados em
+`dashboard-full`) corrigiu um bug real: o loop manual antigo da rota casava
+só por `crop_name`, ignorando segmento — subestimava o potencial sempre que
+um cultivo tinha Índice Tecnológico configurado em mais de um segmento.
+
+**Prova real (não só build):** logado como `teste1@metacampo.com`,
+`npm run lint`/`tsc --noEmit`/`npm run build` limpos, migration aplicada via
+`supabase db push` (confirmado com `supabase migration list`, local=remote).
+No navegador: estado vazio mostrou "Meta ainda não configurada" (não
+"inviável"); salvei meta R$ 500.000,00 / share 10% → API devolveu
+`vpmNecessario = R$ 5.000.000,00` (bate a conta); apetite começou em
+R$ 0,00; lancei um plano real (Fazenda Boa Vista × Milho × Sementes,
+R$ 152.000,00, via `/api/planejamento/cliente-segmento`, o mesmo endpoint que
+o Heatmap usa) e o apetite total na tela de Viabilidade **mudou pra
+R$ 152.000,00** e o déficit recalculou pra R$ 4.848.000,00 — prova de que a
+soma por `ctv_id` funciona com dado gravado de verdade, não só em teoria.
+Console sem erro novo (só o warning pré-existente e não relacionado do input
+de cor em `SegmentSettings.tsx`, já registrado à parte).
+
+Dado de teste ficou no tenant de `teste1@metacampo.com` (meta configurada +
+1 linha de planejamento) — não removido, é dado de demonstração válido, não
+lixo; avisar se quiser que eu limpe.
 
 **Teste dirigido combinado:** Marco Polo vai atuar como um CTV fictício,
 usando a lista de clientes fictícios que o Daniel já enviou, montando uma

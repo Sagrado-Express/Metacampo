@@ -197,6 +197,21 @@ CREATE TABLE IF NOT EXISTS public.user_tenants (
     PRIMARY KEY (user_id, tenant_id)
 );
 
+-- 12. Meta individual de vendas por CTV — Passo 1 do GTMGC (Viabilidade).
+--     RLS é só por tenant (nenhuma tabela tem RLS por usuário); "só vejo
+--     minha própria meta" é aplicado na API, filtrando ctv_id = ctx.userId.
+CREATE TABLE IF NOT EXISTS public.ctv_metas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    ctv_id TEXT NOT NULL,
+    safra TEXT NOT NULL DEFAULT '25/26',
+    meta_vendas_centavos BIGINT NOT NULL DEFAULT 0,
+    share_estimado NUMERIC NOT NULL DEFAULT 0 CHECK (share_estimado >= 0 AND share_estimado <= 1),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, ctv_id, safra)
+);
+
 -- Seed do tenant Piloto (dados pedagógicos/demo)
 INSERT INTO public.tenants (id, nome, plano)
 VALUES ('00000000-0000-0000-0000-000000000000', 'Cliente Piloto V4', 'Piloto')
@@ -226,6 +241,7 @@ ALTER TABLE public.tenant_config_classificacoes  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.planejamento_cliente_segmento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_invites                ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.grupos_economicos             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ctv_metas                     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_tenants                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenants                       ENABLE ROW LEVEL SECURITY;
 
@@ -269,6 +285,9 @@ CREATE POLICY tenant_isolation ON public.tenant_invites
 CREATE POLICY tenant_isolation ON public.grupos_economicos
   FOR ALL USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
+CREATE POLICY tenant_isolation ON public.ctv_metas
+  FOR ALL USING (tenant_id = public.current_tenant_id())
+  WITH CHECK (tenant_id = public.current_tenant_id());
 
 -- user_tenants: cada usuário só enxerga os próprios vínculos
 CREATE POLICY user_tenants_self ON public.user_tenants
@@ -301,6 +320,7 @@ CREATE INDEX IF NOT EXISTS idx_tenant_invites_tenant_id              ON public.t
 CREATE INDEX IF NOT EXISTS idx_tenant_invites_token                  ON public.tenant_invites(token);
 CREATE INDEX IF NOT EXISTS idx_grupos_economicos_tenant_id           ON public.grupos_economicos(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_clientes_grupo_economico_id           ON public.clientes(grupo_economico_id);
+CREATE INDEX IF NOT EXISTS idx_ctv_metas_tenant_id                   ON public.ctv_metas(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_user_id                  ON public.user_tenants(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_tenant_id                ON public.user_tenants(tenant_id);
 

@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   TrendingUp,
+  Target,
   ChevronLeft,
   Menu
 } from "lucide-react";
@@ -38,6 +39,7 @@ export function Sidebar() {
 
   const menuItems = [
     { icon: <Home />, label: "Início", href: "/workspace" },
+    { icon: <Target />, label: "Viabilidade", href: "/workspace/viabilidade" },
     { icon: <Users />, label: "Clientes", href: "/workspace/clientes" },
     { icon: <TrendingUp />, label: "Planejamento", href: "/workspace/planejamento" },
     { icon: <Settings />, label: "Configuração", href: "/workspace/settings/configuracao" },
