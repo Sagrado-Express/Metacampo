@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface MeetingModeContextType {
@@ -15,12 +15,7 @@ export const MeetingModeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const searchParams = useSearchParams();
-  const [isMeetingMode, setIsMeetingMode] = useState(false);
-
-  useEffect(() => {
-    const mode = searchParams.get("mode");
-    setIsMeetingMode(mode === "meeting");
-  }, [searchParams]);
+  const isMeetingMode = searchParams.get("mode") === "meeting";
 
   return (
     <MeetingModeContext.Provider value={{ isMeetingMode }}>

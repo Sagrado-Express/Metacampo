@@ -8,14 +8,12 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 
 // reCAPTCHA component (assumes you have site key in env)
 const Recaptcha = ({ onVerify }: { onVerify: (token: string) => void }) => {
-  const [widgetId, setWidgetId] = React.useState<number | null>(null);
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined" && (window as any).grecaptcha) {
-      const id = (window as any).grecaptcha.render("recaptcha", {
+      (window as any).grecaptcha.render("recaptcha", {
         sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
         callback: (token: string) => onVerify(token),
       });
-      setWidgetId(id);
     }
   }, []);
   return <div id="recaptcha" className="my-4" />;
@@ -29,8 +27,12 @@ export default function RegisterPage() {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "no_invite">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Extrair token da URL no mount
-  React.useEffect(() => {
+  // Extrair token da URL no mount. Precisa ser efeito (não estado derivado
+  // durante o render): a página é pré-renderizada estaticamente sem acesso a
+  // `window`, então o valor real só existe depois da hidratação — calcular
+  // durante o render causaria mismatch entre o HTML estático e o cliente.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("invite");
@@ -41,6 +43,7 @@ export default function RegisterPage() {
       }
     }
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });

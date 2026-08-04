@@ -82,7 +82,11 @@ export function useITConfigurations() {
     retry: 1,
   });
 
-  const configs: ITConfig[] = query.data || [];
+  // useMemo (não `query.data || []` direto): um array novo a cada render
+  // quando query.data está undefined quebra a identidade de matrixMap/
+  // getCellValue abaixo, e o efeito em ITMatrix que depende de getCellValue
+  // reentra em loop (Maximum update depth exceeded) sempre que há dados reais.
+  const configs: ITConfig[] = useMemo(() => query.data || [], [query.data]);
 
   const matrixMap = useMemo(() => {
     const map = new Map<string, ITConfig>();

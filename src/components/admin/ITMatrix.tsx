@@ -95,7 +95,10 @@ export function ITMatrix({
   const [error, setError] = useState<string | null>(null);
   const [editingCell, setEditingCell] = useState<string | null>(null);
 
-  // Initialize draft from server data when cultures/classifications/configs change
+  // Initialize draft from server data when cultures/classifications/configs change.
+  // Não dá para calcular durante o render: precisa mesclar com dirtyKeys (edição
+  // local do usuário) e preservar o que já foi digitado, algo que depende do
+  // estado da renderização anterior, não só das props atuais.
   useEffect(() => {
     const initial: MatrixDraft = {};
     activeCulturas.forEach((cultura) => {
@@ -104,6 +107,7 @@ export function ITMatrix({
         initial[key] = getCellValue(cultura.customName, seg.customName);
       });
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft((prev) => {
       // Only update non-dirty cells to preserve user edits
       const merged = { ...initial };

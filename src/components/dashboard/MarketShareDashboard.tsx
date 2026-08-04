@@ -69,7 +69,7 @@ export function MarketShareDashboard({ cityMetrics }: MarketShareDashboardProps)
         <div>
           <h3 className="text-2xl font-black tracking-tight text-[#3E2723] flex items-center gap-2">
             <Shield className="text-primary" />
-            Dashboard de Dominância ("Dona da Rua")
+            Dashboard de Dominância (&quot;Dona da Rua&quot;)
           </h3>
           <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">
             Análise de penetração e share de mercado municipal em relação ao potencial técnico total (VPM)
