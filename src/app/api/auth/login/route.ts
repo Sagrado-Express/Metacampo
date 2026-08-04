@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createAnonClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     let sessionData = null;
 
     try {
+      const supabase = createAnonClient();
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {

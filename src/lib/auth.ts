@@ -4,7 +4,7 @@
  * Authentication utilities for protecting admin routes and pages.
  * Assumes Supabase auth is used (adjust imports if you use a different provider).
  */
-import { supabase, getSupabaseClientWithSession } from '@/lib/supabase';
+import { getSupabaseClientWithSession } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -64,13 +64,16 @@ export async function getSession() {
       }
     }
 
-    // Try Supabase auth direct query as a backup
-    const { data, error } = await supabase.auth.getSession();
-    if (!error && data.session) {
-      return data.session;
-    }
+    // Sem cookie, não há sessão — ponto final. Havia aqui um fallback que
+    // consultava supabase.auth.getSession() no client singleton compartilhado
+    // (`@/lib/supabase`). Esse client mantém estado de sessão em memória por
+    // processo inteiro; qualquer login anterior no mesmo processo aquecido
+    // deixava sessão "encontrável" por esse fallback, então uma requisição
+    // SEM cookie nenhum podia ser tratada como autenticada com a identidade
+    // de outro usuário. Verificado nesta auditoria: uma chamada sem sessão
+    // "encontrou" um convite de outro tenant por essa via.
   } catch (err) {
-    console.warn('Error reading session from cookies/Supabase:', err);
+    console.warn('Error reading session from cookies:', err);
   }
   return null;
 }

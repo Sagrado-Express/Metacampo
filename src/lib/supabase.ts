@@ -14,6 +14,26 @@ export const supabase = createClient(
   supabaseAnonKey || 'placeholder-key'
 )
 
+/**
+ * Client novo a cada chamada, para operações de auth (signIn/signUp) do lado
+ * do servidor.
+ *
+ * O `supabase` acima é um singleton — uma única instância viva pelo processo
+ * inteiro. `auth.signInWithPassword()` muda o estado de sessão *daquela
+ * instância*, e como o módulo é compartilhado por todas as requisições, uma
+ * requisição concorrente que reusasse `supabase` no mesmo processo aquecido
+ * podia herdar a sessão de outro usuário. Foi assim que uma query de convite
+ * sem sessão nenhuma "encontrou" um convite de outro tenant durante os testes
+ * desta auditoria: o processo ainda carregava a sessão de um login anterior.
+ */
+export function createAnonClient(): SupabaseClient {
+  return createClient(
+    supabaseUrl || 'https://placeholder-project.supabase.co',
+    supabaseAnonKey || 'placeholder-key',
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  )
+}
+
 export const supabaseAdmin = createClient(
   supabaseUrl || 'https://placeholder-project.supabase.co',
   supabaseServiceKey || supabaseAnonKey || 'placeholder-key'

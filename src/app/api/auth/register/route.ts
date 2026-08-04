@@ -7,7 +7,7 @@
 //   • Respostas com códigos HTTP corretos e mensagens amigáveis
 
 import { NextResponse } from 'next/server'
-import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 import { checkRateLimit, getRetryAfter } from '@/lib/rateLimiter'
 
 /** Helper: extrai IP real mesmo atrás de CDN */
@@ -90,8 +90,14 @@ export async function POST(req: Request) {
 
   // ------------------------------------------------------------------
   // Validar convite antes de prosseguir
+  //
+  // Usa supabaseAdmin (service_role) de propósito: esta é uma rota pré-auth
+  // — não existe usuário logado, então não há tenant_id de JWT para o RLS de
+  // tenant_invites comparar, e a query nunca encontraria nada com o client
+  // anônimo. A autorização aqui não vem de sessão, vem do próprio token
+  // (24 bytes aleatórios) — é ele que prova o direito de aceitar o convite.
   // ------------------------------------------------------------------
-  const { data: invite, error: inviteError } = await supabase
+  const { data: invite, error: inviteError } = await supabaseAdmin
     .from('tenant_invites')
     .select('*')
     .eq('token', inviteToken)
@@ -126,18 +132,23 @@ export async function POST(req: Request) {
   // Supabase signup – cria usuário e vincula ao tenant do convite
   // ------------------------------------------------------------------
   try {
-    const { data, error } = await supabase.auth.signUp({
+    // supabase.auth.signUp() (client anônimo) só grava user_metadata — não
+    // existe API pública para setar app_metadata. Sem tenant_id ali, o
+    // usuário criava conta e nunca mais conseguia logar: getSession() é
+    // fail-closed (rejeita token sem tenant_id) e o RLS também rejeitaria
+    // toda query, já que current_tenant_id() dependeria de uma claim
+    // inexistente. Por isso o cadastro por convite usa o client admin, que
+    // grava app_metadata.tenant_id direto na criação.
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: { full_name: name }, // metadata customizada
-        // Se precisar de email de confirmação, já vem habilitado no projeto Supabase
-      },
+      email_confirm: true, // o convite já validou a posse do e-mail
+      app_metadata: { tenant_id: invite.tenant_id, role: 'user' },
+      user_metadata: { full_name: name },
     })
 
     if (error) {
-      // Normalizamos mensagens para o front‑end
-      const msg = error.message.includes('already registered')
+      const msg = error.message.includes('already registered') || error.message.includes('already been registered')
         ? 'E‑mail já está em uso.'
         : 'Erro ao criar conta.'
       return NextResponse.json({ message: msg }, { status: 400 })

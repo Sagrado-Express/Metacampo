@@ -10,10 +10,12 @@ import {
   Settings2,
   ChevronLeft,
   Leaf,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { SegmentSettings } from "@/components/admin/SegmentSettings";
 import { CatalogoCulturas } from "@/components/admin/CatalogoCulturas";
+import { UserInvites } from "@/components/admin/UserInvites";
 import type { TipoCultura } from "@/data/culturas_ibge";
 import { ITMatrix } from "@/components/admin/ITMatrix";
 import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
@@ -33,7 +35,7 @@ import { cn } from "@/lib/utils";
  * tenantId: resolved dynamically via useSession.
  */
 
-type Tab = "classificacoes" | "culturas" | "cultivos" | "it-se";
+type Tab = "classificacoes" | "culturas" | "cultivos" | "it-se" | "usuarios";
 
 const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: string }[] = [
   {
@@ -59,6 +61,12 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: str
     label: "Índice Tecnológico (R$/ha)",
     icon: TrendingUp,
     color: "text-violet-600",
+  },
+  {
+    id: "usuarios",
+    label: "Usuários",
+    icon: Users,
+    color: "text-amber-600",
   },
 ];
 
@@ -339,6 +347,8 @@ export default function ConfiguracaoPage() {
                   ? "Cultur."
                   : tab.id === "cultivos"
                   ? "Cultiv."
+                  : tab.id === "usuarios"
+                  ? "Users"
                   : "IT"}
               </span>
             </button>
@@ -427,6 +437,13 @@ export default function ConfiguracaoPage() {
                   classificacoes={classifications}
                   safra="25/26"
                 />
+              </div>
+            )}
+
+            {/* ── Usuários ── */}
+            {activeTab === "usuarios" && (
+              <div className="glass-card p-6">
+                <UserInvites />
               </div>
             )}
           </motion.div>
