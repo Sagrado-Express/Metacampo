@@ -79,7 +79,7 @@ async function wipe(table) {
   }
 
   console.log('\n=== 2. LIMPANDO DADOS ANTERIORES DOS TENANTS DE TESTE ===\n');
-  for (const t of ['customer_crop_areas', 'clientes', 'it_se_configurations', 'tenant_config_culturas', 'tenant_config_classificacoes']) {
+  for (const t of ['customer_crop_areas', 'clientes', 'grupos_economicos', 'it_se_configurations', 'tenant_config_culturas', 'tenant_config_classificacoes']) {
     await wipe(t);
     console.log(`  limpo: ${t}`);
   }

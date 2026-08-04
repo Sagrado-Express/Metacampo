@@ -37,6 +37,13 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
   const [activeCultures, setActiveCultures] = useState<{ customName: string; internalKey: string }[]>([]);
   const { data: sessionData } = useSession();
 
+  // Grupo econômico: pode ser um dos existentes, nenhum, ou um nome novo
+  // digitado na hora (criado via get-or-create no submit, não em cada tecla).
+  const [gruposEconomicos, setGruposEconomicos] = useState<{ id: string; nome: string }[]>([]);
+  const [grupoEconomicoId, setGrupoEconomicoId] = useState<string>(clienteToEdit?.grupoEconomicoId || '');
+  const [criandoGrupoNovo, setCriandoGrupoNovo] = useState(false);
+  const [novoGrupoNome, setNovoGrupoNome] = useState('');
+
   // Cultivos ativos vêm da configuração do tenant (Regra #6: nada hardcoded no fluxo principal).
   useEffect(() => {
     if (!sessionData?.tenantId) return;
@@ -50,6 +57,11 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
         }
       })
       .catch(() => setActiveCultures([]));
+
+    fetch('/api/grupos-economicos')
+      .then(res => (res.ok ? res.json() : []))
+      .then(data => setGruposEconomicos(Array.isArray(data) ? data : []))
+      .catch(() => setGruposEconomicos([]));
   }, [sessionData?.tenantId]);
 
   const addRow = () => {
@@ -77,12 +89,33 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
     setError('');
 
     try {
+      // Se o usuário digitou um grupo novo em vez de escolher um existente,
+      // cria (ou reaproveita, se já existir com esse nome) antes de salvar
+      // o cliente — /api/grupos-economicos é get-or-create.
+      let finalGrupoId = grupoEconomicoId || null;
+      if (criandoGrupoNovo && novoGrupoNome.trim()) {
+        const resGrupo = await fetch('/api/grupos-economicos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: novoGrupoNome.trim() }),
+        });
+        if (resGrupo.ok) {
+          const grupo = await resGrupo.json();
+          finalGrupoId = grupo.id;
+        } else {
+          setError('Não foi possível criar o grupo econômico.');
+          setSaving(false);
+          return;
+        }
+      }
+
       const payload = {
         name,
         city,
         state,
         region: 'Região Geral',
         areas: validRows.map(r => ({ cropName: r.cropName, areaHa: parseFloat(r.areaHa) })),
+        grupoEconomicoId: finalGrupoId,
       };
 
       const url = clienteToEdit ? `/api/clientes?id=${clienteToEdit.id}` : '/api/clientes';
@@ -170,6 +203,51 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-1">
+              Grupo econômico <span className="normal-case font-semibold text-muted-foreground/70">(opcional — várias fazendas da mesma família)</span>
+            </label>
+            {criandoGrupoNovo ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  autoFocus
+                  value={novoGrupoNome}
+                  onChange={(e) => setNovoGrupoNome(e.target.value)}
+                  placeholder="Ex: Família Silva"
+                  className="flex-1 px-4 py-2.5 rounded-2xl border border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setCriandoGrupoNovo(false); setNovoGrupoNome(''); }}
+                  className="p-2.5 rounded-xl text-muted-foreground hover:bg-slate-100 transition-colors"
+                  title="Cancelar"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ) : (
+              <select
+                value={grupoEconomicoId}
+                onChange={(e) => {
+                  if (e.target.value === '__novo__') {
+                    setCriandoGrupoNovo(true);
+                    setGrupoEconomicoId('');
+                  } else {
+                    setGrupoEconomicoId(e.target.value);
+                  }
+                }}
+                className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
+              >
+                <option value="">Nenhum</option>
+                {gruposEconomicos.map(g => (
+                  <option key={g.id} value={g.id}>{g.nome}</option>
+                ))}
+                <option value="__novo__">+ Criar novo grupo…</option>
+              </select>
+            )}
           </div>
 
           {/* Lista de cultivos × área — múltiplas linhas por cliente */}

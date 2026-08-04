@@ -85,6 +85,15 @@ export async function GET(request: Request) {
       (culturasCfg || []).map((c: any) => String(c.custom_name).toUpperCase())
     );
 
+    // 6. Grupos econômicos do tenant, para exibir o nome junto de cada cliente
+    //    sem precisar de uma segunda ida ao banco por linha.
+    const { data: gruposCfg } = await supabase
+      .from('grupos_economicos')
+      .select('id, nome')
+      .eq('tenant_id', tenantId);
+
+    const gruposPorId = new Map((gruposCfg || []).map((g: any) => [g.id, g.nome]));
+
     const itLookup = buildItLookup(
       (indices || []).map((ind: any) => ({
         cultivo: ind.crop_name,
@@ -160,7 +169,9 @@ export async function GET(request: Request) {
         area_hectares: totalAreaHa,
         areas: mappedAreas,
         vpmTotalCentavos,
-        vpm_total_centavos: vpmTotalCentavos
+        vpm_total_centavos: vpmTotalCentavos,
+        grupoEconomicoId: cust.grupo_economico_id || null,
+        grupoEconomicoNome: cust.grupo_economico_id ? gruposPorId.get(cust.grupo_economico_id) || null : null,
       };
     });
 
@@ -206,7 +217,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa } = body;
+    const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa, grupoEconomicoId } = body;
 
     // Parse areas list: support new multi-crop format and fallback to old single-crop format
     const areaList: { cropName: string; areaHa: number }[] =
@@ -268,7 +279,8 @@ export async function POST(request: Request) {
         city,
         state,
         region: 'Região Geral',
-        document: `doc-${Date.now()}`
+        document: `doc-${Date.now()}`,
+        grupo_economico_id: grupoEconomicoId || null,
       })
       .select()
       .single();
@@ -306,7 +318,8 @@ export async function POST(request: Request) {
         vpmCentavos: vpmPorArea[idx]
       })),
       vpm_total_centavos: vpmCentavos,
-      vpmTotalCentavos: vpmCentavos
+      vpmTotalCentavos: vpmCentavos,
+      grupoEconomicoId: customer.grupo_economico_id || null,
     };
 
     return NextResponse.json(returnedClient, { status: 201 });
@@ -334,7 +347,7 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa } = body;
+    const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa, grupoEconomicoId } = body;
 
     // Parse areas list: support new multi-crop format and fallback to old single-crop format
     const areaList: { cropName: string; areaHa: number }[] =
@@ -393,6 +406,7 @@ export async function PATCH(request: Request) {
         name,
         city,
         state,
+        grupo_economico_id: grupoEconomicoId || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -438,7 +452,8 @@ export async function PATCH(request: Request) {
         vpmCentavos: vpmPorArea[idx]
       })),
       vpm_total_centavos: vpmCentavos,
-      vpmTotalCentavos: vpmCentavos
+      vpmTotalCentavos: vpmCentavos,
+      grupoEconomicoId: customer.grupo_economico_id || null,
     });
   } catch (err: any) {
     console.error('[api/clientes] Supabase error (PATCH):', err);

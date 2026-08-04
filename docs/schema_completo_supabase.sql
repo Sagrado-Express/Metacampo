@@ -46,7 +46,13 @@ CREATE TABLE IF NOT EXISTS public.clientes (
     credit_rating TEXT DEFAULT 'C',          -- A, B, C, D
     wallet_share NUMERIC(5,2) DEFAULT 0.00,
     qualitative_weight INTEGER DEFAULT 3,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+    -- updated_at só existe desde 05/08/2026: o PATCH sempre tentou gravar
+    -- nela, mas a coluna nunca tinha sido criada — toda edição de cliente
+    -- pela UI retornava 503 até essa migration.
+    -- grupo_economico_id é adicionada mais abaixo, via ALTER TABLE, depois
+    -- que grupos_economicos existe (ela referencia essa tabela por FK).
 );
 
 -- 3. Áreas de cultivo — um cliente tem N linhas aqui (multi-cultivo)
@@ -158,7 +164,29 @@ CREATE TABLE IF NOT EXISTS public.tenant_invites (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 10. Vínculo usuário ↔ tenant. PK composta — um usuário pode, em tese,
+-- 10. Grupos econômicos — agrupar clientes (fazendas) da mesma família.
+--     Cadastro próprio, não campo de texto livre: evita "Família Silva" e
+--     "familia silva" virarem grupos diferentes por erro de digitação.
+--     Sem internal_key: ao contrário de cultura/segmento, o nome nunca é
+--     usado como chave de busca em outra tabela — é só um FK direto de
+--     clientes.grupo_economico_id, então renomear já é trivial.
+CREATE TABLE IF NOT EXISTS public.grupos_economicos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    nome TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, nome)
+);
+
+-- ON DELETE SET NULL: apagar um grupo desagrupa as fazendas, nunca as apaga.
+ALTER TABLE public.clientes
+  ADD COLUMN IF NOT EXISTS grupo_economico_id UUID REFERENCES public.grupos_economicos(id) ON DELETE SET NULL;
+-- RLS, policy e índices deste par de tabelas ficam nos blocos
+-- consolidados abaixo, junto com o resto (mesmo padrão de culturas,
+-- classificações, planejamento e convites).
+
+-- 11. Vínculo usuário ↔ tenant. PK composta — um usuário pode, em tese,
 --     pertencer a mais de um tenant, embora nenhuma tela hoje explore isso
 --     (o app assume 1 tenant por usuário, lido de app_metadata do JWT).
 CREATE TABLE IF NOT EXISTS public.user_tenants (
@@ -197,6 +225,7 @@ ALTER TABLE public.tenant_config_culturas        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_config_classificacoes  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.planejamento_cliente_segmento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_invites                ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.grupos_economicos             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_tenants                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenants                       ENABLE ROW LEVEL SECURITY;
 
@@ -237,6 +266,9 @@ CREATE POLICY tenant_isolation ON public.planejamento_cliente_segmento
 CREATE POLICY tenant_isolation ON public.tenant_invites
   FOR ALL USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
+CREATE POLICY tenant_isolation ON public.grupos_economicos
+  FOR ALL USING (tenant_id = public.current_tenant_id())
+  WITH CHECK (tenant_id = public.current_tenant_id());
 
 -- user_tenants: cada usuário só enxerga os próprios vínculos
 CREATE POLICY user_tenants_self ON public.user_tenants
@@ -267,6 +299,8 @@ CREATE INDEX IF NOT EXISTS idx_planejamento_tenant_id                ON public.p
 CREATE INDEX IF NOT EXISTS idx_planejamento_cliente_id               ON public.planejamento_cliente_segmento(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_tenant_invites_tenant_id              ON public.tenant_invites(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tenant_invites_token                  ON public.tenant_invites(token);
+CREATE INDEX IF NOT EXISTS idx_grupos_economicos_tenant_id           ON public.grupos_economicos(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_clientes_grupo_economico_id           ON public.clientes(grupo_economico_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_user_id                  ON public.user_tenants(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_tenant_id                ON public.user_tenants(tenant_id);
 
