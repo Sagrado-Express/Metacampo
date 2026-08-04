@@ -454,7 +454,7 @@ precisa ser recriada do zero — ver Seção 16.
 
 | # | Passo | Status | Onde / o que falta |
 |---|---|---|---|
-| 1 | Viabilidade (meta ÷ share = VPM necessário) | 🟡 Só API | `/api/diagnostico/viabilidade` calcula certo, sem fallback fabricado — mas nenhuma tela chama essa rota |
+| 1 | Viabilidade (meta ÷ share = VPM necessário) | 🟡 Só API | `/api/diagnostico/viabilidade` calcula certo, sem fallback fabricado — mas nenhuma tela chama essa rota. **Priorizado em reunião 04/08/2026** (ver 16.4) |
 | 2 | Cadastro da carteira (cliente × cultivo × hectares) | ✅ Completo | `/workspace/clientes` — multi-área, VPM real, avisos de pendência |
 | 3 | Potencial por cultivo (dashboard parte 1) | ✅ Completo | Planejamento → Resumo → "Por Cultivo" |
 | 4 | Meta por segmento em cada cliente × cultivo | ✅ Completo | Apetite (heatmap por segmento), Planejamento → Editar |
@@ -498,3 +498,69 @@ Sempre que uma auditoria de funcionalidades rodar (grep + teste real, não
 leitura de nome de arquivo), atualize as duas tabelas acima. Se um passo
 mudar de status, essa é a única seção que precisa mudar — o resto do PRD
 descreve o que construir, não o estado atual.
+
+### 16.4 Decisões da reunião Daniel × Marco Polo (04/08/2026)
+
+**Próximo passo priorizado (acordado pelos dois):** Passo 1 (Viabilidade)
+ganha uma tela — hoje só existe a API. O CTV precisa conseguir apontar, por
+produtor × cultivo × grupo de produto, onde vai realizar o VPM (comparando
+potencial do agrupamento vs seu apetite), e o sistema precisa somar esse
+apetite total e comparar contra a meta/orçamento individual do CTV — isso
+ainda não existe (nem schema, nem rota). É a continuação natural do que já
+está pronto no Passo 4/5 (apetite por segmento), não uma feature nova do zero.
+
+**Teste dirigido combinado:** Marco Polo vai atuar como um CTV fictício,
+usando a lista de clientes fictícios que o Daniel já enviou, montando uma
+carteira real dentro do sistema para achar atrito de UX. Login dele ainda
+não foi criado (ver ação pendente abaixo).
+
+**Discutido e adiado — não é trabalho da vez:**
+- *Apelido de cultura + equivalência com IBGE*: hoje, escrever um nome
+  manual em uma cultura (ex.: "Milho safrinha") a torna independente do
+  catálogo IBGE, sem soma cruzada. A ideia de um "de-para" (ex.: apelido
+  "HF" agregando tomate + batata do IBGE para efeito de comparação de
+  mercado) foi discutida e considerada útil, mas Marco Polo decidiu
+  explicitamente adiar: "vamos nascer com essa versão 1.0" sem isso. Não
+  reabrir sem pedido explícito do usuário.
+- *Tela de "crítica"/mata-burro*: comparar o Índice Tecnológico total
+  digitado manualmente para um cultivo contra a soma decomposta por grupo
+  de produto, para pegar erro de digitação do Admin. Ideia validada por
+  ambos, mas sem prioridade definida — não confundir com trabalho já
+  agendado.
+- *Assistente de IA embarcado* (interação tipo WhatsApp): Marco Polo foi
+  explícito — "isso aí é pra depois", só depois de monetizar os primeiros
+  clientes. Fora de escopo até segunda ordem.
+
+**Pedidos de UX levantados — status após 04/08/2026:**
+- ✅ *Olho de mostrar/ocultar em todo campo de senha* — feito.
+  `src/components/ui/PasswordInput.tsx`, aplicado em `/login`, `/register`
+  e na nova troca de senha. Testado no navegador: clicar no botão muda o
+  `type` de `password` para `text` e o label para "Ocultar senha".
+- ✅ *Nova senha não pode ser igual à anterior* — feito, mas não como
+  "senha provisória + forçar troca no primeiro login" (isso ficou de fora,
+  ver nota abaixo). Implementado como uma tela de **troca de senha do
+  próprio usuário**, nova (não existia nenhuma antes): aba Usuários →
+  "Trocar minha senha", chama `POST /api/auth/change-password`, que
+  reautentica com a senha atual via `signInWithPassword` (prova posse) e
+  rejeita com 400 `PASSWORD_REUSED` se a nova senha == a atual. Testado
+  ponta a ponta com `teste1@metacampo.com`: tentativa de reuso → 400 real;
+  troca para senha diferente → 200 + login subsequente com a senha nova
+  funcionando; revertido para a senha original ao final do teste.
+- 🟡 *Senha provisória no convite + forçar troca no primeiro login* — **não
+  implementado como descrito na reunião**. O fluxo de convite existente
+  (`/api/tenant/invites` → `/register?invite=token`) já faz o convidado
+  escolher a própria senha no primeiro acesso — não existe "senha
+  provisória" nesse desenho, então não há o que forçar trocar depois.
+  Mudar isso significaria trocar a arquitetura de um fluxo já testado
+  ponta a ponta (Regra Nº6/Nº7) — não foi feito sem confirmação explícita.
+  Se o usuário realmente quiser o padrão "admin define senha temporária →
+  usuário força-troca no 1º login" em vez do link de convite atual, isso
+  precisa ser pedido explicitamente antes de mexer.
+
+**Ações pendentes fora do código:**
+- Daniel vai criar login/senha para Marco Polo testar como CTV — **ainda
+  não feito**, decisão consciente de não disparar convite até a senha
+  provisória + troca forçada no primeiro login estarem prontas.
+- Daniel vai conversar com Alessandro (05/08/2026) para coletar input do
+  dia a dia real de um CTV — pode gerar insight de produto, sem escopo
+  definido ainda.

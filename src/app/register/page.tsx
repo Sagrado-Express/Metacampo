@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 // reCAPTCHA component (assumes you have site key in env)
 const Recaptcha = ({ onVerify }: { onVerify: (token: string) => void }) => {
@@ -133,15 +134,14 @@ export default function RegisterPage() {
             onChange={handleChange}
             className="w-full rounded-xl border-2 border-primary/10 p-3 focus:border-primary transition"
           />
-          <input
-            type="password"
+          <PasswordInput
             name="password"
             placeholder="Senha"
             required
             minLength={8}
             value={form.password}
             onChange={handleChange}
-            className="w-full rounded-xl border-2 border-primary/10 p-3 focus:border-primary transition"
+            className="border-2 border-primary/10 focus:border-primary"
           />
           <Recaptcha onVerify={setCaptchaToken} />
           {status === "error" && (

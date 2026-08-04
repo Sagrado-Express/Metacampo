@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2, Lock, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -79,20 +80,15 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <Lock size={18} />
-            </div>
-            <input
-              type="password"
-              name="password"
-              placeholder="Senha"
-              required
-              value={form.password}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-slate-200 pl-10 pr-3 py-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition outline-none text-slate-700 bg-white"
-            />
-          </div>
+          <PasswordInput
+            showLockIcon
+            name="password"
+            placeholder="Senha"
+            required
+            value={form.password}
+            onChange={handleChange}
+            className="border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-700 bg-white"
+          />
 
           {status === "error" && (
             <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100">
