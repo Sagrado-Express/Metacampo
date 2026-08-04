@@ -113,7 +113,74 @@ comentários no código refletem a realidade atual.
 
 ---
 
-## 9. Estado Conhecido do Projeto (snapshot da última verificação — 28/07/2026)
+## 9. Estado Conhecido do Projeto (snapshot da última verificação — 04/08/2026)
+
+> ### Auditoria de funcionalidades e consolidação de documentação (04/08/2026)
+>
+> Levantamento completo de código real (grep + teste, não leitura de nome de
+> arquivo) contra o PRD. Resultado detalhado agora vive em
+> `docs/PRD.md` Seção 16 — inclui o mapeamento dos 16 passos do GTMGC ×
+> status real, que o `CLAUDE.md` já afirmava existir aqui mas não existia.
+>
+> **Limpeza de código órfão:** 29 arquivos removidos — as árvores inteiras
+> `src/components/ctv/`, `dashboards/`, `governance/`, `manager/` (resquício
+> das rotas `/ctv`, `/governance`, `/manager`, `/admin` já removidas antes),
+> 9 `domain/services` sem nenhum consumidor, `mock_database.ts`,
+> `monthly_master.ts`, e o motor de VPM que não roda em produção
+> (`domain/services/vpm.service.ts` — o que roda é `lib/services/VpmService.ts`).
+>
+> **Testes:** a suíte anterior em `domain/services/__tests__` tinha 100% de
+> sucesso mas reimplementava a lógica em array local em vez de importar
+> código real — nenhum bug real desta auditoria teria sido pego por ela.
+> Removida e substituída por `src/lib/services/__tests__/VpmService.test.ts`
+> (importa o módulo real) e `npm run test:rls` (formaliza
+> `test_rls_dashboard.js`, já existente, como o teste de isolamento).
+>
+> **Dois bugs de segurança reais, achados testando o convite de usuário
+> ponta a ponta:**
+> 1. Usuário registrado por convite nunca recebia `tenant_id` em
+>    `app_metadata` (`register/route.ts` usava `signUp()`, que só grava
+>    `user_metadata`) — com o fail-closed já em produção, essa conta nunca
+>    mais conseguia logar. Corrigido com `supabaseAdmin.auth.admin.createUser()`.
+> 2. **Vazamento de sessão entre requisições**: `login/route.ts` chamava
+>    `signInWithPassword()` no client singleton compartilhado
+>    (`@/lib/supabase`, vivo pelo processo inteiro), e `getSession()` tinha
+>    um fallback que lia esse mesmo singleton quando não havia cookie. Um
+>    processo aquecido por um login recente podia devolver a sessão de
+>    OUTRO usuário para uma requisição sem sessão nenhuma. Corrigido:
+>    login usa `createAnonClient()` (client novo por chamada), e o fallback
+>    perigoso em `getSession()` foi removido — sem cookie agora é
+>    fail-closed, sem tentar mais nada.
+>
+> **Banco:** 5 tabelas dropadas por estarem vazias e sem nenhuma rota —
+> `customer_faixas`, `scoring_weights`, `official_safra_plans`,
+> `setup_budgets`, `customer_forecasts`. Cada uma sustentava um passo do
+> GTMGC nunca construído (ver PRD Seção 16). `docs/schema_completo_supabase.sql`
+> foi reescrito como espelho fiel do banco live (extraído via PostgREST),
+> não mais uma base histórica com notas de "o que mudou depois".
+>
+> **Documentação:** `docs/` tinha 8 arquivos, hoje tem 2 —
+> `PRD.md` e `schema_completo_supabase.sql`. Removidos: `backlog.md` e
+> `status_agile.md` (datados de 25/05, alegavam "Concluído" para
+> Memory-First/Multi-Tenancy antes de qualquer auditoria real — o próprio
+> PRD de 21/06 já descrevia essas alegações como falsas) e 5 SQLs soltos
+> (`create_planejamento_tables.sql`, `create_tenant_invites.sql`,
+> `migration_metadata_dictionary.sql`, `supabase_migration_v4.sql`,
+> `supabase_security_triggers.sql`) — superados pelas migrations reais em
+> `supabase/migrations/`, e em pontos ativamente errados (um descrevia
+> `aliases` como JSONB quando a produção usa `TEXT[]`; outro criava tabelas
+> já dropadas; o de segurança descrevia um `custom_access_token_hook` que
+> nunca foi ativado).
+>
+> **Convite de usuário:** de API sem UI para fluxo completo — aba Usuários
+> em Configurações, `GET /api/tenant/invites` (não existia), testado
+> ponta a ponta com conta real logando e vendo só os dados do tenant certo.
+>
+> A partir de agora, `supabase/migrations/*.sql` é a fonte de verdade de
+> histórico de schema (aplicado via `supabase db push`); `docs/schema_completo_supabase.sql`
+> é o espelho consolidado; `docs/PRD.md` Seção 16 é o status vivo por
+> passo/épico. Nenhum outro arquivo de schema ou de status deve ser criado
+> — editar estes três.
 
 > ### Correção de registros anteriores (28/07/2026)
 >
@@ -306,5 +373,9 @@ São fixtures de teste. Não promover para produção real sem trocar as senhas.
 ## 10. Onde encontrar o resto
 
 - **O que construir, em que ordem, com quais critérios de aceite:** `docs/PRD.md`
-- **Schema de banco:** `docs/schema_completo_supabase.sql`
+- **Status real de implementação — por épico e pelos 16 passos do GTMGC:** `docs/PRD.md` Seção 16 (viva, atualizar a cada auditoria — não criar arquivo separado pra isso)
+- **Schema de banco (espelho fiel da produção):** `docs/schema_completo_supabase.sql`
+- **Histórico de migrations aplicadas:** `supabase/migrations/*.sql` — é a fonte de verdade de *como* o schema chegou ao estado atual; `schema_completo_supabase.sql` é o resultado consolidado
+- **Descrição completa da metodologia GTMGC (prosa, não resumo):** `Arquivos teste/GTMGC_Metodologia_Completo_v2 - 20260424 (1).docx`
+- **`docs/` só tem esses dois arquivos** (`PRD.md` e `schema_completo_supabase.sql`) — de propósito. Não adicionar um terceiro sem antes perguntar ao usuário (Regra Nº2).
 - **Qualquer coisa não coberta aqui ou no PRD:** pergunte ao usuário antes de assumir

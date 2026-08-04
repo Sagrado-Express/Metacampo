@@ -69,7 +69,7 @@ Sem integração com ERP — dados de faturamento entram via upload de CSV peri�
 |---|---|---|
 | Frontend | Next.js (App Router) | Já existe no projeto — reaproveitar |
 | Backend | Next.js API Routes | Sem Edge Runtime obrigatório — simplificado |
-| Banco de dados | Supabase (Postgres) | **Projeto novo** — o antigo está pausado/morto |
+| Banco de dados | Supabase (Postgres) | `uoaktryjoztczbwklhzn.supabase.co` — em uso, é o banco de produção. Um projeto separado (`jcnxinvycgluoeqixdul`) foi tratado como "o novo" por um tempo em 07/2026; não pertence a esta conta e nunca teve dados reais. |
 | Autenticação | Supabase Auth | A construir — hoje não existe nem a tela de `/login` |
 | Cache/Fila | Nenhum | Upstash Redis removido — nunca foi de fato usado |
 | Deploy | Vercel (Pro, já confirmado) | Mantido |
@@ -355,15 +355,28 @@ configuráveis por empresa, sem lista fixa hardcoded.
 
 ---
 
-## 7. BANCO DE DADOS — TABELAS (base: `docs/schema_completo_supabase.sql`)
+## 7. BANCO DE DADOS — TABELAS (fonte de verdade: `docs/schema_completo_supabase.sql`)
 
-Tabelas confirmadas no schema (reaproveitar, aplicar em projeto novo):
-`tenants`, `customers`, `customer_crop_areas`, `it_se_configurations` (renomear
-referências de exibição), `setup_budgets`, `customer_forecasts`,
-`faturamento_snapshots`, `customer_faixas`, `official_safra_plans`,
-`scoring_weights`, `tenant_config_classificacoes`, `tenant_config_culturas`.
+`docs/schema_completo_supabase.sql` é um espelho fiel do banco em produção,
+não uma base histórica — se este PRD e aquele arquivo divergirem, o schema
+tem razão. Tabelas em produção hoje (04/08/2026):
 
-Todas devem ter `tenant_id UUID NOT NULL REFERENCES tenants(id)` e RLS habilitado.
+`tenants`, `clientes` (nome de produção — a tabela chamava-se `customers`
+neste PRD e no schema até 28/07/2026), `customer_crop_areas`,
+`it_se_configurations`, `faturamento_snapshots`, `tenant_config_culturas`,
+`tenant_config_classificacoes`, `planejamento_cliente_segmento`,
+`tenant_invites`, `user_tenants`.
+
+Todas com `tenant_id UUID NOT NULL REFERENCES tenants(id)` e RLS habilitado
+com `USING` + `WITH CHECK` (verificado com dois tenants reais, não apenas
+"RLS ligado no painel" — ver Regra Nº4 do CLAUDE.md).
+
+**Removidas em 04/08/2026** (existiam, RLS habilitado, 0 linhas, 0 rota de
+API, 0 tela — cada uma sustentava um passo do GTMGC nunca construído):
+`customer_faixas` (Passo 13), `scoring_weights` (Passo 14),
+`official_safra_plans` (Passo 10 / RN-06), `setup_budgets`,
+`customer_forecasts`. Se algum desses passos entrar no roadmap, a tabela
+precisa ser recriada do zero — ver Seção 16.
 
 ---
 
@@ -379,16 +392,39 @@ Todas devem ter `tenant_id UUID NOT NULL REFERENCES tenants(id)` e RLS habilitad
 
 ## 14. DEFINITION OF DONE — SPRINT 0
 
-Sprint 0 só está "done" quando:
-- [ ] Build compila sem erros (bug `SEGMENTOS` corrigido)
-- [ ] `/login` existe, funciona, e isola corretamente 2 tenants de teste diferentes
-- [ ] Todas as 5 telas (`/workspace`, `/ctv`, `/governance`, `/manager`, `/admin`)
-  renderizam com dados reais do Supabase, zero referência a `mock_database.ts`
-- [ ] Upload de CSV persiste em `faturamento_snapshots` (testado com arquivo real)
-- [ ] Segmentos/cultivos configuráveis funcionam ligados ao banco, testado com 2 tenants
-- [ ] Nenhuma menção a ITAA/IT-SE visível ao usuário
-- [ ] Os 11 documentos antigos foram removidos do repositório
-- [ ] Este PRD é o único documento de referência em `docs/`
+> Atualizado 04/08/2026 com prova, não com afirmação. Cada item marcado
+> tem um teste reproduzível associado — ver Seção 16.
+
+- [x] Build compila sem erros — `npm run build`, 24 rotas, 0 erros
+- [x] `/login` existe, funciona, e isola corretamente 2 tenants de teste
+  diferentes — `npm run test:rls` prova via login real + teste negativo
+  com token adulterado (401)
+- [ ] ~~Todas as 5 telas (`/workspace`, `/ctv`, `/governance`, `/manager`,
+  `/admin`) renderizam com dados reais~~ — critério obsoleto: `/ctv`,
+  `/governance`, `/manager`, `/admin` nunca chegaram a ser religadas: eram
+  telas mortas (usavam `mock_database.ts`, sem nenhuma rota apontando pra
+  elas) e foram **removidas** em 04/08/2026, não corrigidas. `/workspace`
+  foi substituída pela tela Início, que usa dado real do tenant — essa
+  parte está feita.
+- [ ] Upload de CSV persiste em `faturamento_snapshots` — **não feito**.
+  `/api/faturamento` aceita POST direto, mas não existe parser de CSV nem
+  tela de conciliação de segmento (ver Épico 5 e Passo 12 na Seção 16)
+- [x] Segmentos/cultivos configuráveis funcionam ligados ao banco, testado
+  com 2 tenants — vai além do escopo original: apelidos, promoção de
+  apelido a nome, catálogo IBGE de 64 produtos
+- [x] Nenhuma menção a ITAA/IT-SE visível ao usuário — verificado por
+  grep em `src/app` e `src/components` (04/08/2026): os únicos hits
+  restantes são o nome interno da tabela `it_se_configurations` e um id
+  de aba não-visível, nenhum texto renderizado
+- [x] Os 11 documentos antigos foram removidos do repositório
+- [x] `docs/PRD.md` e `docs/schema_completo_supabase.sql` são os únicos
+  dois arquivos em `docs/` — os 5 SQLs soltos que ainda existiam
+  (`create_planejamento_tables.sql`, `create_tenant_invites.sql`,
+  `migration_metadata_dictionary.sql`, `supabase_migration_v4.sql`,
+  `supabase_security_triggers.sql`) foram removidos em 04/08/2026 por
+  descreverem uma versão anterior — um deles descrevia um
+  `custom_access_token_hook` que nunca foi ativado, outro criava tabelas
+  já dropadas
 
 ---
 
@@ -401,3 +437,64 @@ Sprint 0 só está "done" quando:
 | **Tenant** | Uma empresa cliente do SaaS. Toda tabela de negócio é isolada por `tenant_id` |
 | **Saldo TO-GO** | Meta menos realizado, calculado a partir de `faturamento_snapshots` |
 | **Handshake** | Congelamento/aprovação do plano comercial — gera registro imutável |
+
+---
+
+## 16. ESTADO DE IMPLEMENTAÇÃO (seção viva — atualizar a cada auditoria)
+
+> Esta seção existe porque o `CLAUDE.md` afirma que "os 16 passos do GTMGC
+> [estão] descritos em detalhe" aqui. Até 04/08/2026 isso era falso — o
+> PRD citava "Passo 10" uma única vez, de passagem. A descrição completa
+> da metodologia está em `Arquivos teste/GTMGC_Metodologia_Completo_v2 -
+> 20260424 (1).docx`; a tabela abaixo é o resumo com status real,
+> verificado por leitura de código e teste, não por inferência do nome
+> dos arquivos.
+
+### 16.1 Os 16 passos × o que existe hoje
+
+| # | Passo | Status | Onde / o que falta |
+|---|---|---|---|
+| 1 | Viabilidade (meta ÷ share = VPM necessário) | 🟡 Só API | `/api/diagnostico/viabilidade` calcula certo, sem fallback fabricado — mas nenhuma tela chama essa rota |
+| 2 | Cadastro da carteira (cliente × cultivo × hectares) | ✅ Completo | `/workspace/clientes` — multi-área, VPM real, avisos de pendência |
+| 3 | Potencial por cultivo (dashboard parte 1) | ✅ Completo | Planejamento → Resumo → "Por Cultivo" |
+| 4 | Meta por segmento em cada cliente × cultivo | ✅ Completo | Apetite (heatmap por segmento), Planejamento → Editar |
+| 5 | Calibrar apetite ao longo do ano + "portais no tempo" (janelas fenológicas) | 🟡 Metade | Calibrar o % existe. Monitorar ao longo do ano / alertar janela fechando — não existe; nenhuma tela viva tenta isso |
+| 6 | Consolidado por cultivo (dashboard parte 2) | ✅ Completo | Mesmos cards do Passo 3 (potencial + planejado) |
+| 7 | Previsão consolidada por segmento | ✅ Completo | Planejamento → Resumo → "Por Classificação de Produto" |
+| 8 | Matriz segmento × cultivo | ✅ Completo | Planejamento → Editar → Matriz |
+| 9 | Carteira consolidada, uma linha por cliente | 🟡 Metade | `/workspace/clientes` já é uma linha por cliente com VPM potencial, mas não mostra a estimativa planejada ao lado |
+| 10 | Handshake — CTV confirma meta oficial (congela o plano) | ❌ Zero | RN-06. Tabela `official_safra_plans` nunca teve rota nem tela; **removida** em 04/08/2026 por estar vazia e sem uso |
+| 11 | Quantos segmentos por cliente (profundidade de relacionamento) | ❌ Zero | Nenhuma tela agrega essa contagem por cliente |
+| 12 | Faturamento real vs meta (Saldo TO-GO) | 🟡 Só API | `/api/faturamento` grava em `faturamento_snapshots`, mas não há parser de CSV nem conciliação nem tela (Épico 5) |
+| 13 | Grau de confiança (régua de 5 cores) | ❌ Zero | Tabela `customer_faixas` removida 04/08/2026, 0 rota. As colunas equivalentes em `clientes` (`confidence_level` etc.) existem mas não são lidas/escritas por nenhum código |
+| 14 | Segmentação multi-critério (risco, perfil, relacionamento) | ❌ Zero | Tabela `scoring_weights` removida 04/08/2026. Colunas `performance_band`/`credit_rating`/`wallet_share`/`qualitative_weight` em `clientes` existem, mortas |
+| 15 | Método de Pareto (classificação 80/20) | ❌ Zero | Sem rota, sem tela. Tentativas órfãs (`ParetoPlanning.tsx`, `ParetoSegmentation.tsx`) removidas 04/08/2026 |
+| 16 | Frequência de visitas por cliente | ❌ Zero | `visitService.ts` estava órfão, removido 04/08/2026 |
+
+**Fechados de ponta a ponta: 6 de 16** (2, 3, 4, 6, 7, 8) — o núcleo que
+sustenta VPM e planejamento por segmento.
+**Pela metade: 4** (1, 5, 9, 12) — existe base ou API, falta tela ou a
+segunda metade da lógica.
+**Zero: 6** (10, 11, 13, 14, 15, 16) — sem schema, sem rota, sem tela.
+
+### 16.2 Épicos do Sprint 0 (Seção 4) × status real
+
+| Épico/Story | Status | Nota |
+|---|---|---|
+| E0-S1 Remover docs deprecados | ✅ Feito | Verificado 04/08/2026: nenhum dos 11 arquivos existe no repo |
+| E1-S1 Banco real + schema + RLS | ✅ Feito | RLS com `USING`+`WITH CHECK`, testado com 2 tenants reais |
+| E2-S1 Login funcional | ✅ Feito | Fail-closed; sessão não vaza mais entre requisições (bug real corrigido 04/08/2026) |
+| E2-S2 Cadastro de Admin + convite | 🟡 Parcial | Convidar usuário **para um tenant existente** funciona ponta a ponta (UI em Configurações → Usuários). Criar tenant novo via self-service **não existe** — tenants só nascem via SQL/seed manual |
+| E3-S1 Corrigir build (`SEGMENTOS` legacy) | ➖ Obsoleto | As rotas afetadas (`/ctv`, `/governance`, `/manager`, `/admin`) foram removidas, não corrigidas |
+| E3-S2 Renomear ITAA → Índice Tecnológico | 🟡 Parcial | UI 100% correta. Tabela continua `it_se_configurations` (nome técnico, não visível ao usuário) |
+| E3-S3 Segmentos/cultivos configuráveis | ✅ Feito | Além do escopo original: apelidos, promoção de apelido a nome, catálogo IBGE |
+| E4-S1 Religar `/workspace` a dados reais | ✅ Feito | Via rota diferente da prevista: a tela foi substituída (Início), não "religada" |
+| E4-S2 Religar `/ctv`/`/manager`/`/admin`/`/governance` | ➖ Obsoleto | Removidas por serem código morto (mock, zero rota apontando pra elas), não religadas |
+| E5-S1 Persistir CSV | ❌ Não feito | Sem parser, sem conciliação, sem tela |
+
+### 16.3 Como manter isto atualizado
+
+Sempre que uma auditoria de funcionalidades rodar (grep + teste real, não
+leitura de nome de arquivo), atualize as duas tabelas acima. Se um passo
+mudar de status, essa é a única seção que precisa mudar — o resto do PRD
+descreve o que construir, não o estado atual.

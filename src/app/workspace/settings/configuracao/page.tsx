@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
  * Unified 3-tab tenant settings page:
  *   - Classificações (Product Segments)
  *   - Cultivos (Crops)
- *   - Índice Tecnológico IT-SE (R$/ha matrix)
+ *   - Índice Tecnológico (matriz R$/ha)
  *
  * Uses existing SegmentSettings component + new ITMatrix.
  * tenantId: resolved dynamically via useSession.
@@ -429,7 +429,7 @@ export default function ConfiguracaoPage() {
               </div>
             )}
 
-            {/* ── IT-SE ── */}
+            {/* ── Índice Tecnológico ── */}
             {activeTab === "it-se" && (
               <div className="glass-card p-6">
                 <ITMatrix
