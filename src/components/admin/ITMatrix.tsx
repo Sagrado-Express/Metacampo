@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -173,6 +173,37 @@ export function ITMatrix({
   // ============================================================
   // Render
   // ============================================================
+
+  // Totais por linha/coluna/geral: antes eram um .reduce() dentro do JSX,
+  // refeito a cada render (cada tecla digitada em qualquer célula) — achado
+  // em auditoria de performance 11/08/2026, sem custo real hoje com poucas
+  // culturas/segmentos, mas cresce O(culturas×segmentos) por tecla.
+  const rowTotals = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const cultura of activeCulturas) {
+      map[cultura.customName] = activeSegmentos.reduce(
+        (sum, seg) => sum + (draft[cellKey(cultura.customName, seg.customName)] ?? 0),
+        0
+      );
+    }
+    return map;
+  }, [activeCulturas, activeSegmentos, draft]);
+
+  const colTotals = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const seg of activeSegmentos) {
+      map[seg.customName] = activeCulturas.reduce(
+        (sum, cultura) => sum + (draft[cellKey(cultura.customName, seg.customName)] ?? 0),
+        0
+      );
+    }
+    return map;
+  }, [activeCulturas, activeSegmentos, draft]);
+
+  const grandTotal = useMemo(
+    () => activeCulturas.reduce((total, cultura) => total + (rowTotals[cultura.customName] ?? 0), 0),
+    [activeCulturas, rowTotals]
+  );
 
   if (isLoadingIT) {
     return (
@@ -365,12 +396,7 @@ export function ITMatrix({
                 {/* Row total */}
                 <td className="px-2 py-2 border-b border-border/20 text-center">
                   <span className="text-xs font-bold text-violet-700 bg-violet-50 px-2 py-1.5 rounded-lg inline-block min-w-[90px]">
-                    {formatBRL(
-                      activeSegmentos.reduce((sum, seg) => {
-                        const key = cellKey(cultura.customName, seg.customName);
-                        return sum + (draft[key] ?? 0);
-                      }, 0)
-                    )}
+                    {formatBRL(rowTotals[cultura.customName] ?? 0)}
                   </span>
                 </td>
               </tr>
@@ -381,29 +407,16 @@ export function ITMatrix({
               <td className="px-4 py-3 font-bold text-xs uppercase tracking-wider text-violet-700">
                 Total
               </td>
-              {activeSegmentos.map((seg) => {
-                const colTotal = activeCulturas.reduce((sum, cultura) => {
-                  const key = cellKey(cultura.customName, seg.customName);
-                  return sum + (draft[key] ?? 0);
-                }, 0);
-                return (
-                  <td key={`total-${seg.id}`} className="px-2 py-3 text-center">
-                    <span className="text-xs font-bold text-violet-700">
-                      {formatBRL(colTotal)}
-                    </span>
-                  </td>
-                );
-              })}
+              {activeSegmentos.map((seg) => (
+                <td key={`total-${seg.id}`} className="px-2 py-3 text-center">
+                  <span className="text-xs font-bold text-violet-700">
+                    {formatBRL(colTotals[seg.customName] ?? 0)}
+                  </span>
+                </td>
+              ))}
               <td className="px-2 py-3 text-center">
                 <span className="text-xs font-black text-violet-900 bg-violet-100 px-3 py-1.5 rounded-lg inline-block">
-                  {formatBRL(
-                    activeCulturas.reduce((grandTotal, cultura) => {
-                      return grandTotal + activeSegmentos.reduce((sum, seg) => {
-                        const key = cellKey(cultura.customName, seg.customName);
-                        return sum + (draft[key] ?? 0);
-                      }, 0);
-                    }, 0)
-                  )}
+                  {formatBRL(grandTotal)}
                 </span>
               </td>
             </tr>

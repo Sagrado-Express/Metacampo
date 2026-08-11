@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { getTenantMembers } from '@/lib/services/TenantMembersService';
+import { fetchAllRows } from '@/lib/db';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
@@ -40,35 +41,40 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'SEM_LINHAS', message: 'Nenhuma linha para importar.' }, { status: 400 });
     }
 
-    const [members, culturasRes, clientesRes, gruposRes] = await Promise.all([
+    // fetchAllRows em vez de .select('*') puro: acima de ~1000 clientes o
+    // PostgREST truncaria a lista sem erro nenhum, e o matching por
+    // documento/nome+cidade+uf+ctv abaixo passaria a falhar em silêncio
+    // (viraria "create" duplicado em vez de "update") — achado em
+    // auditoria 11/08/2026.
+    const [members, culturasAtivasRows, clientesExistentes] = await Promise.all([
       getTenantMembers(ctx.tenantId),
-      ctx.supabase.from('tenant_config_culturas').select('custom_name').eq('is_active', true),
-      ctx.supabase.from('clientes').select('id, document, name, city, state, ctv_id'),
-      ctx.supabase.from('grupos_economicos').select('id, nome'),
+      fetchAllRows((from, to) =>
+        ctx.supabase.from('tenant_config_culturas').select('custom_name').eq('is_active', true).range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        ctx.supabase.from('clientes').select('id, document, name, city, state, ctv_id').range(from, to)
+      ),
     ]);
-
-    if (culturasRes.error) throw culturasRes.error;
-    if (clientesRes.error) throw clientesRes.error;
-    if (gruposRes.error) throw gruposRes.error;
 
     const membersByEmail = new Map(members.map((m) => [m.email.toLowerCase(), m]));
     const culturasAtivas = new Map(
-      (culturasRes.data || []).map((c: any) => [String(c.custom_name).toUpperCase(), c.custom_name])
-    );
-    const clientesExistentes = clientesRes.data || [];
-    const gruposExistentes = new Map(
-      (gruposRes.data || []).map((g: any) => [String(g.nome).toUpperCase(), g])
+      culturasAtivasRows.map((c: any) => [String(c.custom_name).toUpperCase(), c.custom_name])
     );
 
     const clienteIds = clientesExistentes.map((c: any) => c.id);
-    const { data: areasExistentes, error: areasError } =
+    const [areasExistentes, gruposRows] = await Promise.all([
       clienteIds.length > 0
-        ? await ctx.supabase
-            .from('customer_crop_areas')
-            .select('id, customer_id, crop_name, area_ha')
-            .in('customer_id', clienteIds)
-        : { data: [] as any[], error: null };
-    if (areasError) throw areasError;
+        ? fetchAllRows((from, to) =>
+            ctx.supabase
+              .from('customer_crop_areas')
+              .select('id, customer_id, crop_name, area_ha')
+              .in('customer_id', clienteIds)
+              .range(from, to)
+          )
+        : Promise.resolve([] as any[]),
+      fetchAllRows((from, to) => ctx.supabase.from('grupos_economicos').select('id, nome').range(from, to)),
+    ]);
+    const gruposExistentes = new Map(gruposRows.map((g: any) => [String(g.nome).toUpperCase(), g]));
 
     // ---- 1. Agrupar linhas em clientes ----
     const groupsByDoc = new Map<string, any[]>();

@@ -3,6 +3,10 @@ import { getAuthedContext } from '@/lib/auth';
 import { SegmentDictionaryService } from '@/domain/services/segmentDictionary.service';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+const FORBIDDEN = NextResponse.json(
+  { error: 'FORBIDDEN', message: 'Só administradores podem configurar classificações do tenant.' },
+  { status: 403 }
+);
 
 function unavailable(acao: string) {
   return NextResponse.json(
@@ -36,6 +40,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  if (ctx.role !== 'admin') return FORBIDDEN;
 
   try {
     const body = await request.json();
@@ -66,6 +71,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  if (ctx.role !== 'admin') return FORBIDDEN;
 
   try {
     const body = await request.json();
@@ -100,6 +106,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  if (ctx.role !== 'admin') return FORBIDDEN;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');

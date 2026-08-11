@@ -3,16 +3,21 @@ import { getAuthedContext } from '@/lib/auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type AuthResult =
-  | { error: NextResponse; supabase: null; tenantId: null }
-  | { error: null; supabase: SupabaseClient; tenantId: string };
+  | { error: NextResponse; supabase: null; tenantId: null; role: null }
+  | { error: null; supabase: SupabaseClient; tenantId: string; role: string };
+
+const FORBIDDEN = NextResponse.json(
+  { error: 'FORBIDDEN', message: 'Só administradores podem configurar o Índice Tecnológico do tenant.' },
+  { status: 403 }
+);
 
 // Client autenticado: o RLS filtra por tenant, o tenantId vem da claim assinada.
 async function checkAuth(): Promise<AuthResult> {
   const ctx = await getAuthedContext();
   if (!ctx) {
-    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), supabase: null, tenantId: null };
+    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), supabase: null, tenantId: null, role: null };
   }
-  return { error: null, supabase: ctx.supabase, tenantId: ctx.tenantId };
+  return { error: null, supabase: ctx.supabase, tenantId: ctx.tenantId, role: ctx.role };
 }
 
 export async function GET(request: Request) {
@@ -54,8 +59,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error, supabase, tenantId } = await checkAuth();
+  const { error, supabase, tenantId, role } = await checkAuth();
   if (error) return error;
+  if (role !== 'admin') return FORBIDDEN;
 
   try {
     const body = await request.json();
@@ -101,8 +107,9 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { error, supabase, tenantId } = await checkAuth();
+  const { error, supabase, tenantId, role } = await checkAuth();
   if (error) return error;
+  if (role !== 'admin') return FORBIDDEN;
 
   try {
     const body = await request.json();
@@ -150,8 +157,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error, supabase, tenantId } = await checkAuth();
+  const { error, supabase, tenantId, role } = await checkAuth();
   if (error) return error;
+  if (role !== 'admin') return FORBIDDEN;
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

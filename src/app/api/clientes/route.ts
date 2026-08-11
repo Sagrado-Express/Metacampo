@@ -43,11 +43,15 @@ export async function GET(request: Request) {
 
     if (custError) throw custError;
 
-    // 2. Fetch all crop areas for this tenant
-    const { data: cropAreas, error: areasError } = await supabase
-      .from('customer_crop_areas')
-      .select('*')
-      .eq('tenant_id', tenantId);
+    // 2. Fetch crop areas só dos clientes desta página, não do tenant
+    //    inteiro — antes buscava tudo e filtrava em JS por cliente
+    //    (O(página × total de áreas do tenant) a cada request), achado em
+    //    auditoria de performance 11/08/2026.
+    const customerIds = (customers || []).map((c) => c.id);
+    const { data: cropAreas, error: areasError } =
+      customerIds.length > 0
+        ? await supabase.from('customer_crop_areas').select('*').in('customer_id', customerIds)
+        : { data: [] as any[], error: null };
 
     if (areasError) throw areasError;
 

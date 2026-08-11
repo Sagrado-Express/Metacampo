@@ -17,8 +17,20 @@ export async function GET(request: Request) {
       .range(offset, offset + limit - 1);
 
     if (error) throw error;
+
+    const mapped = (data || []).map((row: any) => ({
+      id: row.id,
+      tenantId: row.tenant_id,
+      mes: row.mes,
+      ctvId: row.id_ctv,
+      segmento: row.segmento,
+      valorRealizadoCentavos: Number(row.valor_realizado_centavos),
+      valorMetaCentavos: Number(row.valor_meta_centavos),
+      createdAt: row.created_at,
+    }));
+
     return NextResponse.json({
-      data,
+      data: mapped,
       pagination: {
         total: count || 0,
         limit,
@@ -47,25 +59,48 @@ export async function POST(request: Request) {
     const body = await request.json();
     const payload = Array.isArray(body) ? body : [body];
 
-    const toInsert = payload.map(item => ({
+    // Achado em auditoria (11/08/2026): esta rota gravava colunas que não
+    // existem na tabela real (customer_id, faturado_centavos, safra_ref,
+    // competencia_mes/ano, status) — todo POST falhava com erro cru do
+    // Postgres ("column does not exist"). A tabela real tem
+    // mes/id_ctv/segmento/valor_realizado_centavos/valor_meta_centavos
+    // (docs/schema_completo_supabase.sql), confirmado direto contra o
+    // banco de produção. Sem consumidor em src/ até aqui — nada dependia
+    // do formato antigo.
+    for (const item of payload) {
+      if (!item.mes || !item.id_ctv || !item.segmento) {
+        return NextResponse.json(
+          { error: 'mes, id_ctv e segmento são obrigatórios em cada item' },
+          { status: 400 }
+        );
+      }
+    }
+
+    const toInsert = payload.map((item) => ({
       tenant_id: tenantId,
-      customer_id: item.customer_id,
-      customer_name: item.customer_name,
-      segment_name: item.segment_name,
-      faturado_centavos: Math.round(Number(item.faturado_centavos || 0)),
-      safra_ref: item.safra_ref,
-      competencia_mes: item.competencia_mes,
-      competencia_ano: item.competencia_ano,
-      status: 'active'
+      mes: item.mes,
+      id_ctv: item.id_ctv,
+      segmento: item.segmento,
+      valor_realizado_centavos: Math.round(Number(item.valorRealizadoCentavos || item.valor_realizado_centavos || 0)),
+      valor_meta_centavos: Math.round(Number(item.valorMetaCentavos || item.valor_meta_centavos || 0)),
     }));
 
-    const { data, error } = await supabase
-      .from('faturamento_snapshots')
-      .insert(toInsert)
-      .select();
+    const { data, error } = await supabase.from('faturamento_snapshots').insert(toInsert).select();
 
     if (error) throw error;
-    return NextResponse.json(data);
+
+    const mapped = (data || []).map((row: any) => ({
+      id: row.id,
+      tenantId: row.tenant_id,
+      mes: row.mes,
+      ctvId: row.id_ctv,
+      segmento: row.segmento,
+      valorRealizadoCentavos: Number(row.valor_realizado_centavos),
+      valorMetaCentavos: Number(row.valor_meta_centavos),
+      createdAt: row.created_at,
+    }));
+
+    return NextResponse.json(mapped);
   } catch (dbErr: any) {
     console.error('[Billing API] Supabase error (POST):', dbErr);
     return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { buildItLookup, calcClientVpmTotal } from '@/lib/services/VpmService';
+import { fetchAllRows } from '@/lib/db';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const SAFRA_PADRAO = '25/26';
@@ -12,22 +13,23 @@ const SAFRA_PADRAO = '25/26';
  * CTV, já que clientes não têm dono exclusivo no modelo atual).
  */
 async function computeViabilidade(supabase: SupabaseClient, userId: string) {
-  const [
-    { data: metaRow, error: metaError },
-    { data: planejamentoRows, error: planejamentoError },
-    { data: areas, error: areasError },
-    { data: itRows, error: itError },
-    { data: segmentos, error: segmentosError },
-  ] = await Promise.all([
+  // fetchAllRows nas listas (não no ctv_metas, que é sempre 1 linha): o
+  // PostgREST trunca em ~1000 sem erro, o que subestimaria apetite/potencial
+  // em silêncio — achado em auditoria 11/08/2026.
+  const [metaResult, planejamentoRows, areas, itRows, segmentos] = await Promise.all([
     supabase.from('ctv_metas').select('*').eq('ctv_id', userId).eq('safra', SAFRA_PADRAO).maybeSingle(),
-    supabase.from('planejamento_cliente_segmento').select('valor_planejado_centavos').eq('ctv_id', userId),
-    supabase.from('customer_crop_areas').select('*'),
-    supabase.from('it_se_configurations').select('*'),
-    supabase.from('tenant_config_classificacoes').select('*').eq('is_active', true).is('parent_key', null),
+    fetchAllRows((from, to) =>
+      supabase.from('planejamento_cliente_segmento').select('valor_planejado_centavos').eq('ctv_id', userId).range(from, to)
+    ),
+    fetchAllRows((from, to) => supabase.from('customer_crop_areas').select('*').range(from, to)),
+    fetchAllRows((from, to) => supabase.from('it_se_configurations').select('*').range(from, to)),
+    fetchAllRows((from, to) =>
+      supabase.from('tenant_config_classificacoes').select('*').eq('is_active', true).is('parent_key', null).range(from, to)
+    ),
   ]);
 
-  const firstError = metaError || planejamentoError || areasError || itError || segmentosError;
-  if (firstError) throw firstError;
+  if (metaResult.error) throw metaResult.error;
+  const metaRow = metaResult.data;
 
   // Apetite = o que ESTE CTV planejou (ctv_id = quem gravou a linha), não o
   // que os clientes dele valem. Linhas antigas com ctv_id nulo ficam de fora

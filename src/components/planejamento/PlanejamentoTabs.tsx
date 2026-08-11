@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Heatmap from './Heatmap';
 import { Layers, Sprout, LayoutGrid, Pencil } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -54,6 +54,24 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
     },
   });
 
+  // Precisa ficar antes dos returns condicionais abaixo (regra dos hooks).
+  // Antes era um for-loop refeito em toda renderização do componente (troca
+  // de aba, seleção de segmento) — achado em auditoria de performance
+  // 11/08/2026, sem custo real hoje com poucas linhas de planejamento.
+  const planejamento: any[] = data?.planejamentoRows || [];
+  const { planejadoPorCultivo, planejadoPorSegCrop } = useMemo(() => {
+    const porCultivo: Record<string, number> = {};
+    const porSegCrop: Record<string, Record<string, number>> = {};
+    for (const p of planejamento) {
+      const valor = Number(p.valorPlanejadoCentavos ?? p.valor_planejado_centavos ?? 0);
+      porCultivo[p.cultivo] = (porCultivo[p.cultivo] || 0) + valor;
+      const seg = p.segmento || '—';
+      porSegCrop[seg] ??= {};
+      porSegCrop[seg][p.cultivo] = (porSegCrop[seg][p.cultivo] || 0) + valor;
+    }
+    return { planejadoPorCultivo: porCultivo, planejadoPorSegCrop: porSegCrop };
+  }, [planejamento]);
+
   if (isLoading) return <PlanejamentoSkeleton />;
 
   if (isError || !data) {
@@ -66,7 +84,6 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
 
   const clients: any[] = data.clientes || [];
   const carteira: any[] = data.carteira || [];
-  const planejamento: any[] = data.planejamentoRows || [];
   const byCrop: any[] = data.porCultivo || [];
   const bySegment: any[] = data.porSegmento || [];
   const culturas: any[] = data.culturas || [];
@@ -107,17 +124,6 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
           String(l.segmento).toUpperCase() === segmento.toUpperCase()
       )
       .reduce((acc: number, l: any) => acc + Number(l.vpmCentavos ?? 0), 0);
-
-  // Planejado por cultivo e por segmento×cultivo (client-side, a partir das linhas reais)
-  const planejadoPorCultivo: Record<string, number> = {};
-  const planejadoPorSegCrop: Record<string, Record<string, number>> = {};
-  for (const p of planejamento) {
-    const valor = Number(p.valorPlanejadoCentavos ?? p.valor_planejado_centavos ?? 0);
-    planejadoPorCultivo[p.cultivo] = (planejadoPorCultivo[p.cultivo] || 0) + valor;
-    const seg = p.segmento || '—';
-    planejadoPorSegCrop[seg] ??= {};
-    planejadoPorSegCrop[seg][p.cultivo] = (planejadoPorSegCrop[seg][p.cultivo] || 0) + valor;
-  }
 
   const handleCellChange = async (clientName: string, cropName: string, newShare: number) => {
     const client = clients.find((c: any) => c.name === clientName);

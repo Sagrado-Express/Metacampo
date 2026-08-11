@@ -651,3 +651,97 @@ plano antes de codar, não depois de quebrar em produção:
 
 Dado de teste ficou no tenant de `teste1@metacampo.com` (mesmo padrão da
 Seção 16.4) — não removido, é evidência do teste, não lixo.
+
+### 16.6 Auditoria geral — segurança, performance, saúde do código (11/08/2026)
+
+Pedido do usuário: "auditoria geral vendo tudo que está ok e o que precisa
+melhorar em performance e afins". Rodada com 3 agentes em paralelo
+(segurança, performance, saúde/cobertura de teste), cada achado verificado
+contra o código/banco real antes de virar ação — não é lista de sugestões
+genéricas.
+
+**🔴 Crítico — corrigido e publicado no mesmo dia, antes até de fechar a
+auditoria (achados exploráveis agora, não esperaram o relatório final):**
+1. `POST /api/tenant/invites` sem checagem de `role` — qualquer usuário
+   autenticado podia se auto-promover a admin chamando a rota direto com
+   `role:'admin'` no corpo. Furo introduzido no mesmo dia, junto com o
+   sistema de papéis da Seção 16.5.
+2. `GET /api/tenant/invites` também sem checagem — devolvia o token bruto
+   de convites pendentes de admin pra qualquer membro do tenant; como
+   `register` não confirma posse do e-mail, dava pra sequestrar o convite.
+3. `POST /api/auth/login` nunca teve rate limit (diferente do `register`,
+   que já tinha) — permitia brute-force sem limite. Aplicado
+   `checkRateLimit` (10/min por IP), mesmo padrão do register.
+
+Testado: usuário `role:'user'` real → 403 nas duas rotas de convite;
+12 logins seguidos com senha errada → 401 até o limite, 429 depois.
+
+**🟠 Alto — corrigido:**
+4. **`POST /api/faturamento` estava completamente quebrado** — inseria
+   colunas (`customer_id`, `faturado_centavos`, `safra_ref`,
+   `competencia_mes/ano`, `status`) que não existem na tabela real.
+   Confirmado direto contra o banco de produção: a tabela tem
+   `mes/id_ctv/segmento/valor_realizado_centavos/valor_meta_centavos`,
+   e estava vazia — nenhum POST nunca funcionou. Sem consumidor em `src/`
+   até aqui, então corrigir o mapeamento não quebrou nada. Testado: POST
+   real gravou e o GET leu de volta certo (antes só tornava a Regra Nº1
+   mais urgente: o PRD dizia "grava em faturamento_snapshots" sem nunca
+   ter sido provado ponta a ponta).
+5. **4 rotas de configuração do tenant inteiro sem checagem de admin**:
+   `classifications`, `cultures`, `indice-tecnologico` (POST/PATCH/DELETE).
+   Reconfigurar Índice Tecnológico/segmentos/cultivos afeta o VPM de todos
+   os CTVs — é literalmente a descrição do "parametrizador" da reunião de
+   04/08 ("define os cultivos... coloca os serviços tecnológicos...").
+   `grupos-economicos` ficou de fora de propósito: é usado rotineiramente
+   por qualquer CTV ao cadastrar cliente (get-or-create dentro do fluxo
+   normal), gatear quebraria o cadastro comum. UI de Configurações mostra
+   aviso "Somente leitura" pra quem não é admin. Testado: `role:'user'` →
+   403 nas 3 rotas de escrita, GET continua aberto; `grupos-economicos`
+   continua liberado (testado com 201 real); admin não regrediu.
+6. **`.select('*')` sem paginação real em `dashboard-full`, `viabilidade`,
+   `clientes/import`** — o PostgREST trunca por volta de 1000 linhas sem
+   erro nenhum; acima disso o matching de import (documento/nome+cidade+
+   uf+ctv) viraria duplicata em silêncio, e os agregados de planejamento
+   ficariam subcontados sem aviso. Corrigido com `fetchAllRows`
+   (`src/lib/db.ts`, novo) — pagina de verdade até a página vir menor que
+   o tamanho pedido, em vez de confiar no default do PostgREST.
+
+**🟡 Médio — corrigido:**
+7. `/api/clientes` buscava todas as áreas do tenant inteiro mesmo com
+   `clientes` paginado, e filtrava em JS — O(página × total de áreas).
+   Corrigido pra filtrar `customer_crop_areas` só pelos `customer_id` da
+   página atual.
+8. `ITMatrix.tsx` e `PlanejamentoTabs.tsx` recalculavam totais/agregados
+   a cada render sem `useMemo` — sem custo real hoje (poucas
+   culturas/segmentos/linhas), mas cresce a cada tecla digitada. Extraído
+   pra `useMemo` nos dois; conferido visualmente que os totais continuam
+   batendo (830+1200=2030=1650+380 no ITMatrix).
+
+**Deliberadamente NÃO corrigido — decisão consciente, não esquecimento:**
+- **Rate limiter em memória, não distribuído** (`src/lib/rateLimiter.ts`)
+  — na Vercel (múltiplas instâncias), o limite é contornável distribuindo
+  requests. O fix correto seria um contador compartilhado (Postgres ou
+  Redis/Upstash). Redis foi removido do projeto por decisão explícita já
+  registrada no `CLAUDE.md` ("nunca foi de fato usado, sem necessidade
+  real") — reabrir essa decisão pra resolver um risco hoje sem tráfego
+  real não parece proporcional. Se o usuário quiser, um contador via
+  Postgres (sem reabrir a decisão do Redis) é a via mais barata.
+- **`dashboard-full` recalcula VPM em memória a cada chamada, sem cache**
+  — resolver de verdade exigiria cache com invalidação (nova
+  complexidade), desproporcional ao volume real de dados hoje. O fix já
+  aplicado (`fetchAllRows`) resolve a corretude (não erra mais em
+  silêncio); a velocidade em escala fica pra quando houver escala.
+- **Cobertura de teste das features de hoje** (Viabilidade, troca de
+  senha, importação, papéis) continua zero — só testado manualmente. O
+  candidato mais barato a cobrir primeiro é a lógica de agrupamento do
+  import (`src/app/api/clientes/import/route.ts`), que é regra de negócio
+  pura sem I/O, igual `VpmService.test.ts` — não feito ainda, fica como
+  próximo passo se o usuário quiser.
+
+**Confirmado OK, sem ação necessária:** schema sem drift entre migrations
+e `docs/schema_completo_supabase.sql`; RLS por tenant ativo e correto em
+todas as tabelas checadas; CSRF mitigado (`sameSite:strict` nos dois
+cookies, sem GET com efeito colateral); chave hardcoded em scripts
+antigos confirmada inócua (projeto Supabase morto, já documentado);
+`GET /api/tenant/members` é rota sem consumidor HTTP (import resolve
+in-process) — código morto opcional, não bug.

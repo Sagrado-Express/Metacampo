@@ -311,6 +311,17 @@ export default function ConfiguracaoPage() {
         </div>
       </div>
 
+      {/* Aviso de somente-leitura: classificações/culturas/cultivos/Índice
+          Tecnológico passaram a ser admin-only numa auditoria de segurança
+          (11/08/2026) — configurar isso afeta o VPM de todos os CTVs do
+          tenant. A aba Usuários já mostra o próprio aviso. */}
+      {sessionData?.role && sessionData.role !== "admin" && activeTab !== "usuarios" && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
+          <strong>⚠ Somente leitura.</strong> Só administradores podem alterar
+          classificações, culturas, cultivos e o Índice Tecnológico do tenant.
+        </div>
+      )}
+
       {/* API error banner */}
       {hasApiError && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
