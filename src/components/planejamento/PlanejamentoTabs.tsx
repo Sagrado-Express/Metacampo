@@ -97,6 +97,17 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
 
   const activeClientsNames = clients.slice(0, 15).map((c: any) => c.name);
 
+  // Combinações cliente × cultivo que realmente existem (o cliente tem área
+  // cadastrada daquela cultura) — usado para desabilitar no Heatmap as
+  // células de cultivo que o cliente não planta. Achado em auditoria
+  // 11/08/2026: a Fazenda Boa Vista (só planta Milho) tinha a coluna Soja
+  // editável, e ao salvar um share ali a rota bloqueava com a mensagem
+  // "Sem Índice Tecnológico" — enganosa, já que o índice existe, só não há
+  // área daquela cultura para esse cliente.
+  const combosComArea = new Set<string>(
+    carteira.map((l: any) => `${l.clienteNome}::${String(l.cultura).toUpperCase()}`)
+  );
+
   // O planejamento é por Cliente × Cultivo × Segmento. O heatmap é 2D, então
   // edita-se um segmento por vez — com 10 cultivos e 5 segmentos, colunas
   // aninhadas dariam 50 colunas.
@@ -145,8 +156,11 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
     const vpmCombinacao = vpmDaCombinacao(client.id, cropName, segmento);
 
     if (vpmCombinacao === 0 && newShare > 0) {
+      const clienteTemArea = combosComArea.has(`${clientName}::${cropName.toUpperCase()}`);
       toast.error(
-        `Sem Índice Tecnológico para ${cropName} × ${segmento}. O valor planejado ficaria zerado.`
+        clienteTemArea
+          ? `Sem Índice Tecnológico para ${cropName} × ${segmento}. O valor planejado ficaria zerado.`
+          : `${clientName} não tem área cadastrada de ${cropName}.`
       );
       return;
     }
@@ -338,6 +352,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
             data={heatmapData}
             clients={activeClientsNames}
             crops={activeCrops}
+            validCombos={combosComArea}
             onCellChange={handleCellChange}
           />
         </div>

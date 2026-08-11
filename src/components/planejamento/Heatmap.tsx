@@ -4,6 +4,10 @@ interface HeatmapProps {
   data: { clientName: string; cropName: string; sharePercentual: number }[];
   clients: string[];
   crops: string[];
+  /** Chaves "cliente::CULTIVO" (cultivo em maiúsculas) com área cadastrada —
+   * células fora desse conjunto ficam desabilitadas em vez de aceitar um
+   * share que a rota rejeitaria de qualquer forma (cliente não planta aquilo). */
+  validCombos: Set<string>;
   onCellChange: (clientName: string, cropName: string, newShare: number) => void;
 }
 
@@ -14,7 +18,7 @@ interface HeatmapProps {
  * - Tab: salva e move para a próxima célula da linha
  * (Substituiu o antigo window.prompt(), que quebrava o fluxo de edição.)
  */
-export default function Heatmap({ data, clients, crops, onCellChange }: HeatmapProps) {
+export default function Heatmap({ data, clients, crops, validCombos, onCellChange }: HeatmapProps) {
   const [editing, setEditing] = useState<{ client: string; crop: string } | null>(null);
   const [draft, setDraft] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,6 +83,7 @@ export default function Heatmap({ data, clients, crops, onCellChange }: HeatmapP
                 const match = data.find(d => d.clientName === client && d.cropName.toUpperCase() === crop.toUpperCase());
                 const val = match ? match.sharePercentual : 0;
                 const isEditing = editing?.client === client && editing?.crop === crop;
+                const hasArea = validCombos.has(`${client}::${crop.toUpperCase()}`);
                 return (
                   <td key={crop} className="py-2 px-1 text-center">
                     {isEditing ? (
@@ -100,13 +105,20 @@ export default function Heatmap({ data, clients, crops, onCellChange }: HeatmapP
                         className="mx-auto w-16 py-2 rounded-xl border-2 border-emerald-600 text-[11px] font-black text-center bg-white outline-none"
                         aria-label={`Share % de ${client} em ${crop}`}
                       />
-                    ) : (
+                    ) : hasArea ? (
                       <div
                         onDoubleClick={() => startEdit(client, crop, val)}
                         className={`mx-auto w-16 py-2 rounded-xl border text-[11px] font-black cursor-pointer select-none transition-all hover:scale-105 active:scale-95 ${getCellColor(val)}`}
                         title="Duplo clique para editar • Enter salva • Esc cancela • Tab próxima"
                       >
                         {val}%
+                      </div>
+                    ) : (
+                      <div
+                        className="mx-auto w-16 py-2 rounded-xl border border-dashed border-muted-foreground/25 text-[11px] font-bold text-muted-foreground/40 cursor-not-allowed select-none"
+                        title={`${client} não tem área cadastrada de ${crop}`}
+                      >
+                        —
                       </div>
                     )}
                   </td>
