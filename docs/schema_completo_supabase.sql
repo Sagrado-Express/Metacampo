@@ -33,7 +33,12 @@ CREATE TABLE IF NOT EXISTS public.clientes (
     tenant_id UUID NOT NULL REFERENCES public.tenants(id),
     ctv_id TEXT NOT NULL,
     name TEXT NOT NULL,
-    document TEXT UNIQUE, -- CNPJ / CPF, sem validação de formato
+    -- UNIQUE(tenant_id, document) desde 11/08/2026 (migration
+    -- 20260811140000) — antes era UNIQUE global em `document` sozinho
+    -- (constraint customers_document_key, sobrevivente do nome da tabela
+    -- antes do rename para clientes), o que faria dois tenants distintos
+    -- com cliente de mesmo CNPJ colidirem entre si.
+    document TEXT, -- CNPJ / CPF, sem validação de formato
     city TEXT NOT NULL,
     state TEXT NOT NULL,
     region TEXT NOT NULL,
@@ -55,6 +60,8 @@ CREATE TABLE IF NOT EXISTS public.clientes (
     -- que grupos_economicos existe (ela referencia essa tabela por FK).
 );
 
+ALTER TABLE public.clientes ADD CONSTRAINT clientes_tenant_document_key UNIQUE (tenant_id, document);
+
 -- 3. Áreas de cultivo — um cliente tem N linhas aqui (multi-cultivo)
 CREATE TABLE IF NOT EXISTS public.customer_crop_areas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -64,6 +71,11 @@ CREATE TABLE IF NOT EXISTS public.customer_crop_areas (
     area_ha NUMERIC(10,2) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- UNIQUE(customer_id, crop_name) desde 11/08/2026 (migration
+-- 20260811140000) — sem isso nada impedia duplicar cultivo pro mesmo
+-- cliente, e calcVpm soma por área (duplicar dobrava o VPM em silêncio).
+ALTER TABLE public.customer_crop_areas ADD CONSTRAINT customer_crop_areas_customer_crop_key UNIQUE (customer_id, crop_name);
 
 -- 4. Índice Tecnológico (R$/ha por cultura × segmento × safra).
 --    Nome de coluna/tabela ainda usa a nomenclatura antiga (it_se_*,
@@ -161,6 +173,9 @@ CREATE TABLE IF NOT EXISTS public.tenant_invites (
     created_by UUID,
     used_at TIMESTAMPTZ,
     expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+    -- role existe desde 11/08/2026 (migration 20260811140000) — até então
+    -- todo convite virava usuário 'user', sem meio de convidar um admin.
+    role TEXT NOT NULL DEFAULT 'user',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

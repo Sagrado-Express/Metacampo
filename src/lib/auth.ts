@@ -133,7 +133,7 @@ export function csrfToken() {
  * Retorna null quando não há sessão válida — o chamador responde 401.
  */
 export async function getAuthedContext(): Promise<
-  { supabase: SupabaseClient; tenantId: string; userId: string } | null
+  { supabase: SupabaseClient; tenantId: string; userId: string; role: string } | null
 > {
   const session = await getSession();
   const tenantId = session?.user?.app_metadata?.tenant_id;
@@ -142,7 +142,8 @@ export async function getAuthedContext(): Promise<
 
   try {
     const client = await getSupabaseClientWithSession();
-    return { supabase: client, tenantId, userId };
+    const role = session.user.app_metadata?.role || 'user';
+    return { supabase: client, tenantId, userId, role };
   } catch {
     return null;
   }

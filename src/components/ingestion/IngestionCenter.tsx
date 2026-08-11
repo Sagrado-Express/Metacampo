@@ -10,13 +10,27 @@ interface IngestionCenterProps {
   isProcessing: boolean;
   progress: number;
   error?: string | null;
+  title?: string;
+  description?: React.ReactNode;
 }
 
 /**
  * IngestionCenter: "Sand & Glass" Central de Ingestão
  * Features glassmorphism, drag-and-drop, and pill-style progress bar.
  */
-export function IngestionCenter({ onUpload, isProcessing, progress, error }: IngestionCenterProps) {
+export function IngestionCenter({
+  onUpload,
+  isProcessing,
+  progress,
+  error,
+  title = 'Câmara de Ingestão',
+  description = (
+    <>
+      Arraste o extrato YTD (.csv) do seu ERP legado <br />
+      para atualizar o Saldo TO-GO em tempo real.
+    </>
+  ),
+}: IngestionCenterProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -65,11 +79,8 @@ export function IngestionCenter({ onUpload, isProcessing, progress, error }: Ing
           <UploadCloud size={48} />
         </div>
 
-        <h3 className="text-xl font-semibold mb-2">Câmara de Ingestão</h3>
-        <p className="text-muted-foreground text-sm text-center mb-8">
-          Arraste o extrato YTD (.csv) do seu ERP legado <br />
-          para atualizar o Saldo TO-GO em tempo real.
-        </p>
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <p className="text-muted-foreground text-sm text-center mb-8">{description}</p>
 
         {/* Action Button */}
         <input

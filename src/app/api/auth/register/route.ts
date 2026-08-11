@@ -139,18 +139,27 @@ export async function POST(req: Request) {
     // toda query, já que current_tenant_id() dependeria de uma claim
     // inexistente. Por isso o cadastro por convite usa o client admin, que
     // grava app_metadata.tenant_id direto na criação.
+    // role vem do convite (default 'user' na coluna) — quem convida decide
+    // se o convidado nasce administrador ou CTV, não mais sempre 'user'.
+    const inviteRole = invite.role === 'admin' ? 'admin' : 'user'
+
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true, // o convite já validou a posse do e-mail
-      app_metadata: { tenant_id: invite.tenant_id, role: 'user' },
+      app_metadata: { tenant_id: invite.tenant_id, role: inviteRole },
       user_metadata: { full_name: name },
     })
 
     if (error) {
+      // Repassa o motivo real quando é sobre a própria senha (política de
+      // tamanho/força do Supabase Auth) em vez de mascarar tudo com "Erro ao
+      // criar conta." — sem isso o usuário não sabia o que corrigir.
       const msg = error.message.includes('already registered') || error.message.includes('already been registered')
         ? 'E‑mail já está em uso.'
-        : 'Erro ao criar conta.'
+        : /password/i.test(error.message)
+          ? `Senha inválida: ${error.message}`
+          : 'Erro ao criar conta.'
       return NextResponse.json({ message: msg }, { status: 400 })
     }
 
@@ -163,7 +172,8 @@ export async function POST(req: Request) {
       .from('user_tenants')
       .insert({
         user_id: data.user.id,
-        tenant_id: invite.tenant_id
+        tenant_id: invite.tenant_id,
+        role: inviteRole,
       })
 
     if (linkError) {

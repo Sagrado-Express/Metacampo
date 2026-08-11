@@ -222,8 +222,9 @@ comentários no código refletem a realidade atual.
 ### Usuários de teste
 | Email | Senha | Tenant |
 |---|---|---|
-| `teste1@metacampo.com` | `Teste123!@#` | `11111111-...-1111` (CTV Teste A) |
-| `teste2@metacampo.com` | `Teste123!@#` | `22222222-...-2222` (CTV Teste B) |
+| `teste1@metacampo.com` | `Teste123!@#` | `11111111-...-1111` (CTV Teste A) — `role: admin` |
+| `teste2@metacampo.com` | `Teste123!@#` | `22222222-...-2222` (CTV Teste B) — `role: admin` |
+| `naoadmin.teste@metacampo.com` | `Teste123!@#` | `11111111-...-1111` (Tenant A) — `role: user`, criado 11/08/2026 pra testar bloqueio de rota admin-only |
 
 São fixtures de teste. Não promover para produção real sem trocar as senhas.
 

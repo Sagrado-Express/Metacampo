@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Fragment, useMemo, useState } from 'react';
 import NovoClienteModal from '@/components/clientes/NovoClienteModal';
 import {
-  Loader2, Plus, Edit2, Trash2, Users2, ChevronLeft, AlertTriangle,
+  Loader2, Plus, Edit2, Trash2, Users2, ChevronLeft, AlertTriangle, UploadCloud,
   ChevronDown, ChevronRight, Building2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -207,15 +207,25 @@ export default function ClientesPage() {
             </p>
           </div>
         </div>
-        <button
-          onClick={() => {
-            setEditClient(null);
-            setShowModal(true);
-          }}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-600/10 active:scale-95 transition-all"
-        >
-          <Plus size={16} /> Novo Cliente
-        </button>
+        <div className="flex gap-2">
+          {sessionData?.role === 'admin' && (
+            <Link
+              href="/workspace/clientes/importar"
+              className="bg-white border border-emerald-600/30 text-emerald-700 hover:bg-emerald-50 px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all"
+            >
+              <UploadCloud size={16} /> Importar CSV
+            </Link>
+          )}
+          <button
+            onClick={() => {
+              setEditClient(null);
+              setShowModal(true);
+            }}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-600/10 active:scale-95 transition-all"
+          >
+            <Plus size={16} /> Novo Cliente
+          </button>
+        </div>
       </div>
 
       {/* Avisos de configuração: explicam VPM zerado em vez de mostrar zero sem motivo */}

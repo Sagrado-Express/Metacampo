@@ -484,7 +484,7 @@ segunda metade da lógica.
 | E0-S1 Remover docs deprecados | ✅ Feito | Verificado 04/08/2026: nenhum dos 11 arquivos existe no repo |
 | E1-S1 Banco real + schema + RLS | ✅ Feito | RLS com `USING`+`WITH CHECK`, testado com 2 tenants reais |
 | E2-S1 Login funcional | ✅ Feito | Fail-closed; sessão não vaza mais entre requisições (bug real corrigido 04/08/2026) |
-| E2-S2 Cadastro de Admin + convite | 🟡 Parcial | Convidar usuário **para um tenant existente** funciona ponta a ponta (UI em Configurações → Usuários). Criar tenant novo via self-service **não existe** — tenants só nascem via SQL/seed manual |
+| E2-S2 Cadastro de Admin + convite | 🟡 Parcial | Convidar usuário **para um tenant existente** funciona ponta a ponta, agora com escolha de papel (admin vs CTV) — ver 16.5. Criar tenant novo via self-service **não existe** — tenants só nascem via SQL/seed manual |
 | E3-S1 Corrigir build (`SEGMENTOS` legacy) | ➖ Obsoleto | As rotas afetadas (`/ctv`, `/governance`, `/manager`, `/admin`) foram removidas, não corrigidas |
 | E3-S2 Renomear ITAA → Índice Tecnológico | 🟡 Parcial | UI 100% correta. Tabela continua `it_se_configurations` (nome técnico, não visível ao usuário) |
 | E3-S3 Segmentos/cultivos configuráveis | ✅ Feito | Além do escopo original: apelidos, promoção de apelido a nome, catálogo IBGE |
@@ -584,9 +584,70 @@ não foi criado (ver ação pendente abaixo).
   precisa ser pedido explicitamente antes de mexer.
 
 **Ações pendentes fora do código:**
-- Daniel vai criar login/senha para Marco Polo testar como CTV — **ainda
-  não feito**, decisão consciente de não disparar convite até a senha
-  provisória + troca forçada no primeiro login estarem prontas.
+- ✅ Login do Marco Polo — feito em 11/08/2026, sem esperar a senha
+  provisória (o usuário pediu pra seguir com o fluxo de convite existente).
+  Tenant novo e isolado "Marco Polo - Teste" criado via
+  `scripts/create_tenant_invite.js` (script novo, reaproveitável — schema
+  de tenant/convite ainda não tem self-service, então isso substitui o SQL
+  manual). Convite enviado pra `mpolo009@gmail.com`, confirmado ainda válido
+  (não usado, não expirado) em 11/08/2026.
 - Daniel vai conversar com Alessandro (05/08/2026) para coletar input do
   dia a dia real de um CTV — pode gerar insight de produto, sem escopo
   definido ainda.
+
+### 16.5 Importação de clientes em massa por CTV + papéis admin/CTV (11/08/2026)
+
+Pedido do gestor comercial: subir uma base de clientes de uma vez,
+atribuindo cada um a um vendedor (CTV) específico — não só a si mesmo.
+Implementado em `/workspace/clientes/importar` (link "Importar CSV" em
+`/workspace/clientes`, visível só pra admin).
+
+**Pré-requisito que o usuário pediu explicitamente antes de liberar:**
+distinção real de papel (admin vs CTV), que não existia em lugar nenhum do
+sistema até aqui (todo usuário nascia `role: 'user'`). Agora:
+- Convite (`UserInvites.tsx`, aba Usuários) tem checkbox "Convidar como
+  administrador" — grava em `tenant_invites.role` (coluna nova).
+- `register/route.ts` usa o `role` do convite pro `app_metadata` do usuário
+  e pra `user_tenants.role`, em vez de sempre `'user'`.
+- `getAuthedContext()` (`src/lib/auth.ts`) agora expõe `role`, usado pelas
+  rotas novas pra bloquear com 403 quem não é admin.
+- `teste1@`/`teste2@metacampo.com` já eram `role: 'admin'` desde o seed
+  original (`scripts/seed_test_tenants.js`), então não precisaram de
+  migração retroativa pra testar.
+
+**3 bugs pré-existentes corrigidos como pré-requisito** (migration
+`20260811140000_import_clientes_prereqs.sql`), encontrados numa revisão de
+plano antes de codar, não depois de quebrar em produção:
+1. `clientes.document` era `UNIQUE` **global** (não por tenant) — dois
+   tenants com cliente de mesmo CNPJ colidiriam. Nunca doeu porque a UI de
+   cadastro único sempre gerou `document` fake (`doc-<timestamp>`).
+2. `customer_crop_areas` não tinha nenhuma constraint contra duplicar
+   cultivo no mesmo cliente — `calcVpm` soma por área, duplicar dobraria o
+   VPM em silêncio.
+3. Listar "membros do tenant" com o client RLS do usuário devolveria só a
+   própria linha (`user_tenants_self` só permite `user_id = auth.uid()`) —
+   a nova rota `GET /api/tenant/members` usa `supabaseAdmin` de propósito.
+
+**Prova real (não só build):**
+- `tsc`/`lint`/`build` limpos, migration aplicada via `supabase db push`
+  (local=remote confirmado).
+- Logado como `naoadmin.teste@metacampo.com` (usuário `role:'user'` criado
+  de propósito pra este teste, convite + registro reais): `GET
+  /api/tenant/members` e `POST /api/clientes/import` devolveram **403 real**
+  os dois; a própria tela mostrou "Só administradores podem importar".
+- Logado como `teste1@metacampo.com` (admin): preview (`dryRun=true`) com 5
+  linhas de teste — 1 cliente novo com 2 cultivos (mesmo `documento`,
+  atribuído a OUTRO CTV via e-mail, não ao próprio usuário logado), 1
+  atualização de área existente (Fazenda Boa Vista, Milho 800→999ha), 1 erro
+  de cultivo não cadastrado, 1 erro de e-mail de CTV inexistente — os 4
+  resultados bateram exatamente com o esperado.
+- Confirmação (`dryRun=false`): resumo `{criados:1, atualizados:1, erros:2}`
+  idêntico ao preview. Conferido direto em `GET /api/clientes` (não só na
+  resposta do import): "Fazenda Importada Um" existe com `ctvId` do CTV
+  resolvido pelo CSV (não de quem estava logado) e as 2 áreas certas; "Fazenda
+  Boa Vista" tem **uma única linha** de Milho com 999ha — o upsert
+  substituiu em vez de duplicar, confirmando que a correção da constraint
+  (item 2 acima) funciona.
+
+Dado de teste ficou no tenant de `teste1@metacampo.com` (mesmo padrão da
+Seção 16.4) — não removido, é evidência do teste, não lixo.

@@ -4,19 +4,39 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 
-// reCAPTCHA component (assumes you have site key in env)
+// Site key só existe quando reCAPTCHA está de fato configurado neste ambiente.
+// Sem ela, não há script pra carregar nem widget pra renderizar — pular o
+// bloco inteiro em vez de deixar o usuário travado num widget que nunca
+// aparece (o backend já tem o mesmo bypass quando RECAPTCHA_SECRET_KEY não
+// está setado, ver src/app/api/auth/register/route.ts).
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
 const Recaptcha = ({ onVerify }: { onVerify: (token: string) => void }) => {
-  useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).grecaptcha) {
+  if (!RECAPTCHA_SITE_KEY) return null;
+
+  const renderWidget = () => {
+    const container = document.getElementById("recaptcha");
+    if ((window as any).grecaptcha && container && container.childElementCount === 0) {
       (window as any).grecaptcha.render("recaptcha", {
-        sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+        sitekey: RECAPTCHA_SITE_KEY,
         callback: (token: string) => onVerify(token),
       });
     }
-  }, []);
-  return <div id="recaptcha" className="my-4" />;
+  };
+
+  return (
+    <>
+      <Script
+        src="https://www.google.com/recaptcha/api.js"
+        strategy="afterInteractive"
+        onLoad={renderWidget}
+      />
+      <div id="recaptcha" className="my-4" />
+    </>
+  );
 };
 
 export default function RegisterPage() {
@@ -51,12 +71,14 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!captchaToken) {
+    if (RECAPTCHA_SITE_KEY && !captchaToken) {
       setErrorMsg("Por favor, complete o reCAPTCHA.");
+      setStatus("error");
       return;
     }
     if (!inviteToken) {
       setErrorMsg("Token de convite inválido ou expirado.");
+      setStatus("error");
       return;
     }
     setStatus("loading");
@@ -65,7 +87,11 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, captchaToken, inviteToken }),
+        body: JSON.stringify({
+          ...form,
+          captchaToken: captchaToken || "recaptcha-not-configured",
+          inviteToken,
+        }),
       });
       if (res.ok) {
         setStatus("success");
@@ -146,6 +172,7 @@ export default function RegisterPage() {
             onChange={handleChange}
             className="border-2 border-primary/10 focus:border-primary"
           />
+          <p className="text-xs text-muted-foreground -mt-2 pl-1">Mínimo de 8 caracteres.</p>
           <Recaptcha onVerify={setCaptchaToken} />
           {status === "error" && (
             <div className="flex items-center gap-2 text-destructive text-sm">

@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data, error } = await ctx.supabase
     .from('tenant_invites')
-    .select('id, email, token, used_at, expires_at, created_at')
+    .select('id, email, token, role, used_at, expires_at, created_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -31,11 +31,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, role: bodyRole } = body;
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return NextResponse.json({ error: 'INVALID_EMAIL' }, { status: 400 });
     }
+
+    const role = bodyRole === 'admin' ? 'admin' : 'user';
 
     const token = randomBytes(24).toString('hex');
 
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
         tenant_id: ctx.tenantId,
         email: email.toLowerCase(),
         token,
+        role,
         created_by: ctx.userId,
       })
       .select()
@@ -59,6 +62,7 @@ export async function POST(request: Request) {
       id: data.id,
       inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://metacampo.vercel.app'}/register?invite=${data.token}`,
       email: data.email,
+      role: data.role,
       expiresAt: data.expires_at,
       createdAt: data.created_at,
     });
