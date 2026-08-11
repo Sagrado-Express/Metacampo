@@ -15,6 +15,13 @@ const FORBIDDEN = NextResponse.json(
 export async function GET() {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  // Achado em auditoria (11/08/2026): esta rota devolve o `token` bruto de
+  // convites pendentes, incluindo os com role='admin'. Sem essa checagem,
+  // qualquer CTV comum podia pegar o token de um convite de admin alheio
+  // aqui e usá-lo em /api/auth/register pra virar admin no lugar do
+  // convidado real — register() não confirma posse do e-mail, só que o
+  // token bate.
+  if (ctx.role !== 'admin') return FORBIDDEN;
 
   const { data, error } = await ctx.supabase
     .from('tenant_invites')

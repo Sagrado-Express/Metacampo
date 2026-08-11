@@ -39,6 +39,9 @@ export function UserInvites() {
       if (!res.ok) throw new Error("Falha ao carregar convites");
       return res.json();
     },
+    // GET também é admin-only (mesma auditoria) — nem tenta buscar se o
+    // usuário não é admin, pra não gastar uma chamada que sempre dá 403.
+    enabled: isAdmin,
   });
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -127,6 +130,7 @@ export function UserInvites() {
         </p>
       )}
 
+      {isAdmin && (
       <div>
         <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
           Convites enviados
@@ -183,6 +187,7 @@ export function UserInvites() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
