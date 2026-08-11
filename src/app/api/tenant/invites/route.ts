@@ -3,6 +3,10 @@ import { randomBytes } from 'crypto';
 import { getAuthedContext } from '@/lib/auth';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+const FORBIDDEN = NextResponse.json(
+  { error: 'FORBIDDEN', message: 'Só administradores podem convidar novos usuários.' },
+  { status: 403 }
+);
 
 /**
  * Lista os convites do tenant, mais recentes primeiro. A tela usa isso pra
@@ -28,6 +32,12 @@ export async function GET() {
 export async function POST(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  // Convite concede acesso ao tenant (e, se role='admin', concede poder de
+  // convidar outros admins e importar clientes de qualquer CTV) — não pode
+  // ficar aberto a qualquer usuário autenticado. Achado numa auditoria em
+  // 11/08/2026: antes desta checagem, um CTV comum podia se auto-promover
+  // a admin chamando esta rota direto com role:'admin' no corpo.
+  if (ctx.role !== 'admin') return FORBIDDEN;
 
   try {
     const body = await request.json();

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, Copy, Check, Loader2, Clock, UserCheck } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { useSession } from "@/hooks/useSession";
 
 interface Invite {
   id: string;
@@ -23,6 +24,8 @@ interface Invite {
  * com uma requisição direta à API.
  */
 export function UserInvites() {
+  const { data: sessionData } = useSession();
+  const isAdmin = sessionData?.role === "admin";
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [inviteAsAdmin, setInviteAsAdmin] = useState(false);
@@ -85,38 +88,44 @@ export function UserInvites() {
         </p>
       </div>
 
-      <form onSubmit={handleInvite} className="space-y-2">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@empresa.com.br"
-              required
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border/40 bg-white/60 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400"
-            />
+      {isAdmin ? (
+        <form onSubmit={handleInvite} className="space-y-2">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="email@empresa.com.br"
+                required
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border/40 bg-white/60 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={sending}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            >
+              {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+              Convidar
+            </button>
           </div>
-          <button
-            type="submit"
-            disabled={sending}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors disabled:opacity-50"
-          >
-            {sending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
-            Convidar
-          </button>
-        </div>
-        <label className="flex items-center gap-2 pl-1 text-xs text-muted-foreground cursor-pointer">
-          <input
-            type="checkbox"
-            checked={inviteAsAdmin}
-            onChange={(e) => setInviteAsAdmin(e.target.checked)}
-            className="rounded border-border/40"
-          />
-          Convidar como administrador
-        </label>
-      </form>
+          <label className="flex items-center gap-2 pl-1 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={inviteAsAdmin}
+              onChange={(e) => setInviteAsAdmin(e.target.checked)}
+              className="rounded border-border/40"
+            />
+            Convidar como administrador
+          </label>
+        </form>
+      ) : (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+          Só administradores podem convidar novos usuários.
+        </p>
+      )}
 
       <div>
         <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
