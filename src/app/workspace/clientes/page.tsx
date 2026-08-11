@@ -6,7 +6,8 @@ import { Fragment, useMemo, useState } from 'react';
 import NovoClienteModal from '@/components/clientes/NovoClienteModal';
 import {
   Loader2, Plus, Edit2, Trash2, Users2, ChevronLeft, AlertTriangle, UploadCloud,
-  ChevronDown, ChevronRight, Building2,
+  ChevronDown, ChevronRight, Building2, Search, ArrowUp, ArrowDown,
+  ChevronsUpDown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRetryMutation } from '@/hooks/useRetryMutation';
@@ -15,7 +16,16 @@ import { useToast } from '@/components/Toast/ToastContext';
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
-const SEM_GRUPO = '__sem_grupo__';
+type SortField = 'nome' | 'area' | 'vpm';
+
+// Soma todas as áreas cadastradas do cliente (um cliente pode ter várias
+// culturas/áreas) — usado para ordenação e para os totais do rodapé.
+const totalAreaHa = (c: any) => (c.areas || []).reduce((s: number, a: any) => s + Number(a.areaHa || 0), 0);
+
+function SortIcon({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: 'asc' | 'desc' }) {
+  if (sortField !== field) return <ChevronsUpDown size={12} className="opacity-40" />;
+  return sortDir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />;
+}
 
 export default function ClientesPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
@@ -24,6 +34,9 @@ export default function ClientesPage() {
   const [editClient, setEditClient] = useState<any>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [editingGroup, setEditingGroup] = useState<{ id: string; nome: string } | null>(null);
+  const [search, setSearch] = useState('');
+  const [sortField, setSortField] = useState<SortField>('nome');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
 
@@ -41,25 +54,57 @@ export default function ClientesPage() {
   const clientes: any[] = payload?.data ?? [];
   const configuracao = payload?.configuracao;
 
+  // Busca por nome do produtor ou município/UF, aplicada antes do agrupamento
+  // — os totais e os grupos abaixo já refletem só o que está filtrado.
+  const clientesFiltrados = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return clientes;
+    return clientes.filter((c: any) =>
+      c.name?.toLowerCase().includes(q) ||
+      c.city?.toLowerCase().includes(q) ||
+      c.state?.toLowerCase().includes(q)
+    );
+  }, [clientes, search]);
+
   // Agrupa por grupo econômico (várias fazendas da mesma família), com o
-  // VPM somado de todas as fazendas do grupo. Fazendas sem grupo caem num
-  // bucket "Sem grupo econômico" ao final, nunca misturadas silenciosamente
-  // com as agrupadas.
+  // VPM somado de todas as fazendas do grupo. Cliente sem grupo vira o seu
+  // próprio "grupo" (nome = nome do cliente) em vez de cair num bucket
+  // genérico "Sem grupo econômico" — pedido do Marco Polo em 11/08: o grupo
+  // econômico de quem está sozinho é ele mesmo.
   const grupos = useMemo(() => {
-    const map = new Map<string, { id: string; nome: string; clientes: any[]; vpmTotal: number }>();
-    for (const c of clientes) {
-      const gid = c.grupoEconomicoId || SEM_GRUPO;
-      const gnome = c.grupoEconomicoId ? (c.grupoEconomicoNome || '—') : 'Sem grupo econômico';
-      if (!map.has(gid)) map.set(gid, { id: gid, nome: gnome, clientes: [], vpmTotal: 0 });
+    const map = new Map<string, { id: string; nome: string; clientes: any[]; vpmTotal: number; areaTotal: number; synthetic: boolean }>();
+    for (const c of clientesFiltrados) {
+      const gid = c.grupoEconomicoId || `cliente:${c.id}`;
+      const gnome = c.grupoEconomicoId ? (c.grupoEconomicoNome || '—') : c.name;
+      if (!map.has(gid)) map.set(gid, { id: gid, nome: gnome, clientes: [], vpmTotal: 0, areaTotal: 0, synthetic: !c.grupoEconomicoId });
       const g = map.get(gid)!;
       g.clientes.push(c);
       g.vpmTotal += Number(c.vpmTotalCentavos || 0);
+      g.areaTotal += totalAreaHa(c);
     }
+
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const cmpCliente = (a: any, b: any) => {
+      if (sortField === 'nome') return dir * String(a.name).localeCompare(b.name, 'pt-BR');
+      if (sortField === 'area') return dir * (totalAreaHa(a) - totalAreaHa(b));
+      return dir * (Number(a.vpmTotalCentavos || 0) - Number(b.vpmTotalCentavos || 0));
+    };
+    const cmpGrupo = (a: { nome: string; areaTotal: number; vpmTotal: number }, b: { nome: string; areaTotal: number; vpmTotal: number }) => {
+      if (sortField === 'nome') return dir * a.nome.localeCompare(b.nome, 'pt-BR');
+      if (sortField === 'area') return dir * (a.areaTotal - b.areaTotal);
+      return dir * (a.vpmTotal - b.vpmTotal);
+    };
+
     const lista = Array.from(map.values());
-    const nomeados = lista.filter(g => g.id !== SEM_GRUPO).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-    const semGrupo = lista.find(g => g.id === SEM_GRUPO);
-    return semGrupo ? [...nomeados, semGrupo] : nomeados;
-  }, [clientes]);
+    for (const g of lista) g.clientes.sort(cmpCliente);
+    lista.sort(cmpGrupo);
+    return lista;
+  }, [clientesFiltrados, sortField, sortDir]);
+
+  const totais = useMemo(() => ({
+    area: clientesFiltrados.reduce((s: number, c: any) => s + totalAreaHa(c), 0),
+    vpm: clientesFiltrados.reduce((s: number, c: any) => s + Number(c.vpmTotalCentavos || 0), 0),
+  }), [clientesFiltrados]);
 
   const toggleGroup = (id: string) => {
     setCollapsedGroups(prev => {
@@ -67,6 +112,21 @@ export default function ClientesPage() {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  };
+
+  const allGroupIds = useMemo(() => grupos.map(g => g.id), [grupos]);
+  const allCollapsed = allGroupIds.length > 0 && allGroupIds.every(id => collapsedGroups.has(id));
+  const toggleAllGroups = () => {
+    setCollapsedGroups(allCollapsed ? new Set() : new Set(allGroupIds));
+  };
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir('asc');
+    }
   };
 
   const renameGroup = async (id: string, nome: string) => {
@@ -287,14 +347,49 @@ export default function ClientesPage() {
         </div>
       ) : (
         <div className="glass-card-premium p-6 overflow-x-auto">
+          {/* Busca + atalho de colapsar/expandir todos os grupos */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="relative flex-1 max-w-xs">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nome ou município..."
+                className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              />
+            </div>
+            {grupos.length > 0 && (
+              <button
+                onClick={toggleAllGroups}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/20 transition-colors"
+              >
+                {allCollapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
+                {allCollapsed ? 'Expandir tudo' : 'Colapsar tudo'}
+              </button>
+            )}
+          </div>
+
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border/40">
-                <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest pl-2">Produtor</th>
+                <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest pl-2">
+                  <button onClick={() => toggleSort('nome')} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                    Produtor <SortIcon field="nome" sortField={sortField} sortDir={sortDir} />
+                  </button>
+                </th>
                 <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Município / UF</th>
                 <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Cultivo Principal</th>
-                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">Área (ha)</th>
-                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">VPM Potencial</th>
+                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">
+                  <button onClick={() => toggleSort('area')} className="flex items-center gap-1 ml-auto hover:text-foreground transition-colors">
+                    Área (ha) <SortIcon field="area" sortField={sortField} sortDir={sortDir} />
+                  </button>
+                </th>
+                <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">
+                  <button onClick={() => toggleSort('vpm')} className="flex items-center gap-1 ml-auto hover:text-foreground transition-colors">
+                    VPM Potencial <SortIcon field="vpm" sortField={sortField} sortDir={sortDir} />
+                  </button>
+                </th>
                 <th className="pb-3 text-center font-black text-muted-foreground uppercase tracking-widest">Ações</th>
               </tr>
             </thead>
@@ -305,68 +400,83 @@ export default function ClientesPage() {
                     Nenhum produtor cadastrado. Clique em Novo Cliente para começar.
                   </td>
                 </tr>
+              ) : clientesFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-muted-foreground font-semibold uppercase tracking-wider">
+                    Nenhum produtor encontrado para &quot;{search}&quot;.
+                  </td>
+                </tr>
               ) : (
                 grupos.map((g) => {
-                  const isSemGrupo = g.id === SEM_GRUPO;
                   const collapsed = collapsedGroups.has(g.id);
                   const isEditing = editingGroup?.id === g.id;
 
                   return (
                     <Fragment key={g.id}>
-                      {/* Fazenda avulsa (sem grupo) não precisa de cabeçalho de grupo
-                          quando é a única categoria — mas se existem grupos nomeados
-                          junto, o cabeçalho "Sem grupo econômico" evita misturar tudo
-                          silenciosamente. */}
-                      {!(isSemGrupo && grupos.length === 1) && (
-                        <tr className="bg-muted/20 border-b border-border/30">
-                          <td colSpan={6} className="py-2 pl-2">
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => toggleGroup(g.id)}
-                                className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                      {/* Cliente sem grupo econômico vira seu próprio "grupo", com o
+                          próprio nome como cabeçalho — não é um grupo de verdade
+                          (não renomeável), mas mantém a mesma estrutura visual das
+                          famílias/grupos reais. */}
+                      <tr className="bg-muted/20 border-b border-border/30">
+                        <td colSpan={6} className="py-2 pl-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => toggleGroup(g.id)}
+                              className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+                            </button>
+                            <Building2 size={13} className={g.synthetic ? 'text-muted-foreground/50' : 'text-emerald-600'} />
+
+                            {isEditing ? (
+                              <input
+                                autoFocus
+                                defaultValue={g.nome}
+                                onBlur={(e) => renameGroup(g.id, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') renameGroup(g.id, (e.target as HTMLInputElement).value);
+                                  if (e.key === 'Escape') setEditingGroup(null);
+                                }}
+                                className="px-2 py-0.5 rounded-lg border border-emerald-300 text-xs font-black uppercase tracking-wider focus:outline-none"
+                              />
+                            ) : (
+                              <span
+                                onDoubleClick={() => !g.synthetic && setEditingGroup({ id: g.id, nome: g.nome })}
+                                className={`text-xs font-black uppercase tracking-wider ${g.synthetic ? 'text-muted-foreground' : 'text-slate-700 cursor-text'}`}
+                                title={g.synthetic ? undefined : 'Duplo clique para renomear'}
                               >
-                                {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                              </button>
-                              <Building2 size={13} className={isSemGrupo ? 'text-muted-foreground/50' : 'text-emerald-600'} />
-
-                              {isEditing ? (
-                                <input
-                                  autoFocus
-                                  defaultValue={g.nome}
-                                  onBlur={(e) => renameGroup(g.id, e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') renameGroup(g.id, (e.target as HTMLInputElement).value);
-                                    if (e.key === 'Escape') setEditingGroup(null);
-                                  }}
-                                  className="px-2 py-0.5 rounded-lg border border-emerald-300 text-xs font-black uppercase tracking-wider focus:outline-none"
-                                />
-                              ) : (
-                                <span
-                                  onDoubleClick={() => !isSemGrupo && setEditingGroup({ id: g.id, nome: g.nome })}
-                                  className={`text-xs font-black uppercase tracking-wider ${isSemGrupo ? 'text-muted-foreground' : 'text-slate-700 cursor-text'}`}
-                                  title={isSemGrupo ? undefined : 'Duplo clique para renomear'}
-                                >
-                                  {g.nome}
-                                </span>
-                              )}
-
-                              <span className="text-[10px] text-muted-foreground font-semibold">
-                                · {g.clientes.length} {g.clientes.length === 1 ? 'fazenda' : 'fazendas'}
+                                {g.nome}
                               </span>
+                            )}
 
-                              <span className="ml-auto pr-4 text-xs font-black text-emerald-700">
-                                {fmt(g.vpmTotal / 100)}
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
+                            <span className="text-[10px] text-muted-foreground font-semibold">
+                              · {g.clientes.length} {g.clientes.length === 1 ? 'cliente' : 'clientes'}
+                            </span>
+
+                            <span className="ml-auto pr-4 text-xs font-black text-emerald-700">
+                              {fmt(g.vpmTotal / 100)}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
                       {!collapsed && g.clientes.map(renderClienteRow)}
                     </Fragment>
                   );
                 })
               )}
             </tbody>
+            {clientesFiltrados.length > 0 && (
+              <tfoot>
+                <tr className="border-t-2 border-emerald-600/20">
+                  <td colSpan={3} className="pt-3 pl-2 text-[10px] font-black uppercase tracking-widest text-slate-700">
+                    Total · {clientesFiltrados.length} {clientesFiltrados.length === 1 ? 'produtor' : 'produtores'}
+                  </td>
+                  <td className="pt-3 text-right font-black text-slate-700">{totais.area.toLocaleString('pt-BR')}</td>
+                  <td className="pt-3 text-right font-black text-emerald-700">{fmt(totais.vpm / 100)}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       )}

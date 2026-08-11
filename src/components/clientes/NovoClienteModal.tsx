@@ -36,6 +36,7 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
   const [error, setError] = useState('');
   const [activeCultures, setActiveCultures] = useState<{ customName: string; internalKey: string }[]>([]);
   const { data: sessionData } = useSession();
+  const isAdmin = sessionData?.role === 'admin';
 
   // Grupo econômico: pode ser um dos existentes, nenhum, ou um nome novo
   // digitado na hora (criado via get-or-create no submit, não em cada tecla).
@@ -174,7 +175,7 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-sm font-semibold"
-              placeholder="Ex: Fazenda Santa Maria"
+              placeholder="Ex: João da Silva"
               required
             />
           </div>
@@ -245,8 +246,13 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
                 {gruposEconomicos.map(g => (
                   <option key={g.id} value={g.id}>{g.nome}</option>
                 ))}
-                <option value="__novo__">+ Criar novo grupo…</option>
+                {isAdmin && <option value="__novo__">+ Criar novo grupo…</option>}
               </select>
+            )}
+            {!isAdmin && (
+              <p className="text-[10px] text-muted-foreground pl-1">
+                Só administradores podem criar novos grupos econômicos. Peça para o admin cadastrar, se o grupo ainda não existir.
+              </p>
             )}
           </div>
 
