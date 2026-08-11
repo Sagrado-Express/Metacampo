@@ -14,7 +14,9 @@ import {
   Sprout,
   Tags,
   Ruler,
+  AlertTriangle,
 } from "lucide-react";
+import { useSession } from "@/hooks/useSession";
 
 /**
  * Início — porta de entrada do MetaCampo.
@@ -36,6 +38,7 @@ type Setup = {
 
 export default function InicioPage() {
   const router = useRouter();
+  const { data: sessionData, isLoading: isLoadingSession } = useSession();
   const [loading, setLoading] = useState(true);
   const [nome, setNome] = useState<string>("");
   const [setup, setSetup] = useState<Setup | null>(null);
@@ -80,7 +83,9 @@ export default function InicioPage() {
     carregar();
   }, [router]);
 
-  if (loading) {
+  const isAdmin = sessionData?.role === "admin";
+
+  if (loading || isLoadingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-emerald-600" size={32} />
@@ -190,8 +195,30 @@ export default function InicioPage() {
         </p>
       </div>
 
-      {/* Primeiros passos, com estado real do tenant */}
-      {setup && (
+      {/* Primeiros passos, com estado real do tenant — conteúdo muda por
+          papel: admin vê o checklist acionável (os links levam a telas que
+          só ele pode editar, desde a auditoria de 11/08/2026); CTV, se o
+          tenant ainda não está configurado, vê um aviso pra procurar o
+          admin em vez de links pra telas onde ele só bateria num 403. */}
+      {setup && pendentes > 0 && !isAdmin && (
+        <div className="glass-card-premium p-6 border border-amber-200 bg-amber-50/60">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-sm font-bold text-amber-900">
+                Sistema ainda não configurado
+              </h2>
+              <p className="text-xs text-amber-800 mt-1 max-w-xl">
+                Antes de cadastrar produtores, um administrador do seu tenant precisa definir
+                culturas, segmentos e o Índice Tecnológico. Peça pra ele completar essa
+                configuração — {pendentes} passo(s) ainda pendente(s).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {setup && isAdmin && (
         <div className="glass-card-premium p-6">
           <div className="flex items-baseline justify-between mb-5">
             <h2 className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">
