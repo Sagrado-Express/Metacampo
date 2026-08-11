@@ -16,6 +16,7 @@ import Link from "next/link";
 import { SegmentSettings } from "@/components/admin/SegmentSettings";
 import { CatalogoCulturas } from "@/components/admin/CatalogoCulturas";
 import { UserInvites } from "@/components/admin/UserInvites";
+import { EstruturaComercial } from "@/components/admin/EstruturaComercial";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
 import type { TipoCultura } from "@/data/culturas_ibge";
 import { ITMatrix } from "@/components/admin/ITMatrix";
@@ -456,6 +457,12 @@ export default function ConfiguracaoPage() {
             {activeTab === "usuarios" && (
               <div className="glass-card p-6 space-y-8">
                 <UserInvites />
+                <div className="border-t border-border/40 pt-6">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
+                    Estrutura Comercial
+                  </h3>
+                  <EstruturaComercial />
+                </div>
                 <div className="border-t border-border/40 pt-6">
                   <ChangePasswordForm />
                 </div>

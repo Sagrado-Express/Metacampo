@@ -208,8 +208,15 @@ CREATE TABLE IF NOT EXISTS public.user_tenants (
     user_id UUID NOT NULL,
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'user',
+    -- Árvore comercial (CTV → gerente → diretor regional), adicionada
+    -- 11/08/2026. FK composta contra a própria PK garante que o gerente
+    -- seja sempre do mesmo tenant; sem CHECK de ciclo no banco (validado
+    -- na API ao salvar).
+    manager_id UUID,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (user_id, tenant_id)
+    PRIMARY KEY (user_id, tenant_id),
+    FOREIGN KEY (manager_id, tenant_id) REFERENCES public.user_tenants(user_id, tenant_id),
+    CHECK (manager_id IS NULL OR manager_id <> user_id)
 );
 
 -- 12. Meta individual de vendas por CTV — Passo 1 do GTMGC (Viabilidade).
@@ -338,6 +345,7 @@ CREATE INDEX IF NOT EXISTS idx_clientes_grupo_economico_id           ON public.c
 CREATE INDEX IF NOT EXISTS idx_ctv_metas_tenant_id                   ON public.ctv_metas(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_user_id                  ON public.user_tenants(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_tenant_id                ON public.user_tenants(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_user_tenants_manager_id               ON public.user_tenants(manager_id);
 
 -- ============================================================
 -- Tabelas removidas em 04/08/2026 (auditoria de funcionalidades)
