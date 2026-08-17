@@ -76,6 +76,7 @@ export default function ConfiguracaoPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
   const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
   const [activeTab, setActiveTab] = useState<Tab>("classificacoes");
+  const [safra, setSafra] = useState("25/26");
 
   const {
     classifications,
@@ -183,13 +184,19 @@ export default function ConfiguracaoPage() {
         customName: item.customName,
         displayOrder: item.displayOrder,
         isActive: item.isActive,
+        aliases: item.aliases,
       }),
     });
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error || "Erro ao salvar cultura");
     }
+    // Duas queries cobrem culturas: esta (só a aba Cultivos) e todasCulturas
+    // (aba Culturas/catálogo, que também precisa saber de toggle/rename/apelido
+    // feitos aqui — sem isso a aba Culturas ficava com dado velho depois de
+    // qualquer ação na aba Cultivos).
     invalidateCultures();
+    refetchTodasCulturas();
   };
 
   // ── Catálogo IBGE ──────────────────────────────────────────
@@ -261,6 +268,7 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao criar cultura");
     }
     invalidateCultures();
+    refetchTodasCulturas();
   };
 
   const handleDeleteCultura = async (id: string) => {
@@ -273,6 +281,7 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao deletar cultura");
     }
     invalidateCultures();
+    refetchTodasCulturas();
   };
 
   // ============================================================
@@ -446,9 +455,11 @@ export default function ConfiguracaoPage() {
             {activeTab === "it-se" && (
               <div className="glass-card p-6">
                 <ITMatrix
+                  key={safra}
                   culturas={cultures}
                   classificacoes={classifications}
-                  safra="25/26"
+                  safra={safra}
+                  onSafraChange={setSafra}
                 />
               </div>
             )}

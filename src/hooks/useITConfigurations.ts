@@ -28,8 +28,8 @@ export interface UpsertITConfigInput {
   valorPorHectareCentavos: number;
 }
 
-async function fetchITConfigurations(): Promise<ITConfig[]> {
-  const response = await fetch("/api/indice-tecnologico");
+async function fetchITConfigurations(safra: string): Promise<ITConfig[]> {
+  const response = await fetch(`/api/indice-tecnologico?safra=${encodeURIComponent(safra)}`);
   if (!response.ok) throw new Error("Failed to fetch IT configurations");
   return response.json();
 }
@@ -68,13 +68,13 @@ async function deleteITConfiguration(id: string): Promise<void> {
   }
 }
 
-export function useITConfigurations() {
+export function useITConfigurations(safra: string) {
   const queryClient = useQueryClient();
-  const QUERY_KEY = ["it-configurations"];
+  const QUERY_KEY = ["it-configurations", safra];
 
   const query = useQuery({
     queryKey: QUERY_KEY,
-    queryFn: fetchITConfigurations,
+    queryFn: () => fetchITConfigurations(safra),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,

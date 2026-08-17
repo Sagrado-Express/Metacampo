@@ -20,6 +20,13 @@ const eslintConfig = defineConfig([
     "scripts/**",
     "test_*.js",
     "fix_*.js",
+    // Worktrees isolados de outras sessões do Claude Code (agentes rodando
+    // em paralelo) têm seu próprio .next/** — mas ".next/**" acima só
+    // ignora a raiz, não casa em subpastas. Sem isso, o lint do repo
+    // principal varre e falha em build output de OUTRA sessão (achado
+    // 17/08/2026: pre-commit quebrou lintando .js gerado de um worktree
+    // de task em background, nada a ver com o código deste commit).
+    ".claude/worktrees/**",
   ]),
   {
     rules: {

@@ -470,14 +470,28 @@ export class SegmentDictionaryService {
     try {
       const { data: existing, error: checkError } = await supabase
         .from('tenant_config_culturas')
-        .select('id')
+        .select('id, is_active')
         .eq('tenant_id', tenantId)
         .eq('internal_key', internalKey)
         .maybeSingle();
 
       if (checkError) throw checkError;
+
       if (existing) {
-        throw new Error(`Cultura com chave "${internalKey}" já existe para este tenant.`);
+        if (existing.is_active) {
+          throw new Error(`Cultura com chave "${internalKey}" já existe para este tenant.`);
+        }
+        // Já existiu e foi desabilitada: reativa em vez de bloquear com um
+        // erro sem saída. Sem isso, um usuário que digitasse o mesmo nome de
+        // novo (não achando como reabilitar) criava um registro órfão sem
+        // ibge_produto, que sobrava listado como "fora do catálogo" enquanto
+        // o original ficava desabilitado e invisível pra sempre — relato
+        // Marco Polo, 13/08/2026.
+        return this.updateCultura(supabase, tenantId, existing.id, {
+          customName: input.customName,
+          isActive: true,
+          aliases: input.aliases,
+        });
       }
 
       const { data, error } = await supabase

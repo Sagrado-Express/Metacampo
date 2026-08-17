@@ -39,6 +39,7 @@ interface CulturaItem {
   id: string;
   internalKey: string;
   customName: string;
+  aliases: string[];
   isActive: boolean;
   displayOrder: number;
 }
@@ -98,6 +99,8 @@ export function SegmentSettings({
   const [editingAliases, setEditingAliases] = useState<Record<string, string>>({});
   const [renaming, setRenaming] = useState<{ kind: "classificacao" | "cultura"; id: string } | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  const [dragCulturaIdx, setDragCulturaIdx] = useState<number | null>(null);
+  const [dragClassificacaoIdx, setDragClassificacaoIdx] = useState<number | null>(null);
 
   // Separate roots and children
   const roots = classificacoes.filter((c) => c.parentKey === null);
@@ -189,6 +192,57 @@ export function SegmentSettings({
     }
   };
 
+  // ─── Apelidos de cultura ───
+  // Mesmo padrão de classificações (add/promover/remover), só que reaproveitando
+  // onSaveCultura direto — cultura não tem um endpoint dedicado de "promover
+  // alias" como classificação (onPromoteAlias), mas updateCultura já aceita
+  // customName+aliases juntos no mesmo PATCH e já propaga o rename pras tabelas
+  // dependentes, então não precisa de um endpoint novo pra isso.
+  const handleAddCulturaAlias = async (item: CulturaItem) => {
+    const alias = editingAliases[item.id]?.trim();
+    if (!alias || item.aliases.includes(alias)) return;
+
+    const updatedAliases = [...item.aliases, alias];
+    try {
+      await onSaveCultura({ ...item, aliases: updatedAliases });
+      setEditingAliases((prev) => ({ ...prev, [item.id]: "" }));
+      toast.success("Apelido adicionado");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao adicionar apelido");
+    }
+  };
+
+  const handlePromoteCulturaAlias = async (item: CulturaItem, alias: string) => {
+    if (
+      !window.confirm(
+        `Usar "${alias}" como nome desta cultura?\n\n` +
+          `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
+          `O código interno (${item.internalKey}) não muda.`
+      )
+    ) {
+      return;
+    }
+    const restantes = item.aliases.filter((a) => a.toLowerCase() !== alias.toLowerCase());
+    const jaTem = restantes.some((a) => a.toLowerCase() === item.customName.toLowerCase());
+    const novosAliases = jaTem ? restantes : [...restantes, item.customName];
+    try {
+      await onSaveCultura({ ...item, customName: alias, aliases: novosAliases });
+      toast.success(`"${alias}" agora é o nome`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao trocar o nome");
+    }
+  };
+
+  const handleRemoveCulturaAlias = async (item: CulturaItem, aliasToRemove: string) => {
+    const updatedAliases = item.aliases.filter((a) => a !== aliasToRemove);
+    try {
+      await onSaveCultura({ ...item, aliases: updatedAliases });
+      toast.success("Apelido removido");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao remover apelido");
+    }
+  };
+
   const handleToggleActive = async (item: ClassificacaoItem) => {
     try {
       await onSaveClassificacao({ ...item, isActive: !item.isActive });
@@ -245,6 +299,45 @@ export function SegmentSettings({
       toast.success("Classificação excluída");
     } catch (err: any) {
       toast.error(err?.message || "Erro ao excluir classificação");
+    }
+  };
+
+  // ─── Reordenação por arrastar (GripVertical) ───
+  // displayOrder é reatribuído sequencialmente (0..N-1) pra lista inteira a
+  // cada drop, não só pros dois itens trocados: a maioria dos registros
+  // existentes nasceu com displayOrder 0 (default), então só mexer nos dois
+  // extremos não bastaria pra fixar uma ordem real.
+  const handleReorderCulturas = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const reordered = [...culturas];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    try {
+      await Promise.all(
+        reordered
+          .map((c, displayOrder) => ({ c, displayOrder }))
+          .filter(({ c, displayOrder }) => c.displayOrder !== displayOrder)
+          .map(({ c, displayOrder }) => onSaveCultura({ ...c, displayOrder }))
+      );
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao reordenar");
+    }
+  };
+
+  const handleReorderClassificacoes = async (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const reordered = [...roots];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    try {
+      await Promise.all(
+        reordered
+          .map((c, displayOrder) => ({ c, displayOrder }))
+          .filter(({ c, displayOrder }) => c.displayOrder !== displayOrder)
+          .map(({ c, displayOrder }) => onSaveClassificacao({ ...c, displayOrder }))
+      );
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao reordenar");
     }
   };
 
@@ -308,54 +401,150 @@ export function SegmentSettings({
 
         {/* Cultura list */}
         <div className="space-y-2 mb-4">
-          {culturas.map((cultura) => (
+          {culturas.map((cultura, index) => (
             <motion.div
               key={cultura.id}
               layout
-              className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+              draggable
+              onDragStart={() => setDragCulturaIdx(index)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => {
+                if (dragCulturaIdx !== null) handleReorderCulturas(dragCulturaIdx, index);
+                setDragCulturaIdx(null);
+              }}
+              onDragEnd={() => setDragCulturaIdx(null)}
+              className={`rounded-xl border transition-all ${
+                dragCulturaIdx === index ? "opacity-40" : ""
+              } ${
                 cultura.isActive
                   ? "bg-white/60 border-border/50"
                   : "bg-muted/20 border-border/20 opacity-50"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <GripVertical size={14} className="text-muted-foreground/40 cursor-grab" />
-                {renaming?.kind === "cultura" && renaming.id === cultura.id ? (
-                  renderRenameInput(cultura)
-                ) : (
-                  <span
-                    className="font-medium text-sm cursor-text hover:bg-amber-50 rounded px-1 -mx-1 transition-colors"
-                    title="Duplo clique para renomear"
-                    onDoubleClick={() => startRename("cultura", cultura.id, cultura.customName)}
-                  >
-                    {cultura.customName}
-                  </span>
-                )}
-                <span className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full">
-                  {cultura.internalKey}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    onSaveCultura({ ...cultura, isActive: !cultura.isActive })
-                  }
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {cultura.isActive ? (
-                    <ToggleRight size={20} className="text-green-500" />
+              <div className="flex items-center justify-between p-3">
+                <div className="flex items-center gap-3">
+                  <GripVertical size={14} className="text-muted-foreground/40 cursor-grab" />
+                  {renaming?.kind === "cultura" && renaming.id === cultura.id ? (
+                    renderRenameInput(cultura)
                   ) : (
-                    <ToggleLeft size={20} />
+                    <span
+                      className="font-medium text-sm cursor-text hover:bg-amber-50 rounded px-1 -mx-1 transition-colors"
+                      title="Duplo clique para renomear"
+                      onDoubleClick={() => startRename("cultura", cultura.id, cultura.customName)}
+                    >
+                      {cultura.customName}
+                    </span>
                   )}
-                </button>
-                <button
-                  onClick={() => handleDeleteCulturaClick(cultura)}
-                  className="text-muted-foreground/50 hover:text-destructive transition-colors"
-                  title="Excluir cultura"
-                >
-                  <Trash2 size={15} />
-                </button>
+                  <span className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full">
+                    {cultura.internalKey}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleExpand(`cultura-aliases-${cultura.id}`)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-muted-foreground hover:bg-muted/30 transition-colors"
+                  >
+                    <Tag size={10} />
+                    {cultura.aliases.length} apelido{cultura.aliases.length !== 1 && "s"}
+                  </button>
+                  <button
+                    onClick={() =>
+                      onSaveCultura({ ...cultura, isActive: !cultura.isActive })
+                    }
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {cultura.isActive ? (
+                      <ToggleRight size={20} className="text-green-500" />
+                    ) : (
+                      <ToggleLeft size={20} />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCulturaClick(cultura)}
+                    className="text-muted-foreground/50 hover:text-destructive transition-colors"
+                    title="Excluir cultura"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
+
+              {/* Apelidos panel */}
+              <AnimatePresence>
+                {expandedItems.has(`cultura-aliases-${cultura.id}`) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-3 pt-1 border-t border-border/30">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 font-bold">
+                        Apelidos (nomes alternativos para matching do CSV/ERP)
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 mb-1">
+                        {/* O nome em uso aparece junto dos apelidos, mesmo padrão da
+                            Classificação de Produtos — deixa claro qual rótulo vale hoje. */}
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                          <Check size={10} />
+                          {cultura.customName}
+                          <span className="font-normal opacity-70">em uso</span>
+                        </span>
+                        {cultura.aliases.map((alias) => (
+                          <span
+                            key={alias}
+                            className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-muted/40 text-[11px]"
+                          >
+                            {alias}
+                            <button
+                              onClick={() => handlePromoteCulturaAlias(cultura, alias)}
+                              className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 transition-colors"
+                              title={`Usar "${alias}" como nome desta cultura`}
+                            >
+                              usar como nome
+                            </button>
+                            <button
+                              onClick={() => handleRemoveCulturaAlias(cultura, alias)}
+                              className="text-muted-foreground hover:text-destructive transition-colors"
+                              title="Remover apelido"
+                            >
+                              <X size={10} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mb-2">
+                        Trocar o nome (duplo clique) sobrescreve sem guardar o anterior — pra
+                        manter o reconhecimento de arquivos já importados, adicione o nome
+                        antigo aqui como apelido antes de renomear.
+                      </p>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          value={editingAliases[cultura.id] || ""}
+                          onChange={(e) =>
+                            setEditingAliases((p) => ({
+                              ...p,
+                              [cultura.id]: e.target.value,
+                            }))
+                          }
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleAddCulturaAlias(cultura)
+                          }
+                          placeholder="Novo apelido..."
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-border/30 bg-white/50 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30"
+                        />
+                        <button
+                          onClick={() => handleAddCulturaAlias(cultura)}
+                          className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>
@@ -420,12 +609,24 @@ export function SegmentSettings({
 
         {/* Classification tree */}
         <div className="space-y-3 mb-4">
-          {roots.map((root) => {
+          {roots.map((root, index) => {
             const children = getChildren(root.internalKey);
             const isExpanded = expandedItems.has(root.internalKey);
 
             return (
-              <motion.div key={root.id} layout className="space-y-1">
+              <motion.div
+                key={root.id}
+                layout
+                draggable
+                onDragStart={() => setDragClassificacaoIdx(index)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => {
+                  if (dragClassificacaoIdx !== null) handleReorderClassificacoes(dragClassificacaoIdx, index);
+                  setDragClassificacaoIdx(null);
+                }}
+                onDragEnd={() => setDragClassificacaoIdx(null)}
+                className={`space-y-1 ${dragClassificacaoIdx === index ? "opacity-40" : ""}`}
+              >
                 {/* Root classification */}
                 <div
                   className={`rounded-xl border transition-all ${

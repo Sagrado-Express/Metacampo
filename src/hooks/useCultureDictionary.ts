@@ -20,8 +20,12 @@ import { TenantCultura } from '@/types/schema';
 // ============================================================
 
 async function fetchCultureDictionary(tenantId: string): Promise<TenantCultura[]> {
-  const response = await fetch(`/api/cultures?tenantId=${tenantId}`);
-  
+  // todas=true: inclui culturas desabilitadas. Sem isso, a aba Cultivos
+  // (que usa este hook) perde de vista qualquer cultura desligada e não
+  // sobra nenhuma forma de reabilitá-la por ali (bug reportado por Marco
+  // Polo, 13/08/2026).
+  const response = await fetch(`/api/cultures?tenantId=${tenantId}&todas=true`);
+
   if (!response.ok) {
     throw new Error('Failed to fetch culture dictionary');
   }

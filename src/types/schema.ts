@@ -89,6 +89,7 @@ export interface TenantCultura {
   tenantId: string;
   internalKey: string;
   customName: string;
+  aliases: string[];
   isActive: boolean;
   displayOrder: number;
 }

@@ -22,7 +22,8 @@ import { toast } from "@/lib/toast";
 interface ITMatrixProps {
   culturas: TenantCultura[];
   classificacoes: TenantClassificacao[];
-  safra?: string;
+  safra: string;
+  onSafraChange: (safra: string) => void;
 }
 
 // Local draft: cultivo|segmento → value (centavos)
@@ -70,7 +71,8 @@ function cellKey(cultivo: string, segmento: string): string {
 export function ITMatrix({
   culturas,
   classificacoes,
-  safra = "25/26",
+  safra,
+  onSafraChange,
 }: ITMatrixProps) {
   const {
     getCellValue,
@@ -78,8 +80,10 @@ export function ITMatrix({
     isLoading: isLoadingIT,
     isError,
     isUpserting,
-  } = useITConfigurations();
+  } = useITConfigurations(safra);
   const queryClient = useQueryClient();
+  const [editingSafra, setEditingSafra] = useState(false);
+  const [safraDraft, setSafraDraft] = useState(safra);
 
   // Active classifications only (roots)
   const activeSegmentos = classificacoes.filter(
@@ -174,10 +178,17 @@ export function ITMatrix({
   // Render
   // ============================================================
 
-  // Totais por linha/coluna/geral: antes eram um .reduce() dentro do JSX,
-  // refeito a cada render (cada tecla digitada em qualquer célula) — achado
-  // em auditoria de performance 11/08/2026, sem custo real hoje com poucas
-  // culturas/segmentos, mas cresce O(culturas×segmentos) por tecla.
+  // Total por linha (soma de R$/ha entre classificações, pra um mesmo
+  // cultivo) faz sentido como "investimento tecnológico total daquele
+  // cultivo". Não existe total por coluna nem geral: somar R$/ha de
+  // cultivos diferentes não é uma conta válida (cada um é uma taxa por
+  // hectare do seu próprio cultivo, não uma quantidade somável entre
+  // cultivos) — removido a pedido do Marco Polo, 13/08/2026.
+  //
+  // Antes era um .reduce() dentro do JSX, refeito a cada render (cada tecla
+  // digitada em qualquer célula) — achado em auditoria de performance
+  // 11/08/2026, sem custo real hoje com poucas culturas/segmentos, mas
+  // cresce O(culturas×segmentos) por tecla.
   const rowTotals = useMemo(() => {
     const map: Record<string, number> = {};
     for (const cultura of activeCulturas) {
@@ -188,22 +199,6 @@ export function ITMatrix({
     }
     return map;
   }, [activeCulturas, activeSegmentos, draft]);
-
-  const colTotals = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const seg of activeSegmentos) {
-      map[seg.customName] = activeCulturas.reduce(
-        (sum, cultura) => sum + (draft[cellKey(cultura.customName, seg.customName)] ?? 0),
-        0
-      );
-    }
-    return map;
-  }, [activeCulturas, activeSegmentos, draft]);
-
-  const grandTotal = useMemo(
-    () => activeCulturas.reduce((total, cultura) => total + (rowTotals[cultura.customName] ?? 0), 0),
-    [activeCulturas, rowTotals]
-  );
 
   if (isLoadingIT) {
     return (
@@ -241,9 +236,41 @@ export function ITMatrix({
           </div>
           <div>
             <h2 className="text-lg font-semibold">Índice Tecnológico</h2>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
               Valor de referência R$/ha por cultivo × classificação — Safra{" "}
-              <span className="font-medium text-foreground">{safra}</span>
+              {editingSafra ? (
+                <input
+                  autoFocus
+                  value={safraDraft}
+                  onChange={(e) => setSafraDraft(e.target.value)}
+                  onBlur={() => {
+                    setEditingSafra(false);
+                    const trimmed = safraDraft.trim();
+                    if (trimmed && trimmed !== safra) onSafraChange(trimmed);
+                    else setSafraDraft(safra);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur();
+                    if (e.key === "Escape") {
+                      setSafraDraft(safra);
+                      setEditingSafra(false);
+                    }
+                  }}
+                  placeholder="ex: 26/27"
+                  className="px-2 py-0.5 rounded-lg border border-violet-300 bg-white text-xs font-medium text-foreground w-20 focus:outline-none focus:ring-1 focus:ring-violet-400"
+                />
+              ) : (
+                <button
+                  onClick={() => {
+                    setSafraDraft(safra);
+                    setEditingSafra(true);
+                  }}
+                  className="font-medium text-foreground underline decoration-dotted decoration-violet-400 underline-offset-2 hover:text-violet-700 transition-colors"
+                  title="Clique para trocar de safra"
+                >
+                  {safra}
+                </button>
+              )}
             </p>
           </div>
         </div>
@@ -402,25 +429,6 @@ export function ITMatrix({
               </tr>
             ))}
           </tbody>
-          <tfoot>
-            <tr className="bg-violet-50/60 border-t-2 border-violet-200">
-              <td className="px-4 py-3 font-bold text-xs uppercase tracking-wider text-violet-700">
-                Total
-              </td>
-              {activeSegmentos.map((seg) => (
-                <td key={`total-${seg.id}`} className="px-2 py-3 text-center">
-                  <span className="text-xs font-bold text-violet-700">
-                    {formatBRL(colTotals[seg.customName] ?? 0)}
-                  </span>
-                </td>
-              ))}
-              <td className="px-2 py-3 text-center">
-                <span className="text-xs font-black text-violet-900 bg-violet-100 px-3 py-1.5 rounded-lg inline-block">
-                  {formatBRL(grandTotal)}
-                </span>
-              </td>
-            </tr>
-          </tfoot>
         </table>
       </div>
 

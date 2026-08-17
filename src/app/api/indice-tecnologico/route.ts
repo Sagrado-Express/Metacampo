@@ -25,12 +25,23 @@ export async function GET(request: Request) {
   if (error) return error;
 
   try {
+    const { searchParams } = new URL(request.url);
+    const safra = searchParams.get('safra');
+
     // O client carrega o JWT do usuário: o RLS filtra por tenant no Postgres.
     // O .eq(tenant_id) abaixo é redundante e fica apenas como defesa em profundidade.
-    const { data, error: dbError } = await supabase
+    let query = supabase
       .from('it_se_configurations')
       .select('*')
       .eq('tenant_id', tenantId);
+
+    // Sem filtro por safra, linhas de safras diferentes para o mesmo
+    // cultivo×classificação se misturavam no client (matriz e upsert
+    // indexavam só por cultivo|segmento, ignorando safra) — achado ao
+    // implementar o seletor de safra, 17/08/2026.
+    if (safra) query = query.eq('safra', safra);
+
+    const { data, error: dbError } = await query;
 
     if (dbError) throw dbError;
 
