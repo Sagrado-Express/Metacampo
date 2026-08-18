@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 
+interface FaturamentoRow {
+  id: string;
+  tenant_id: string;
+  mes: string;
+  id_ctv: string;
+  segmento: string;
+  valor_realizado_centavos: number;
+  valor_meta_centavos: number;
+  created_at: string;
+}
+
+function mapFaturamentoRow(row: FaturamentoRow) {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    mes: row.mes,
+    ctvId: row.id_ctv,
+    segmento: row.segmento,
+    valorRealizadoCentavos: Number(row.valor_realizado_centavos),
+    valorMetaCentavos: Number(row.valor_meta_centavos),
+    createdAt: row.created_at,
+  };
+}
+
 export async function GET(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
@@ -18,16 +42,7 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    const mapped = (data || []).map((row: any) => ({
-      id: row.id,
-      tenantId: row.tenant_id,
-      mes: row.mes,
-      ctvId: row.id_ctv,
-      segmento: row.segmento,
-      valorRealizadoCentavos: Number(row.valor_realizado_centavos),
-      valorMetaCentavos: Number(row.valor_meta_centavos),
-      createdAt: row.created_at,
-    }));
+    const mapped = (data || []).map(mapFaturamentoRow);
 
     return NextResponse.json({
       data: mapped,
@@ -38,7 +53,7 @@ export async function GET(request: Request) {
         hasMore: offset + limit < (count || 0),
       },
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[Billing API] Supabase error (GET):', err);
     return NextResponse.json(
       {
@@ -89,19 +104,10 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    const mapped = (data || []).map((row: any) => ({
-      id: row.id,
-      tenantId: row.tenant_id,
-      mes: row.mes,
-      ctvId: row.id_ctv,
-      segmento: row.segmento,
-      valorRealizadoCentavos: Number(row.valor_realizado_centavos),
-      valorMetaCentavos: Number(row.valor_meta_centavos),
-      createdAt: row.created_at,
-    }));
+    const mapped = (data || []).map(mapFaturamentoRow);
 
     return NextResponse.json(mapped);
-  } catch (dbErr: any) {
+  } catch (dbErr) {
     console.error('[Billing API] Supabase error (POST):', dbErr);
     return NextResponse.json(
       {

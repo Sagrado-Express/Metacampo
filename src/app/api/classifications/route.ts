@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { SegmentDictionaryService } from '@/domain/services/segmentDictionary.service';
+import { getErrorMessage } from '@/lib/utils';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
       : await SegmentDictionaryService.getAllClassificacoes(ctx.supabase, ctx.tenantId);
 
     return NextResponse.json(classifications);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Classifications API] Supabase error (GET):', error);
     return unavailable('carregar');
   }
@@ -59,10 +60,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newCls);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Classifications API] Supabase error (POST):', error);
-    if (typeof error?.message === 'string' && (error.message.includes('já existe') || error.message.includes('não encontrada'))) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    const message = getErrorMessage(error);
+    if (message.includes('já existe') || message.includes('não encontrada')) {
+      return NextResponse.json({ error: message }, { status: 400 });
     }
     return unavailable('salvar');
   }
@@ -97,7 +99,7 @@ export async function PATCH(request: Request) {
             });
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Classifications API] Supabase error (PATCH):', error);
     return unavailable('atualizar');
   }
@@ -117,7 +119,7 @@ export async function DELETE(request: Request) {
   try {
     await SegmentDictionaryService.deactivateClassificacao(ctx.supabase, ctx.tenantId, id);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Classifications API] Supabase error (DELETE):', error);
     return unavailable('excluir');
   }

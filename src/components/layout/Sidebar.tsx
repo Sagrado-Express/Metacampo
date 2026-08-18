@@ -85,7 +85,7 @@ export function Sidebar() {
       
       {/* Navigation Items */}
       <nav className="flex-1 space-y-3">
-        {menuItems.map((item, idx) => {
+        {menuItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link 
@@ -107,7 +107,7 @@ export function Sidebar() {
               )}
               
               <div className="shrink-0 w-6 flex justify-center">
-                {React.cloneElement(item.icon as React.ReactElement<any>, { size: 22 })}
+                {React.cloneElement(item.icon as React.ReactElement<{ size?: number }>, { size: 22 })}
               </div>
 
               <AnimatePresence mode="wait">

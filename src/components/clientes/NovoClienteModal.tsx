@@ -3,10 +3,19 @@ import { X, Loader2, Save, Plus, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { useSession } from '@/hooks/useSession';
 
+interface ClienteToEdit {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  grupoEconomicoId?: string | null;
+  areas?: { cropName: string; areaHa: number }[];
+}
+
 interface NovoClienteModalProps {
   onClose: () => void;
   onSuccess: () => void;
-  clienteToEdit?: any;
+  clienteToEdit?: ClienteToEdit;
 }
 
 interface AreaRow {
@@ -29,7 +38,7 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
   const [state, setState] = useState(clienteToEdit?.state || 'MG');
   const [areaRows, setAreaRows] = useState<AreaRow[]>(
     clienteToEdit?.areas?.length
-      ? clienteToEdit.areas.map((a: any) => ({ cropName: a.cropName, areaHa: String(a.areaHa) }))
+      ? clienteToEdit.areas.map((a) => ({ cropName: a.cropName, areaHa: String(a.areaHa) }))
       : [{ cropName: '', areaHa: '' }]
   );
   const [saving, setSaving] = useState(false);
@@ -53,7 +62,10 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
       .then(data => {
         const list = Array.isArray(data) && data.length > 0 ? data : [];
         setActiveCultures(list);
-        if (list.length > 0 && areaRows[0].cropName === '') {
+        if (list.length > 0) {
+          // Só preenche linhas ainda sem cultivo escolhido — o updater lê o
+          // estado mais recente, então não sobrescreve o que o usuário já
+          // tiver digitado enquanto o fetch estava em voo.
           setAreaRows(prev => prev.map(r => (r.cropName ? r : { ...r, cropName: list[0].customName })));
         }
       })
@@ -135,7 +147,7 @@ export default function NovoClienteModal({ onClose, onSuccess, clienteToEdit }: 
         const err = await res.json();
         setError(err.error || 'Erro ao processar requisição.');
       }
-    } catch (err: any) {
+    } catch {
       setError('Erro de conexão.');
     } finally {
       setSaving(false);

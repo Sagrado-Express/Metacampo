@@ -2,6 +2,22 @@ import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { getTenantMembers, setMemberManager } from '@/lib/services/TenantMembersService';
 import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
+import { getErrorMessage } from '@/lib/utils';
+
+interface ClassificacaoRow {
+  custom_name: string;
+}
+
+interface ItConfigRow {
+  crop_name: string;
+  segment_name: string;
+  value_per_hectare: number;
+}
+
+interface ClienteRow {
+  id: string;
+  ctv_id: string;
+}
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json({ error: 'FORBIDDEN', message: 'Só administradores podem ver os membros do tenant.' }, { status: 403 });
@@ -36,16 +52,16 @@ export async function GET() {
 
     const { data: clientes } = await ctx.supabase.from('clientes').select('id, ctv_id');
 
-    const segNames: string[] = (segmentosAtivos || []).map((s: any) => s.custom_name);
+    const segNames: string[] = (segmentosAtivos as ClassificacaoRow[] || []).map((s) => s.custom_name);
     const itLookup = buildItLookup(
-      (indices || []).map((ind: any) => ({
+      (indices as ItConfigRow[] || []).map((ind) => ({
         cultivo: ind.crop_name,
         segmento: ind.segment_name,
         valorPorHectareCentavos: Number(ind.value_per_hectare),
       }))
     );
 
-    const ctvIdPorCliente = new Map((clientes || []).map((c: any) => [c.id, c.ctv_id]));
+    const ctvIdPorCliente = new Map((clientes as ClienteRow[] || []).map((c) => [c.id, c.ctv_id]));
     const vpmPorCtv = new Map<string, number>();
     for (const area of areas || []) {
       const ctvId = ctvIdPorCliente.get(area.customer_id);
@@ -68,7 +84,7 @@ export async function GET() {
     }));
 
     return NextResponse.json(withVpm);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[api/tenant/members][GET]', error);
     return NextResponse.json(
       { error: 'DATA_SOURCE_UNAVAILABLE', message: 'Não foi possível carregar os membros do tenant.' },
@@ -103,10 +119,11 @@ export async function PATCH(request: Request) {
 
     await setMemberManager(ctx.tenantId, userId, managerId ?? null);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    const message = MANAGER_ERROR_MESSAGES[error?.message];
+  } catch (error) {
+    const errorCode = getErrorMessage(error);
+    const message = MANAGER_ERROR_MESSAGES[errorCode];
     if (message) {
-      return NextResponse.json({ error: error.message, message }, { status: 400 });
+      return NextResponse.json({ error: errorCode, message }, { status: 400 });
     }
     console.error('[api/tenant/members][PATCH]', error);
     return NextResponse.json(

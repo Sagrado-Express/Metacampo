@@ -27,7 +27,7 @@ export async function GET() {
 
     if (error) throw error;
     return NextResponse.json({ labelGrupoProduto: data?.label_grupo_produto ?? null });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Tenant Settings API] Supabase error (GET):', error);
     return NextResponse.json(
       { error: 'DATA_SOURCE_UNAVAILABLE', message: 'Não foi possível carregar as configurações do tenant.' },
@@ -60,7 +60,7 @@ export async function PATCH(request: Request) {
 
     if (error) throw error;
     return NextResponse.json({ labelGrupoProduto: data?.label_grupo_produto ?? null });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Tenant Settings API] Supabase error (PATCH):', error);
     return NextResponse.json(
       { error: 'DATA_SOURCE_UNAVAILABLE', message: 'Não foi possível salvar as configurações do tenant.' },

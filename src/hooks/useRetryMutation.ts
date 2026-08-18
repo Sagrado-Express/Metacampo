@@ -23,7 +23,7 @@ export function useRetryMutation<TData, TError, TVariables>(
   };
 
   const retryWrapper = async (variables: TVariables) => {
-    let lastError: any;
+    let lastError: unknown;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {

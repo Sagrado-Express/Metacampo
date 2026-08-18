@@ -2,12 +2,78 @@ import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { getTenantMembers } from '@/lib/services/TenantMembersService';
 import { fetchAllRows } from '@/lib/db';
+import { getErrorMessage } from '@/lib/utils';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
   { error: 'FORBIDDEN', message: 'Só administradores podem importar clientes.' },
   { status: 403 }
 );
+
+// Uma linha do CSV enviado pelo usuário — campos crus, sem validação ainda.
+interface CsvRow {
+  documento?: string;
+  nome_cliente?: string;
+  cidade?: string;
+  uf?: string;
+  email_ctv?: string;
+  grupo_economico?: string;
+  cultivo?: string;
+  hectares?: string | number;
+}
+
+// Linhas do Supabase (snake_case), só os campos selecionados nas queries
+// desta rota.
+interface ClienteExistenteRow {
+  id: string;
+  document: string | null;
+  name: string;
+  city: string;
+  state: string;
+  ctv_id: string;
+}
+
+interface AreaExistenteRow {
+  id: string;
+  customer_id: string;
+  crop_name: string;
+  area_ha: number;
+}
+
+interface CulturaAtivaRow {
+  custom_name: string;
+}
+
+interface GrupoEconomicoRow {
+  id: string;
+  nome: string;
+}
+
+interface AreaResolvida {
+  cultivo: string;
+  hectares: number;
+  valida: boolean;
+  motivo?: string;
+  areaAnteriorHa?: number | null;
+}
+
+interface GroupResult {
+  key: string;
+  documento: string | null;
+  nome: string;
+  cidade: string;
+  uf: string;
+  ctvEmail: string;
+  ctvId: string | null;
+  grupoEconomicoNome: string | null;
+  grupoEconomicoId: string | null;
+  clienteExistenteId: string | null;
+  action: 'create' | 'update' | 'error';
+  erro: string | null;
+  areas: AreaResolvida[];
+  resultado?: 'criado' | 'atualizado' | 'erro';
+  erroCommit?: string | null;
+}
 
 /**
  * Importação de clientes em massa por CSV, um cliente pode ter várias
@@ -34,8 +100,8 @@ export async function POST(request: Request) {
   const dryRun = searchParams.get('dryRun') !== 'false';
 
   try {
-    const body = await request.json();
-    const rows: any[] = Array.isArray(body.rows) ? body.rows : [];
+    const body = await request.json() as { rows?: CsvRow[] };
+    const rows: CsvRow[] = Array.isArray(body.rows) ? body.rows : [];
 
     if (rows.length === 0) {
       return NextResponse.json({ error: 'SEM_LINHAS', message: 'Nenhuma linha para importar.' }, { status: 400 });
@@ -48,37 +114,37 @@ export async function POST(request: Request) {
     // auditoria 11/08/2026.
     const [members, culturasAtivasRows, clientesExistentes] = await Promise.all([
       getTenantMembers(ctx.tenantId),
-      fetchAllRows((from, to) =>
+      fetchAllRows<CulturaAtivaRow>((from, to) =>
         ctx.supabase.from('tenant_config_culturas').select('custom_name').eq('is_active', true).range(from, to)
       ),
-      fetchAllRows((from, to) =>
+      fetchAllRows<ClienteExistenteRow>((from, to) =>
         ctx.supabase.from('clientes').select('id, document, name, city, state, ctv_id').range(from, to)
       ),
     ]);
 
     const membersByEmail = new Map(members.map((m) => [m.email.toLowerCase(), m]));
     const culturasAtivas = new Map(
-      culturasAtivasRows.map((c: any) => [String(c.custom_name).toUpperCase(), c.custom_name])
+      culturasAtivasRows.map((c) => [String(c.custom_name).toUpperCase(), c.custom_name])
     );
 
-    const clienteIds = clientesExistentes.map((c: any) => c.id);
+    const clienteIds = clientesExistentes.map((c) => c.id);
     const [areasExistentes, gruposRows] = await Promise.all([
       clienteIds.length > 0
-        ? fetchAllRows((from, to) =>
+        ? fetchAllRows<AreaExistenteRow>((from, to) =>
             ctx.supabase
               .from('customer_crop_areas')
               .select('id, customer_id, crop_name, area_ha')
               .in('customer_id', clienteIds)
               .range(from, to)
           )
-        : Promise.resolve([] as any[]),
-      fetchAllRows((from, to) => ctx.supabase.from('grupos_economicos').select('id, nome').range(from, to)),
+        : Promise.resolve([] as AreaExistenteRow[]),
+      fetchAllRows<GrupoEconomicoRow>((from, to) => ctx.supabase.from('grupos_economicos').select('id, nome').range(from, to)),
     ]);
-    const gruposExistentes = new Map(gruposRows.map((g: any) => [String(g.nome).toUpperCase(), g]));
+    const gruposExistentes = new Map(gruposRows.map((g) => [String(g.nome).toUpperCase(), g]));
 
     // ---- 1. Agrupar linhas em clientes ----
-    const groupsByDoc = new Map<string, any[]>();
-    const rowsSemDoc: any[] = [];
+    const groupsByDoc = new Map<string, CsvRow[]>();
+    const rowsSemDoc: CsvRow[] = [];
 
     for (const row of rows) {
       const doc = String(row.documento || '').trim();
@@ -90,13 +156,13 @@ export async function POST(request: Request) {
       }
     }
 
-    const rawGroups: { documento: string | null; rows: any[] }[] = [
+    const rawGroups: { documento: string | null; rows: CsvRow[] }[] = [
       ...Array.from(groupsByDoc.entries()).map(([documento, groupRows]) => ({ documento, rows: groupRows })),
       ...rowsSemDoc.map((row) => ({ documento: null, rows: [row] })),
     ];
 
     // ---- 2. Resolver cada grupo (validação — nunca grava aqui) ----
-    const results: any[] = rawGroups.map((g, idx) => {
+    const results: GroupResult[] = rawGroups.map((g, idx) => {
       const first = g.rows[0];
       const nome = String(first.nome_cliente || '').trim();
       const cidade = String(first.cidade || '').trim();
@@ -113,7 +179,7 @@ export async function POST(request: Request) {
 
       // Todas as linhas do grupo têm que concordar no CTV — evita atribuir
       // parte da carteira a um CTV e parte a outro por engano de digitação.
-      const emailsDistintos = new Set(g.rows.map((r: any) => String(r.email_ctv || '').trim().toLowerCase()));
+      const emailsDistintos = new Set(g.rows.map((r) => String(r.email_ctv || '').trim().toLowerCase()));
       if (emailsDistintos.size > 1) {
         erros.push('linhas deste cliente têm e-mails de CTV diferentes');
       }
@@ -124,9 +190,9 @@ export async function POST(request: Request) {
       }
 
       const existente = g.documento
-        ? clientesExistentes.find((c: any) => c.document === g.documento)
+        ? clientesExistentes.find((c) => c.document === g.documento)
         : clientesExistentes.find(
-            (c: any) =>
+            (c) =>
               String(c.name).trim().toUpperCase() === nome.toUpperCase() &&
               String(c.city).trim().toUpperCase() === cidade.toUpperCase() &&
               String(c.state).trim().toUpperCase() === uf &&
@@ -134,7 +200,7 @@ export async function POST(request: Request) {
               c.ctv_id === member.userId
           );
 
-      const areas = g.rows.map((row: any) => {
+      const areas: AreaResolvida[] = g.rows.map((row) => {
         const cultivoRaw = String(row.cultivo || '').trim();
         const hectares = Number(row.hectares);
         const cultivoResolvido = culturasAtivas.get(cultivoRaw.toUpperCase());
@@ -147,7 +213,7 @@ export async function POST(request: Request) {
 
         const areaAnterior = existente
           ? (areasExistentes || []).find(
-              (a: any) => a.customer_id === existente.id && String(a.crop_name).toUpperCase() === cultivoResolvido.toUpperCase()
+              (a) => a.customer_id === existente.id && String(a.crop_name).toUpperCase() === cultivoResolvido.toUpperCase()
             )
           : undefined;
 
@@ -159,7 +225,7 @@ export async function POST(request: Request) {
         };
       });
 
-      const areasValidas = areas.filter((a: any) => a.valida);
+      const areasValidas = areas.filter((a) => a.valida);
       if (areasValidas.length === 0) erros.push('nenhuma linha de cultivo válida para este cliente');
 
       const grupoResolvido = grupoEconomicoNome ? gruposExistentes.get(grupoEconomicoNome.toUpperCase()) : undefined;
@@ -257,7 +323,7 @@ export async function POST(request: Request) {
             .eq('id', clienteId);
         }
 
-        for (const area of g.areas.filter((a: any) => a.valida)) {
+        for (const area of g.areas.filter((a) => a.valida)) {
           const { error: areaError } = await ctx.supabase.from('customer_crop_areas').upsert(
             { tenant_id: ctx.tenantId, customer_id: clienteId, crop_name: area.cultivo, area_ha: area.hectares },
             { onConflict: 'customer_id,crop_name' }
@@ -267,9 +333,9 @@ export async function POST(request: Request) {
 
         g.resultado = g.clienteExistenteId ? 'atualizado' : 'criado';
         g.clienteExistenteId = clienteId;
-      } catch (err: any) {
+      } catch (err) {
         g.resultado = 'erro';
-        g.erroCommit = err.message || 'Erro ao gravar';
+        g.erroCommit = getErrorMessage(err) || 'Erro ao gravar';
       }
     }
 
@@ -282,7 +348,7 @@ export async function POST(request: Request) {
         erros: results.filter((r) => r.resultado === 'erro').length,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[api/clientes/import][POST]', error);
     return NextResponse.json(
       { error: 'DATA_SOURCE_UNAVAILABLE', message: 'Não foi possível processar a importação.' },

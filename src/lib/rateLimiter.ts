@@ -38,7 +38,7 @@ export function checkRateLimit(key: string, limit: number, intervalMs: number): 
 /**
  * Returns the seconds remaining until the next window opens.
  */
-export function getRetryAfter(key: string, intervalMs: number): number {
+export function getRetryAfter(key: string): number {
   const record = store.get(key);
   if (!record) return 0;
   const now = Date.now();

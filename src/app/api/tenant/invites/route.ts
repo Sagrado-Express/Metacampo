@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       expiresAt: data.expires_at,
       createdAt: data.created_at,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[api/tenant/invites][POST] Error:', err);
     return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 });
   }

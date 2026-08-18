@@ -13,7 +13,8 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { SegmentSettings } from "@/components/admin/SegmentSettings";
+import type { LucideIcon } from "lucide-react";
+import { SegmentSettings, type ClassificacaoItem, type CulturaItem } from "@/components/admin/SegmentSettings";
 import { CatalogoCulturas } from "@/components/admin/CatalogoCulturas";
 import { UserInvites } from "@/components/admin/UserInvites";
 import { EstruturaComercial } from "@/components/admin/EstruturaComercial";
@@ -25,6 +26,7 @@ import { useCultureDictionary } from "@/hooks/useCultureDictionary";
 import { useSession } from "@/hooks/useSession";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { cn } from "@/lib/utils";
+import type { TenantCultura } from "@/types/schema";
 
 /**
  * /workspace/settings/configuracao
@@ -46,7 +48,7 @@ type Tab = "classificacoes" | "culturas" | "cultivos" | "it-se" | "usuarios";
 // produtos, depois Índice Tecnológico — a matriz do IT cruza cultivo x
 // grupo de produto, então faz sentido o usuário já ter passado pelos dois
 // antes de chegar nela.
-const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: string }[] = [
+const TABS: { id: Tab; label: string; icon: LucideIcon; color: string }[] = [
   {
     id: "culturas",
     label: "Culturas",
@@ -103,7 +105,7 @@ export default function ConfiguracaoPage() {
   // O catálogo precisa também das culturas desligadas, que o hook acima não traz.
   const { data: todasCulturas = [], refetch: refetchTodasCulturas } = useQuery({
     queryKey: ["culturas-todas", tenantId],
-    queryFn: async () => {
+    queryFn: async (): Promise<TenantCultura[]> => {
       const res = await fetch("/api/cultures?todas=true");
       if (!res.ok) throw new Error("Falha ao carregar culturas");
       return res.json();
@@ -115,7 +117,7 @@ export default function ConfiguracaoPage() {
   // Classification handlers
   // ============================================================
 
-  const handleSaveClassificacao = async (item: any) => {
+  const handleSaveClassificacao = async (item: ClassificacaoItem) => {
     const response = await fetch("/api/classifications", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -181,7 +183,7 @@ export default function ConfiguracaoPage() {
   // Culture handlers
   // ============================================================
 
-  const handleSaveCultura = async (item: any) => {
+  const handleSaveCultura = async (item: CulturaItem) => {
     // Toggle isActive: update the culture's active state without deleting
     const response = await fetch("/api/cultures", {
       method: "POST",
@@ -212,7 +214,7 @@ export default function ConfiguracaoPage() {
   // em vez de criar outro com o mesmo internal_key (que a unique bloquearia).
 
   const handleHabilitarDoCatalogo = async (produto: string, tipo: TipoCultura) => {
-    const existente = todasCulturas.find((c: any) => c.ibgeProduto === produto);
+    const existente = todasCulturas.find((c) => c.ibgeProduto === produto);
 
     const response = existente
       ? await fetch("/api/cultures", {
@@ -269,7 +271,7 @@ export default function ConfiguracaoPage() {
   };
 
   const handleDefinirApelidoCultura = async (id: string, apelido: string) => {
-    const atual = todasCulturas.find((c: any) => c.id === id);
+    const atual = todasCulturas.find((c) => c.id === id);
     const aliases = [...(atual?.aliases ?? []), apelido];
 
     const response = await fetch("/api/cultures", {
@@ -435,7 +437,6 @@ export default function ConfiguracaoPage() {
             {activeTab === "classificacoes" && (
               <div className="glass-card p-6">
                 <SegmentSettings
-                  tenantId={tenantId}
                   classificacoes={classifications}
                   culturas={cultures}
                   onSaveClassificacao={handleSaveClassificacao}
@@ -471,7 +472,6 @@ export default function ConfiguracaoPage() {
             {activeTab === "cultivos" && (
               <div className="glass-card p-6">
                 <SegmentSettings
-                  tenantId={tenantId}
                   classificacoes={classifications}
                   culturas={cultures}
                   onSaveClassificacao={handleSaveClassificacao}

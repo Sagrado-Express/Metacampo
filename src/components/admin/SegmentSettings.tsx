@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -8,23 +8,22 @@ import {
   ChevronDown,
   ChevronRight,
   Tag,
-  Palette,
   ToggleLeft,
   ToggleRight,
   Trash2,
   Sprout,
   Layers,
-  Save,
   X,
   Check,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { getErrorMessage } from "@/lib/utils";
 
 // ============================================================
 // Types (local to this component, mirrors TenantClassificacao)
 // ============================================================
 
-interface ClassificacaoItem {
+export interface ClassificacaoItem {
   id: string;
   internalKey: string;
   parentKey: string | null;
@@ -35,7 +34,7 @@ interface ClassificacaoItem {
   color: string;
 }
 
-interface CulturaItem {
+export interface CulturaItem {
   id: string;
   internalKey: string;
   customName: string;
@@ -45,7 +44,6 @@ interface CulturaItem {
 }
 
 interface SegmentSettingsProps {
-  tenantId: string;
   classificacoes: ClassificacaoItem[];
   culturas: CulturaItem[];
   onSaveClassificacao: (item: ClassificacaoItem) => Promise<void>;
@@ -87,7 +85,6 @@ interface SegmentSettingsProps {
  * rótulo pelo termo que já usa, ex. "Segmento" (17/08/2026).
  */
 export function SegmentSettings({
-  tenantId,
   classificacoes,
   culturas,
   onSaveClassificacao,
@@ -137,9 +134,9 @@ export function SegmentSettings({
       // Campo vazio = volta pro rótulo padrão "Grupo de Produtos".
       await onChangeLabelGrupoProduto(trimmed || null);
       toast.success("Nome do grupo de produtos atualizado");
-    } catch (err: any) {
+    } catch (err) {
       setLabelDraft(labelGrupoProduto);
-      toast.error(err?.message || "Erro ao salvar o nome");
+      toast.error(getErrorMessage(err) || "Erro ao salvar o nome");
     }
   };
 
@@ -149,8 +146,8 @@ export function SegmentSettings({
       await onCreateClassificacao(newClassName.trim());
       setNewClassName("");
       toast.success("Grupo de produto criado");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar grupo de produto");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao criar grupo de produto");
     }
   };
 
@@ -161,8 +158,8 @@ export function SegmentSettings({
       await onCreateClassificacao(name, parentKey);
       setNewSubClassName((prev) => ({ ...prev, [parentKey]: "" }));
       toast.success("Subgrupo criado");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar subgrupo");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao criar subgrupo");
     }
   };
 
@@ -172,8 +169,8 @@ export function SegmentSettings({
       await onCreateCultura(newCulturaName.trim());
       setNewCulturaName("");
       toast.success("Cultura criada");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar cultura");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao criar cultura");
     }
   };
 
@@ -186,8 +183,8 @@ export function SegmentSettings({
       await onSaveClassificacao({ ...item, aliases: updatedAliases });
       setEditingAliases((prev) => ({ ...prev, [item.id]: "" }));
       toast.success("Apelido adicionado");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao adicionar apelido");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao adicionar apelido");
     }
   };
 
@@ -204,8 +201,8 @@ export function SegmentSettings({
     try {
       await onPromoteAlias(item.id, alias);
       toast.success(`"${alias}" agora é o nome`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao trocar o nome");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao trocar o nome");
     }
   };
 
@@ -214,8 +211,8 @@ export function SegmentSettings({
     try {
       await onSaveClassificacao({ ...item, aliases: updatedAliases });
       toast.success("Apelido removido");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao remover apelido");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao remover apelido");
     }
   };
 
@@ -234,8 +231,8 @@ export function SegmentSettings({
       await onSaveCultura({ ...item, aliases: updatedAliases });
       setEditingAliases((prev) => ({ ...prev, [item.id]: "" }));
       toast.success("Apelido adicionado");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao adicionar apelido");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao adicionar apelido");
     }
   };
 
@@ -255,8 +252,8 @@ export function SegmentSettings({
     try {
       await onSaveCultura({ ...item, customName: alias, aliases: novosAliases });
       toast.success(`"${alias}" agora é o nome`);
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao trocar o nome");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao trocar o nome");
     }
   };
 
@@ -265,24 +262,24 @@ export function SegmentSettings({
     try {
       await onSaveCultura({ ...item, aliases: updatedAliases });
       toast.success("Apelido removido");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao remover apelido");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao remover apelido");
     }
   };
 
   const handleToggleActive = async (item: ClassificacaoItem) => {
     try {
       await onSaveClassificacao({ ...item, isActive: !item.isActive });
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao atualizar");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao atualizar");
     }
   };
 
   const handleColorChange = async (item: ClassificacaoItem, color: string) => {
     try {
       await onSaveClassificacao({ ...item, color });
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao alterar cor");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao alterar cor");
     }
   };
 
@@ -303,8 +300,8 @@ export function SegmentSettings({
         await onSaveClassificacao({ ...(item as ClassificacaoItem), customName: name });
       }
       toast.success("Nome atualizado");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao renomear");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao renomear");
     }
   };
 
@@ -314,8 +311,8 @@ export function SegmentSettings({
     try {
       await onDeleteCultura(cultura.id);
       toast.success("Cultura excluída");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao excluir cultura");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao excluir cultura");
     }
   };
 
@@ -324,8 +321,8 @@ export function SegmentSettings({
     try {
       await onDeleteClassificacao(item.id);
       toast.success("Grupo de produto excluído");
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao excluir grupo de produto");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao excluir grupo de produto");
     }
   };
 
@@ -346,8 +343,8 @@ export function SegmentSettings({
           .filter(({ c, displayOrder }) => c.displayOrder !== displayOrder)
           .map(({ c, displayOrder }) => onSaveCultura({ ...c, displayOrder }))
       );
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao reordenar");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao reordenar");
     }
   };
 
@@ -363,8 +360,8 @@ export function SegmentSettings({
           .filter(({ c, displayOrder }) => c.displayOrder !== displayOrder)
           .map(({ c, displayOrder }) => onSaveClassificacao({ ...c, displayOrder }))
       );
-    } catch (err: any) {
-      toast.error(err?.message || "Erro ao reordenar");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao reordenar");
     }
   };
 

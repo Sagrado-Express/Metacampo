@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, CheckCircle2, AlertCircle, LucideX } from "lucide-react";
+import { UploadCloud, AlertCircle } from "lucide-react";
 import { validateSafeUpload } from "@/lib/security";
 
 interface IngestionCenterProps {

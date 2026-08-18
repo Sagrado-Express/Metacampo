@@ -38,7 +38,7 @@ export default function LoginPage() {
         setErrorMsg(data.error || "Falha no login.");
         setStatus("error");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Erro inesperado.");
       setStatus("error");
     }

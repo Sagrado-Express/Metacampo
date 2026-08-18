@@ -52,7 +52,7 @@ export function useSegmentDictionary(tenantId: string) {
     retry: 1,                        // Fail fast if API unreachable
   });
 
-  const classifications = query.data || [];
+  const classifications = useMemo(() => query.data || [], [query.data]);
 
   // Memoized: root classifications (level 1)
   const rootClassifications = useMemo(() => {
@@ -100,7 +100,7 @@ export function useSegmentDictionary(tenantId: string) {
     return map;
   }, [classifications]);
 
-  // Force refetch (used after saving new aliases in ReconciliationModal)
+  // Force refetch (used after saving new aliases)
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['classification-dictionary', tenantId] });
   }, [queryClient, tenantId]);

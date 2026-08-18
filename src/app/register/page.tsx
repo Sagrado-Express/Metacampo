@@ -14,13 +14,20 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 // está setado, ver src/app/api/auth/register/route.ts).
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
+interface WindowWithRecaptcha extends Window {
+  grecaptcha?: {
+    render: (containerId: string, options: { sitekey: string; callback: (token: string) => void }) => void;
+  };
+}
+
 const Recaptcha = ({ onVerify }: { onVerify: (token: string) => void }) => {
   if (!RECAPTCHA_SITE_KEY) return null;
 
   const renderWidget = () => {
     const container = document.getElementById("recaptcha");
-    if ((window as any).grecaptcha && container && container.childElementCount === 0) {
-      (window as any).grecaptcha.render("recaptcha", {
+    const grecaptcha = (window as unknown as WindowWithRecaptcha).grecaptcha;
+    if (grecaptcha && container && container.childElementCount === 0) {
+      grecaptcha.render("recaptcha", {
         sitekey: RECAPTCHA_SITE_KEY,
         callback: (token: string) => onVerify(token),
       });
@@ -101,7 +108,7 @@ export default function RegisterPage() {
         setErrorMsg(data.message || "Falha no cadastro.");
         setStatus("error");
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Erro inesperado.");
       setStatus("error");
     }

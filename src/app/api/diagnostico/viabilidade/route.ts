@@ -6,6 +6,21 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 const SAFRA_PADRAO = '25/26';
 
+interface ItConfigRow {
+  crop_name: string;
+  segment_name: string;
+  value_per_hectare: number;
+}
+
+interface CropAreaRow {
+  crop_name: string;
+  area_ha: number;
+}
+
+interface ClassificacaoRow {
+  custom_name: string;
+}
+
 /**
  * Monta o retorno de viabilidade: meta individual do CTV (se configurada),
  * apetite total já comprometido no planejamento, e potencial bruto da
@@ -21,9 +36,9 @@ async function computeViabilidade(supabase: SupabaseClient, userId: string) {
     fetchAllRows((from, to) =>
       supabase.from('planejamento_cliente_segmento').select('valor_planejado_centavos').eq('ctv_id', userId).range(from, to)
     ),
-    fetchAllRows((from, to) => supabase.from('customer_crop_areas').select('*').range(from, to)),
-    fetchAllRows((from, to) => supabase.from('it_se_configurations').select('*').range(from, to)),
-    fetchAllRows((from, to) =>
+    fetchAllRows<CropAreaRow>((from, to) => supabase.from('customer_crop_areas').select('*').range(from, to)),
+    fetchAllRows<ItConfigRow>((from, to) => supabase.from('it_se_configurations').select('*').range(from, to)),
+    fetchAllRows<ClassificacaoRow>((from, to) =>
       supabase.from('tenant_config_classificacoes').select('*').eq('is_active', true).is('parent_key', null).range(from, to)
     ),
   ]);
@@ -40,7 +55,7 @@ async function computeViabilidade(supabase: SupabaseClient, userId: string) {
   );
 
   const itLookup = buildItLookup(
-    (itRows || []).map((ind: any) => ({
+    (itRows || []).map((ind) => ({
       cultivo: ind.crop_name,
       segmento: ind.segment_name,
       valorPorHectareCentavos: Number(ind.value_per_hectare),
@@ -48,8 +63,8 @@ async function computeViabilidade(supabase: SupabaseClient, userId: string) {
   );
 
   const { vpmTotal: vpmPotencialCarteiraCentavos } = calcClientVpmTotal({
-    areas: (areas || []).map((a: any) => ({ cropName: a.crop_name, areaHa: Number(a.area_ha) })),
-    segments: (segmentos || []).map((s: any) => s.custom_name),
+    areas: (areas || []).map((a) => ({ cropName: a.crop_name, areaHa: Number(a.area_ha) })),
+    segments: (segmentos || []).map((s) => s.custom_name),
     itLookup,
   });
 
@@ -79,7 +94,7 @@ export async function GET() {
   try {
     const result = await computeViabilidade(ctx.supabase, ctx.userId);
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[api/diagnostico/viabilidade][GET]', error);
     return NextResponse.json(
       { error: 'DATA_SOURCE_UNAVAILABLE', message: 'Não foi possível carregar a viabilidade.' },
@@ -131,7 +146,7 @@ export async function POST(request: Request) {
 
     const result = await computeViabilidade(ctx.supabase, ctx.userId);
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[api/diagnostico/viabilidade][POST]', error);
     return NextResponse.json(
       { error: 'DATA_SOURCE_UNAVAILABLE', message: 'Não foi possível salvar a meta.' },

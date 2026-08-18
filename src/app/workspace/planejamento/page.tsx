@@ -14,10 +14,8 @@ import { ChevronLeft, BarChart3 } from 'lucide-react';
  * pelo Resumo; a lista completa da carteira vive em /workspace/clientes.
  */
 export default function PlanejamentoPage() {
-  const { data: sessionData, isLoading } = useSession();
+  const { isLoading } = useSession();
   const [tab, setTab] = useState<'resumo' | 'editar'>('resumo');
-
-  const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
 
   if (isLoading) {
     return (
@@ -70,7 +68,7 @@ export default function PlanejamentoPage() {
 
       {/* Tab content */}
       <div className="glass-card p-6 min-h-[300px]">
-        <PlanejamentoTabs tab={tab} tenantId={tenantId} onGoToEditar={() => setTab('editar')} />
+        <PlanejamentoTabs tab={tab} onGoToEditar={() => setTab('editar')} />
       </div>
     </div>
   );

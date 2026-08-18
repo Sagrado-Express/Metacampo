@@ -28,7 +28,28 @@ interface GroupPreview {
   erro: string | null;
   areas: AreaPreview[];
   resultado?: "criado" | "atualizado" | "erro";
-  erroCommit?: string;
+  erroCommit?: string | null;
+}
+
+interface ResumoImportacao {
+  total: number;
+  criar?: number;
+  atualizar?: number;
+  erro?: number;
+  criados?: number;
+  atualizados?: number;
+  erros?: number;
+}
+
+interface CsvRow {
+  documento?: string;
+  nome_cliente?: string;
+  cidade?: string;
+  uf?: string;
+  email_ctv?: string;
+  grupo_economico?: string;
+  cultivo?: string;
+  hectares?: string | number;
 }
 
 const REQUIRED_COLUMNS = ["email_ctv", "nome_cliente", "cidade", "uf", "cultivo", "hectares"];
@@ -38,9 +59,9 @@ export default function ImportarClientesPage() {
   const [parsing, setParsing] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [committing, setCommitting] = useState(false);
-  const [rows, setRows] = useState<any[] | null>(null);
-  const [preview, setPreview] = useState<{ groups: GroupPreview[]; resumo: any } | null>(null);
-  const [committed, setCommitted] = useState<{ groups: GroupPreview[]; resumo: any } | null>(null);
+  const [rows, setRows] = useState<CsvRow[] | null>(null);
+  const [preview, setPreview] = useState<{ groups: GroupPreview[]; resumo: ResumoImportacao } | null>(null);
+  const [committed, setCommitted] = useState<{ groups: GroupPreview[]; resumo: ResumoImportacao } | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
 
   const isAdmin = sessionData?.role === "admin";
@@ -62,7 +83,7 @@ export default function ImportarClientesPage() {
       skipEmptyLines: true,
       complete: (results) => {
         setParsing(false);
-        const parsed = results.data as any[];
+        const parsed = results.data as CsvRow[];
         const headers = results.meta.fields || [];
         const faltando = REQUIRED_COLUMNS.filter((c) => !headers.includes(c));
         if (faltando.length > 0) {
@@ -309,7 +330,7 @@ export default function ImportarClientesPage() {
               </button>
               <button
                 onClick={runCommit}
-                disabled={committing || displayData.resumo.criar + displayData.resumo.atualizar === 0}
+                disabled={committing || (displayData.resumo.criar ?? 0) + (displayData.resumo.atualizar ?? 0) === 0}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-black uppercase tracking-wider hover:bg-emerald-700 transition-colors disabled:opacity-50"
               >
                 {committing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}

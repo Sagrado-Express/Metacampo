@@ -40,7 +40,7 @@ export async function getTenantMembers(tenantId: string): Promise<TenantMember[]
         members.push({
           userId: u.id,
           email: u.email || '',
-          fullName: (u.user_metadata as any)?.full_name || u.email || '',
+          fullName: (u.user_metadata as { full_name?: string })?.full_name || u.email || '',
           role: membership.role,
           managerId: membership.manager_id,
         });

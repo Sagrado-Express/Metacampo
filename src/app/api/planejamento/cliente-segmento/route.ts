@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 
-export async function GET(request: Request) {
+export async function GET() {
   const ctx = await getAuthedContext();
   if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const { supabase, tenantId } = ctx;
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     }));
 
     return NextResponse.json(mapped);
-  } catch (err: any) {
+  } catch (err) {
     console.error('[api/planejamento/cliente-segmento] Supabase error (GET):', err);
     return NextResponse.json(
       {
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
     return NextResponse.json(data);
-  } catch (dbErr: any) {
+  } catch (dbErr) {
     console.error('[api/planejamento/cliente-segmento] Supabase error (POST):', dbErr);
     return NextResponse.json(
       {

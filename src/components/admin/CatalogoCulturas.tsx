@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Search, Check, Loader2, Tag, X, Sprout, TreePine } from "lucide-react";
+import { Search, Check, Loader2, Tag, Sprout, TreePine } from "lucide-react";
 import { CATALOGO_IBGE, TOTAL_TEMPORARIAS, TOTAL_PERMANENTES, type TipoCultura } from "@/data/culturas_ibge";
 import { toast } from "@/lib/toast";
+import { getErrorMessage } from "@/lib/utils";
 
 /**
  * Catálogo de culturas do IBGE.
@@ -81,8 +82,8 @@ export function CatalogoCulturas({ culturas, onHabilitar, onDesabilitar, onDefin
     try {
       await fn();
       toast.success(msg);
-    } catch (err: any) {
-      toast.error(err?.message || "Não foi possível salvar");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Não foi possível salvar");
     } finally {
       setOcupado(null);
     }
@@ -143,7 +144,7 @@ export function CatalogoCulturas({ culturas, onHabilitar, onDesabilitar, onDefin
         ).map(([id, label]) => (
           <button
             key={id}
-            onClick={() => setFiltro(id as any)}
+            onClick={() => setFiltro(id)}
             className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider transition-colors ${
               filtro === id
                 ? "bg-emerald-600 text-white"

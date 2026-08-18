@@ -1,11 +1,66 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 
 type AuthResult =
   | { error: NextResponse; supabase: null; tenantId: null; userId: null }
   | { error: null; supabase: SupabaseClient; tenantId: string; userId: string };
+
+// Formato bruto das linhas do Supabase (snake_case), refletindo as colunas
+// reais em docs/schema_completo_supabase.sql — só os campos lidos aqui.
+interface ClienteRow {
+  id: string;
+  tenant_id: string;
+  ctv_id: string;
+  name: string;
+  document: string | null;
+  city: string;
+  state: string;
+  region: string;
+  grupo_economico_id: string | null;
+}
+
+interface CropAreaRow {
+  id: string;
+  customer_id: string;
+  crop_name: string;
+  area_ha: number;
+}
+
+interface ItConfigRow {
+  crop_name: string;
+  segment_name: string;
+  value_per_hectare: number;
+}
+
+interface ClassificacaoRow {
+  custom_name: string;
+}
+
+interface CulturaRow {
+  custom_name: string;
+}
+
+interface GrupoEconomicoRow {
+  id: string;
+  nome: string;
+}
+
+interface AreaInput {
+  cropName?: string;
+  areaHa?: number | string;
+}
+
+interface ClienteRequestBody {
+  name?: string;
+  city?: string;
+  state?: string;
+  areas?: AreaInput[];
+  cultivo?: string;
+  area_hectares?: number | string;
+  grupoEconomicoId?: string | null;
+}
 
 /**
  * Devolve um client Supabase que carrega o JWT do usuário: o RLS filtra por
@@ -39,7 +94,7 @@ export async function GET(request: Request) {
       .from('clientes')
       .select('*', { count: 'exact' })
       .eq('tenant_id', tenantId)
-      .range(offset, offset + limit - 1);
+      .range(offset, offset + limit - 1) as { data: ClienteRow[] | null; error: PostgrestError | null; count: number | null };
 
     if (custError) throw custError;
 
@@ -50,8 +105,8 @@ export async function GET(request: Request) {
     const customerIds = (customers || []).map((c) => c.id);
     const { data: cropAreas, error: areasError } =
       customerIds.length > 0
-        ? await supabase.from('customer_crop_areas').select('*').in('customer_id', customerIds)
-        : { data: [] as any[], error: null };
+        ? await supabase.from('customer_crop_areas').select('*').in('customer_id', customerIds) as { data: CropAreaRow[] | null; error: PostgrestError | null }
+        : { data: [] as CropAreaRow[], error: null };
 
     if (areasError) throw areasError;
 
@@ -73,7 +128,7 @@ export async function GET(request: Request) {
     // não configurou segmento nenhum, o VPM é 0 e a resposta diz o porquê.
     // A versão anterior caía em ['Sementes','Fertilizantes','Defensivos'] e
     // calculava VPM sobre segmentos que o tenant nunca definiu.
-    const segNames: string[] = (segments || []).map((s: any) => s.custom_name);
+    const segNames: string[] = ((segments as ClassificacaoRow[]) || []).map((s) => s.custom_name);
     const semSegmentosConfigurados = segNames.length === 0;
 
     // 5. Culturas cadastradas do tenant — usadas para distinguir
@@ -86,7 +141,7 @@ export async function GET(request: Request) {
       .eq('is_active', true);
 
     const culturasCadastradas = new Set(
-      (culturasCfg || []).map((c: any) => String(c.custom_name).toUpperCase())
+      ((culturasCfg as CulturaRow[]) || []).map((c) => String(c.custom_name).toUpperCase())
     );
 
     // 6. Grupos econômicos do tenant, para exibir o nome junto de cada cliente
@@ -96,10 +151,10 @@ export async function GET(request: Request) {
       .select('id, nome')
       .eq('tenant_id', tenantId);
 
-    const gruposPorId = new Map((gruposCfg || []).map((g: any) => [g.id, g.nome]));
+    const gruposPorId = new Map(((gruposCfg as GrupoEconomicoRow[]) || []).map((g) => [g.id, g.nome]));
 
     const itLookup = buildItLookup(
-      (indices || []).map((ind: any) => ({
+      ((indices as ItConfigRow[]) || []).map((ind) => ({
         cultivo: ind.crop_name,
         segmento: ind.segment_name,
         valorPorHectareCentavos: Number(ind.value_per_hectare),
@@ -189,9 +244,9 @@ export async function GET(request: Request) {
         culturasNaoCadastradas: [
           ...new Set(
             result
-              .flatMap((c: any) => c.areas)
-              .filter((a: any) => !a.culturaCadastrada)
-              .map((a: any) => a.cropName)
+              .flatMap((c) => c.areas)
+              .filter((a) => !a.culturaCadastrada)
+              .map((a) => a.cropName)
           ),
         ],
       },
@@ -202,7 +257,7 @@ export async function GET(request: Request) {
         hasMore: offset + limit < (count || 0),
       },
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[api/clientes] Supabase error (GET):', err);
     return NextResponse.json(
       {
@@ -220,14 +275,14 @@ export async function POST(request: Request) {
   const ctvId = userId;
 
   try {
-    const body = await request.json();
+    const body = await request.json() as ClienteRequestBody;
     const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa, grupoEconomicoId } = body;
 
     // Parse areas list: support new multi-crop format and fallback to old single-crop format
     const areaList: { cropName: string; areaHa: number }[] =
       Array.isArray(areas) && areas.length > 0
         ? areas
-            .map((a: any) => ({ cropName: a.cropName, areaHa: Number(a.areaHa) }))
+            .map((a) => ({ cropName: a.cropName ?? '', areaHa: Number(a.areaHa) }))
             .filter((a) => a.cropName && a.areaHa > 0)
         : bodyCultivo && bodyAreaHa
           ? [{ cropName: bodyCultivo, areaHa: Number(bodyAreaHa) }]
@@ -244,7 +299,7 @@ export async function POST(request: Request) {
       .eq('tenant_id', tenantId);
 
     const itLookup = buildItLookup(
-      (indices || []).map((ind: any) => ({
+      ((indices as ItConfigRow[]) || []).map((ind) => ({
         cultivo: ind.crop_name,
         segmento: ind.segment_name,
         valorPorHectareCentavos: Number(ind.value_per_hectare),
@@ -261,7 +316,7 @@ export async function POST(request: Request) {
 
     // Sem fallback para lista fixa de segmentos (Regra Nº6): tenant sem
     // segmento configurado resulta em VPM 0, nunca em VPM sobre segmento fantasma.
-    const segNames: string[] = (segments || []).map((s: any) => s.custom_name);
+    const segNames: string[] = ((segments as ClassificacaoRow[]) || []).map((s) => s.custom_name);
 
     // Calculate VPM per area
     const vpmPorArea = areaList.map((a) => {
@@ -287,7 +342,7 @@ export async function POST(request: Request) {
         grupo_economico_id: grupoEconomicoId || null,
       })
       .select()
-      .single();
+      .single() as { data: ClienteRow; error: PostgrestError | null };
 
     if (custError) throw custError;
 
@@ -295,14 +350,14 @@ export async function POST(request: Request) {
     const { data: areasData, error: areaError } = await supabase
       .from('customer_crop_areas')
       .insert(
-        areaList.map((a, idx) => ({
+        areaList.map((a) => ({
           tenant_id: tenantId,
           customer_id: customer.id,
           crop_name: a.cropName,
           area_ha: a.areaHa
         }))
       )
-      .select();
+      .select() as { data: CropAreaRow[] | null; error: PostgrestError | null };
 
     if (areaError) throw areaError;
 
@@ -315,7 +370,7 @@ export async function POST(request: Request) {
       state: customer.state,
       cultivo: areaList[0].cropName,
       area_hectares: areaList.reduce((sum, a) => sum + a.areaHa, 0),
-      areas: areasData.map((area: any, idx: number) => ({
+      areas: (areasData || []).map((area, idx) => ({
         id: area.id,
         cropName: area.crop_name,
         areaHa: Number(area.area_ha),
@@ -327,7 +382,7 @@ export async function POST(request: Request) {
     };
 
     return NextResponse.json(returnedClient, { status: 201 });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[api/clientes] Supabase error (POST):', err);
     return NextResponse.json(
       {
@@ -350,14 +405,14 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    const body = await request.json() as ClienteRequestBody;
     const { name, city, state, areas, cultivo: bodyCultivo, area_hectares: bodyAreaHa, grupoEconomicoId } = body;
 
     // Parse areas list: support new multi-crop format and fallback to old single-crop format
     const areaList: { cropName: string; areaHa: number }[] =
       Array.isArray(areas) && areas.length > 0
         ? areas
-            .map((a: any) => ({ cropName: a.cropName, areaHa: Number(a.areaHa) }))
+            .map((a) => ({ cropName: a.cropName ?? '', areaHa: Number(a.areaHa) }))
             .filter((a) => a.cropName && a.areaHa > 0)
         : bodyCultivo && bodyAreaHa
           ? [{ cropName: bodyCultivo, areaHa: Number(bodyAreaHa) }]
@@ -374,7 +429,7 @@ export async function PATCH(request: Request) {
       .eq('tenant_id', tenantId);
 
     const itLookup = buildItLookup(
-      (indices || []).map((ind: any) => ({
+      ((indices as ItConfigRow[]) || []).map((ind) => ({
         cultivo: ind.crop_name,
         segmento: ind.segment_name,
         valorPorHectareCentavos: Number(ind.value_per_hectare),
@@ -391,7 +446,7 @@ export async function PATCH(request: Request) {
 
     // Sem fallback para lista fixa de segmentos (Regra Nº6): tenant sem
     // segmento configurado resulta em VPM 0, nunca em VPM sobre segmento fantasma.
-    const segNames: string[] = (segments || []).map((s: any) => s.custom_name);
+    const segNames: string[] = ((segments as ClassificacaoRow[]) || []).map((s) => s.custom_name);
 
     // Calculate VPM per area
     const vpmPorArea = areaList.map((a) => {
@@ -416,7 +471,7 @@ export async function PATCH(request: Request) {
       .eq('id', id)
       .eq('tenant_id', tenantId)
       .select()
-      .single();
+      .single() as { data: ClienteRow; error: PostgrestError | null };
 
     if (custError) throw custError;
 
@@ -437,7 +492,7 @@ export async function PATCH(request: Request) {
           area_ha: a.areaHa
         }))
       )
-      .select();
+      .select() as { data: CropAreaRow[] | null; error: PostgrestError | null };
 
     if (areaError) throw areaError;
 
@@ -449,7 +504,7 @@ export async function PATCH(request: Request) {
       state: customer.state,
       cultivo: areaList[0].cropName,
       area_hectares: areaList.reduce((sum, a) => sum + a.areaHa, 0),
-      areas: areasData.map((area: any, idx: number) => ({
+      areas: (areasData || []).map((area, idx) => ({
         id: area.id,
         cropName: area.crop_name,
         areaHa: Number(area.area_ha),
@@ -459,7 +514,7 @@ export async function PATCH(request: Request) {
       vpmTotalCentavos: vpmCentavos,
       grupoEconomicoId: customer.grupo_economico_id || null,
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[api/clientes] Supabase error (PATCH):', err);
     return NextResponse.json(
       {
@@ -491,7 +546,7 @@ export async function DELETE(request: Request) {
     if (dbError) throw dbError;
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[api/clientes] Supabase error (DELETE):', err);
     return NextResponse.json(
       {

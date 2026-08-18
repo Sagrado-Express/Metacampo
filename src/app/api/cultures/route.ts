@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { SegmentDictionaryService } from '@/domain/services/segmentDictionary.service';
+import { getErrorMessage } from '@/lib/utils';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
       ? await SegmentDictionaryService.getAllCulturas(ctx.supabase, ctx.tenantId)
       : await SegmentDictionaryService.getActiveCulturas(ctx.supabase, ctx.tenantId);
     return NextResponse.json(cultures);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Cultures API] Supabase error (GET):', error);
     return unavailable('carregar');
   }
@@ -82,10 +83,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newCult);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Cultures API] Supabase error (POST):', error);
-    if (typeof error?.message === 'string' && error.message.includes('já existe')) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+    const message = getErrorMessage(error);
+    if (message.includes('já existe')) {
+      return NextResponse.json({ error: message }, { status: 400 });
     }
     return unavailable('salvar');
   }
@@ -105,7 +107,7 @@ export async function DELETE(request: Request) {
   try {
     await SegmentDictionaryService.deactivateCultura(ctx.supabase, ctx.tenantId, id);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Cultures API] Supabase error (DELETE):', error);
     return unavailable('excluir');
   }

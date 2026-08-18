@@ -14,6 +14,7 @@ import { useITConfigurations, UpsertITConfigInput } from "@/hooks/useITConfigura
 import { useQueryClient } from "@tanstack/react-query";
 import { TenantCultura, TenantClassificacao } from "@/types/schema";
 import { toast } from "@/lib/toast";
+import { getErrorMessage } from "@/lib/utils";
 
 // ============================================================
 // Types
@@ -79,7 +80,6 @@ export function ITMatrix({
     upsertConfig,
     isLoading: isLoadingIT,
     isError,
-    isUpserting,
   } = useITConfigurations(safra);
   const queryClient = useQueryClient();
   const [editingSafra, setEditingSafra] = useState(false);
@@ -166,8 +166,8 @@ export function ITMatrix({
       setSavedKeys(new Set(dirtyKeys));
       setDirtyKeys(new Set());
       toast.success('Índice Tecnológico salvo');
-    } catch (err: any) {
-      setError(err.message || "Erro ao salvar configurações.");
+    } catch (err) {
+      setError(getErrorMessage(err) || "Erro ao salvar configurações.");
       toast.error('Erro ao salvar Índice Tecnológico');
     } finally {
       setSavingAll(false);

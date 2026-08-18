@@ -51,7 +51,7 @@ export function useCultureDictionary(tenantId: string) {
     retry: 1,                        // Fail fast if API unreachable
   });
 
-  const cultures = query.data || [];
+  const cultures = useMemo(() => query.data || [], [query.data]);
 
   // Memoized: lookup map for O(1) translation
   const nameMap = useMemo(() => {

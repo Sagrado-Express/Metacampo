@@ -6,6 +6,13 @@ type AuthResult =
   | { error: NextResponse; supabase: null; tenantId: null; role: null }
   | { error: null; supabase: SupabaseClient; tenantId: string; role: string };
 
+interface ItUpdatePayload {
+  safra?: string;
+  crop_name?: string;
+  segment_name?: string;
+  value_per_hectare?: number;
+}
+
 const FORBIDDEN = NextResponse.json(
   { error: 'FORBIDDEN', message: 'Só administradores podem configurar o Índice Tecnológico do tenant.' },
   { status: 403 }
@@ -57,7 +64,7 @@ export async function GET(request: Request) {
     }));
 
     return NextResponse.json(mapped);
-  } catch (err: any) {
+  } catch (err) {
     console.error('[IT API] Supabase failed (GET):', err);
     return NextResponse.json(
       {
@@ -105,7 +112,7 @@ export async function POST(request: Request) {
       valorPorHectareCentavos: data.value_per_hectare,
       createdAt: data.created_at
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[IT API] Supabase failed (POST):', err);
     return NextResponse.json(
       {
@@ -130,7 +137,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 });
     }
 
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: ItUpdatePayload = {};
     if (safra !== undefined) updatePayload.safra = safra;
     if (cultivo !== undefined) updatePayload.crop_name = cultivo;
     if (segmento !== undefined) updatePayload.segment_name = segmento;
@@ -155,7 +162,7 @@ export async function PATCH(request: Request) {
       valorPorHectareCentavos: data.value_per_hectare,
       createdAt: data.created_at
     });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[IT API] Supabase failed (PATCH):', err);
     return NextResponse.json(
       {
@@ -188,7 +195,7 @@ export async function DELETE(request: Request) {
     if (dbError) throw dbError;
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[IT API] Supabase failed (DELETE):', err);
     return NextResponse.json(
       {

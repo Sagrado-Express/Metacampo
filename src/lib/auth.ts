@@ -10,15 +10,28 @@ import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
+ * Payload de interesse de um JWT do Supabase — só os campos que este app lê.
+ */
+interface JwtPayload {
+  sub?: string;
+  email?: string;
+  exp?: number;
+  role?: string;
+  tenant_id?: string;
+  app_metadata?: { role?: string; tenant_id?: string };
+  user_metadata?: { full_name?: string };
+}
+
+/**
  * Decodes a base64url encoded JWT payload.
  */
-function decodeJwtPayload(token: string): any {
+function decodeJwtPayload(token: string): JwtPayload | null {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const payloadJson = Buffer.from(parts[1], 'base64').toString('utf-8');
     return JSON.parse(payloadJson);
-  } catch (e) {
+  } catch {
     return null;
   }
 }

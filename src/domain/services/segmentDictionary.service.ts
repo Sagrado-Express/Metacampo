@@ -14,9 +14,7 @@
  *  But the name I bring is associated to what I decided to call it."
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import path from 'path';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { TenantClassificacao, TenantCultura } from '@/types/schema';
 
 // ============================================================
@@ -59,6 +57,50 @@ export interface CreateCulturaInput {
   aliases?: string[];
   ibgeProduto?: string | null;
   ibgeTipo?: 'temporaria' | 'permanente' | null;
+}
+
+interface ClassificacaoUpdatePayload {
+  custom_name?: string;
+  aliases?: string[];
+  is_active?: boolean;
+  display_order?: number;
+  color?: string;
+}
+
+interface CulturaUpdatePayload {
+  custom_name?: string;
+  display_order?: number;
+  is_active?: boolean;
+  aliases?: string[];
+}
+
+// Formato bruto das linhas como o Supabase devolve (snake_case), refletindo
+// as colunas reais de tenant_config_classificacoes / tenant_config_culturas
+// em docs/schema_completo_supabase.sql.
+interface ClassificacaoRow {
+  id: string;
+  tenant_id: string;
+  internal_key: string;
+  parent_key: string | null;
+  custom_name: string;
+  aliases: string[] | null;
+  is_active: boolean | null;
+  display_order: number | null;
+  color: string | null;
+  created_at: string | null;
+}
+
+interface CulturaRow {
+  id: string;
+  tenant_id: string;
+  internal_key: string;
+  custom_name: string;
+  aliases: string[] | null;
+  ibge_produto: string | null;
+  ibge_tipo: 'temporaria' | 'permanente' | null;
+  is_active: boolean | null;
+  display_order: number | null;
+  created_at: string | null;
 }
 
 // ============================================================
@@ -175,7 +217,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return mapRowToClassificacao(data);
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -197,7 +239,7 @@ export class SegmentDictionaryService {
     input: UpdateClassificacaoInput
   ): Promise<TenantClassificacao> {
     try {
-      const updatePayload: Record<string, any> = {};
+      const updatePayload: ClassificacaoUpdatePayload = {};
 
       if (input.customName !== undefined) updatePayload.custom_name = input.customName;
       if (input.aliases !== undefined) updatePayload.aliases = input.aliases;
@@ -241,7 +283,7 @@ export class SegmentDictionaryService {
       }
 
       return mapRowToClassificacao(data);
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -305,7 +347,7 @@ export class SegmentDictionaryService {
         .eq('tenant_id', tenantId);
 
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -347,7 +389,7 @@ export class SegmentDictionaryService {
 
       const updatedAliases = [...currentAliases, normalizedAlias];
       return this.updateClassificacao(supabase, tenantId, id, { aliases: updatedAliases });
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -369,7 +411,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return (data || []).map(mapRowToClassificacao);
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -390,7 +432,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return (data || []).map(mapRowToClassificacao);
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -493,7 +535,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return mapRowToCultura(data);
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -515,7 +557,7 @@ export class SegmentDictionaryService {
 
       if (error) throw error;
       return (data || []).map(mapRowToCultura);
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -555,7 +597,7 @@ export class SegmentDictionaryService {
     id: string,
     input: { customName?: string; displayOrder?: number; isActive?: boolean; aliases?: string[] }
   ): Promise<TenantCultura> {
-    const updatePayload: Record<string, any> = {};
+    const updatePayload: CulturaUpdatePayload = {};
     if (input.customName !== undefined) updatePayload.custom_name = input.customName;
     if (input.displayOrder !== undefined) updatePayload.display_order = input.displayOrder;
     if (input.isActive !== undefined) updatePayload.is_active = input.isActive;
@@ -620,7 +662,7 @@ export class SegmentDictionaryService {
         .eq('tenant_id', tenantId);
 
       if (error) throw error;
-    } catch (err: any) {
+    } catch (err) {
       throw err;
     }
   }
@@ -630,7 +672,7 @@ export class SegmentDictionaryService {
 // Row Mappers (Supabase snake_case → TypeScript camelCase)
 // ============================================================
 
-function mapRowToClassificacao(row: any): TenantClassificacao {
+function mapRowToClassificacao(row: ClassificacaoRow): TenantClassificacao {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -638,14 +680,14 @@ function mapRowToClassificacao(row: any): TenantClassificacao {
     parentKey: row.parent_key,
     customName: row.custom_name,
     aliases: row.aliases || [],
-    isActive: row.is_active,
-    displayOrder: row.display_order,
-    color: row.color,
+    isActive: row.is_active ?? true,
+    displayOrder: row.display_order ?? 0,
+    color: row.color ?? DEFAULT_COLORS[0],
     createdAt: row.created_at ? new Date(row.created_at) : undefined,
   };
 }
 
-function mapRowToCultura(row: any): TenantCultura {
+function mapRowToCultura(row: CulturaRow): TenantCultura {
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -654,8 +696,8 @@ function mapRowToCultura(row: any): TenantCultura {
     aliases: row.aliases || [],
     ibgeProduto: row.ibge_produto ?? null,
     ibgeTipo: row.ibge_tipo ?? null,
-    isActive: row.is_active,
-    displayOrder: row.display_order,
+    isActive: row.is_active ?? true,
+    displayOrder: row.display_order ?? 0,
     createdAt: row.created_at ? new Date(row.created_at) : undefined,
   };
 }

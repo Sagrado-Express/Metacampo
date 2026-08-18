@@ -10,7 +10,7 @@ import { cookies } from 'next/headers';
 export async function generateCsrfToken(): Promise<string> {
   const token = crypto.randomUUID();
   // Set cookie – Next.js provides a mutable cookies() API on server components
-  const cookieStore = (await cookies()) as any;
+  const cookieStore = await cookies();
   cookieStore.set('csrf', token, {
     httpOnly: true,
     sameSite: 'strict',

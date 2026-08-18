@@ -21,8 +21,65 @@ import { toast } from '@/lib/toast';
 
 interface PlanejamentoTabsProps {
   tab: 'resumo' | 'editar';
-  tenantId: string;
   onGoToEditar?: () => void;
+}
+
+// Formato de `/api/planejamento/dashboard-full` — ver
+// src/app/api/planejamento/dashboard-full/route.ts para a origem de cada
+// campo. `clientes` e `planejamentoRows` são linhas cruas do banco
+// (snake_case); os demais já vêm computados em camelCase.
+interface ClienteResumo {
+  id: string;
+  name: string;
+}
+
+interface CarteiraLinha {
+  clienteId: string;
+  clienteNome: string;
+  cultura: string;
+  segmento: string;
+  hectares: number;
+  vpmCentavos: number;
+}
+
+interface PorCultivo {
+  cultivo: string;
+  areaTotalHa: number;
+  vpmPotencialCentavos: number;
+}
+
+interface PorSegmento {
+  segmento: string;
+  potencialCentavos: number;
+}
+
+interface CulturaResumo {
+  custom_name: string;
+}
+
+interface SegmentoResumo {
+  custom_name: string;
+}
+
+interface PlanejamentoRow {
+  cliente_id?: string;
+  clienteId?: string;
+  cultivo: string;
+  segmento: string;
+  valor_planejado_centavos?: number;
+  valorPlanejadoCentavos?: number;
+  share_percentual?: number;
+  sharePercentual?: number;
+}
+
+interface DashboardFullResponse {
+  clientes: ClienteResumo[];
+  carteira: CarteiraLinha[];
+  porCultivo: PorCultivo[];
+  porSegmento: PorSegmento[];
+  planejamentoRows: PlanejamentoRow[];
+  culturas: CulturaResumo[];
+  segmentos: SegmentoResumo[];
 }
 
 const fmt = (v: number) =>
@@ -38,7 +95,7 @@ function PlanejamentoSkeleton() {
   );
 }
 
-export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: PlanejamentoTabsProps) {
+export default function PlanejamentoTabs({ tab, onGoToEditar }: PlanejamentoTabsProps) {
   const queryClient = useQueryClient();
   const [editView, setEditView] = useState<'heatmap' | 'matriz'>('heatmap');
   // null = ainda não escolhido; cai no primeiro segmento ativo do tenant.
@@ -47,7 +104,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['planejamento', 'dashboard-full'],
-    queryFn: async () => {
+    queryFn: async (): Promise<DashboardFullResponse> => {
       const res = await fetch('/api/planejamento/dashboard-full');
       if (!res.ok) throw new Error('Falha ao carregar planejamento');
       return res.json();
@@ -58,7 +115,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
   // Antes era um for-loop refeito em toda renderização do componente (troca
   // de aba, seleção de segmento) — achado em auditoria de performance
   // 11/08/2026, sem custo real hoje com poucas linhas de planejamento.
-  const planejamento: any[] = data?.planejamentoRows || [];
+  const planejamento: PlanejamentoRow[] = useMemo(() => data?.planejamentoRows || [], [data?.planejamentoRows]);
   const { planejadoPorCultivo, planejadoPorSegCrop } = useMemo(() => {
     const porCultivo: Record<string, number> = {};
     const porSegCrop: Record<string, Record<string, number>> = {};
@@ -82,20 +139,20 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
     );
   }
 
-  const clients: any[] = data.clientes || [];
-  const carteira: any[] = data.carteira || [];
-  const byCrop: any[] = data.porCultivo || [];
-  const bySegment: any[] = data.porSegmento || [];
-  const culturas: any[] = data.culturas || [];
-  const segmentosAtivos: any[] = data.segmentos || [];
+  const clients: ClienteResumo[] = data.clientes || [];
+  const carteira: CarteiraLinha[] = data.carteira || [];
+  const byCrop: PorCultivo[] = data.porCultivo || [];
+  const bySegment: PorSegmento[] = data.porSegmento || [];
+  const culturas: CulturaResumo[] = data.culturas || [];
+  const segmentosAtivos: SegmentoResumo[] = data.segmentos || [];
 
   // Cultivos do tenant (Regra #6: nada hardcoded). Fallback: cultivos presentes na carteira.
   const activeCrops: string[] =
     culturas.length > 0
-      ? culturas.map((c: any) => c.custom_name)
-      : Array.from(new Set(byCrop.map((c: any) => c.cultivo)));
+      ? culturas.map((c) => c.custom_name)
+      : Array.from(new Set(byCrop.map((c) => c.cultivo)));
 
-  const activeClientsNames = clients.slice(0, 15).map((c: any) => c.name);
+  const activeClientsNames = clients.slice(0, 15).map((c) => c.name);
 
   // Combinações cliente × cultivo que realmente existem (o cliente tem área
   // cadastrada daquela cultura) — usado para desabilitar no Heatmap as
@@ -105,7 +162,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
   // "Sem Índice Tecnológico" — enganosa, já que o índice existe, só não há
   // área daquela cultura para esse cliente.
   const combosComArea = new Set<string>(
-    carteira.map((l: any) => `${l.clienteNome}::${String(l.cultura).toUpperCase()}`)
+    carteira.map((l) => `${l.clienteNome}::${String(l.cultura).toUpperCase()}`)
   );
 
   // O planejamento é por Cliente × Cultivo × Segmento. O heatmap é 2D, então
@@ -115,9 +172,9 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
     segmentoSelecionado ?? segmentosAtivos[0]?.custom_name;
 
   const heatmapData = planejamento
-    .filter((p: any) => String(p.segmento ?? '') === String(segmentoAtivo ?? ''))
-    .map((p: any) => {
-      const client = clients.find((c: any) => c.id === p.cliente_id || c.id === p.clienteId);
+    .filter((p) => String(p.segmento ?? '') === String(segmentoAtivo ?? ''))
+    .map((p) => {
+      const client = clients.find((c) => c.id === p.cliente_id || c.id === p.clienteId);
       return {
         clientName: client ? client.name : 'Cliente Geral',
         cropName: p.cultivo,
@@ -129,15 +186,15 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
   const vpmDaCombinacao = (clienteId: string, cultivo: string, segmento: string): number =>
     carteira
       .filter(
-        (l: any) =>
+        (l) =>
           l.clienteId === clienteId &&
           String(l.cultura).toUpperCase() === cultivo.toUpperCase() &&
           String(l.segmento).toUpperCase() === segmento.toUpperCase()
       )
-      .reduce((acc: number, l: any) => acc + Number(l.vpmCentavos ?? 0), 0);
+      .reduce((acc, l) => acc + Number(l.vpmCentavos ?? 0), 0);
 
   const handleCellChange = async (clientName: string, cropName: string, newShare: number) => {
-    const client = clients.find((c: any) => c.name === clientName);
+    const client = clients.find((c) => c.name === clientName);
     if (!client) return;
 
     const segmento = segmentoAtivo;
@@ -193,7 +250,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
   /* ───────────────────────── ABA: RESUMO ───────────────────────── */
   if (tab === 'resumo') {
     const totalPotencial = byCrop.reduce(
-      (acc: number, c: any) => acc + Number(c.vpmPotencialCentavos ?? 0), 0
+      (acc, c) => acc + Number(c.vpmPotencialCentavos ?? 0), 0
     );
     const totalPlanejado = Object.values(planejadoPorCultivo).reduce((a, b) => a + b, 0);
 
@@ -219,7 +276,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
             <Sprout className="text-emerald-600" size={16} /> Por Cultivo
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {byCrop.map((crop: any) => {
+            {byCrop.map((crop) => {
               const potencial = Number(crop.vpmPotencialCentavos ?? 0);
               const planejado = planejadoPorCultivo[crop.cultivo] || 0;
               return (
@@ -260,7 +317,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
             <Layers className="text-emerald-600" size={16} /> Por Grupo de Produto
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {bySegment.map((seg: any) => {
+            {bySegment.map((seg) => {
               const potencial = Number(seg.potencialCentavos ?? 0);
               const planejadoSeg = Object.values(planejadoPorSegCrop[seg.segmento] || {}).reduce(
                 (a, b) => a + b, 0
@@ -324,7 +381,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-1">
                 Grupo de Produto
               </span>
-              {segmentosAtivos.map((s: any) => {
+              {segmentosAtivos.map((s) => {
                 const nome = s.custom_name;
                 const ativo = nome === segmentoAtivo;
                 return (
@@ -379,7 +436,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
               </tr>
             </thead>
             <tbody>
-              {bySegment.map((m: any) => {
+              {bySegment.map((m) => {
                 const linha = planejadoPorSegCrop[m.segmento] || {};
                 const totalLinha = Object.values(linha).reduce((a, b) => a + b, 0);
                 return (

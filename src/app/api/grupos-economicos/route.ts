@@ -29,7 +29,7 @@ export async function GET() {
 
     if (error) throw error;
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[grupos-economicos API] Supabase error (GET):', error);
     return unavailable('carregar');
   }
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
     return NextResponse.json(data, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[grupos-economicos API] Supabase error (POST):', error);
     return unavailable('salvar');
   }
@@ -107,7 +107,7 @@ export async function PATCH(request: Request) {
       throw error;
     }
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error) {
     console.error('[grupos-economicos API] Supabase error (PATCH):', error);
     return unavailable('renomear');
   }
@@ -130,7 +130,7 @@ export async function DELETE(request: Request) {
     const { error } = await ctx.supabase.from('grupos_economicos').delete().eq('id', id);
     if (error) throw error;
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[grupos-economicos API] Supabase error (DELETE):', error);
     return unavailable('excluir');
   }

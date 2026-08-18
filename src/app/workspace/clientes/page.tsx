@@ -18,9 +18,39 @@ const fmt = (v: number) =>
 
 type SortField = 'nome' | 'area' | 'vpm';
 
+interface AreaCliente {
+  id: string;
+  cropName: string;
+  areaHa: number;
+  vpmCentavos: number;
+  indiceTecnologicoDefinido: boolean;
+  culturaCadastrada: boolean;
+  aviso: string | null;
+}
+
+interface Cliente {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+  areas: AreaCliente[];
+  vpmTotalCentavos: number;
+  grupoEconomicoId: string | null;
+  grupoEconomicoNome: string | null;
+}
+
+interface ClientesResponse {
+  data: Cliente[];
+  configuracao?: {
+    semSegmentosConfigurados: boolean;
+    semCulturasConfiguradas: boolean;
+    culturasNaoCadastradas: string[];
+  };
+}
+
 // Soma todas as áreas cadastradas do cliente (um cliente pode ter várias
 // culturas/áreas) — usado para ordenação e para os totais do rodapé.
-const totalAreaHa = (c: any) => (c.areas || []).reduce((s: number, a: any) => s + Number(a.areaHa || 0), 0);
+const totalAreaHa = (c: Cliente) => (c.areas || []).reduce((s: number, a: AreaCliente) => s + Number(a.areaHa || 0), 0);
 
 function SortIcon({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: 'asc' | 'desc' }) {
   if (sortField !== field) return <ChevronsUpDown size={12} className="opacity-40" />;
@@ -31,7 +61,7 @@ export default function ClientesPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
   const { addToast } = useToast();
   const [showModal, setShowModal] = useState(false);
-  const [editClient, setEditClient] = useState<any>(null);
+  const [editClient, setEditClient] = useState<Cliente | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [editingGroup, setEditingGroup] = useState<{ id: string; nome: string } | null>(null);
   const [search, setSearch] = useState('');
@@ -42,7 +72,7 @@ export default function ClientesPage() {
 
   const { data: payload, refetch, isLoading } = useQuery({
     queryKey: ['clientes', tenantId],
-    queryFn: async () => {
+    queryFn: async (): Promise<ClientesResponse> => {
       const res = await fetch('/api/clientes');
       if (!res.ok) throw new Error('Falha ao buscar clientes');
       return res.json();
@@ -51,7 +81,7 @@ export default function ClientesPage() {
   });
 
   // A rota responde { data, configuracao, pagination } desde a paginação.
-  const clientes: any[] = payload?.data ?? [];
+  const clientes: Cliente[] = useMemo(() => payload?.data ?? [], [payload?.data]);
   const configuracao = payload?.configuracao;
 
   // Busca por nome do produtor ou município/UF, aplicada antes do agrupamento
@@ -59,7 +89,7 @@ export default function ClientesPage() {
   const clientesFiltrados = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return clientes;
-    return clientes.filter((c: any) =>
+    return clientes.filter((c) =>
       c.name?.toLowerCase().includes(q) ||
       c.city?.toLowerCase().includes(q) ||
       c.state?.toLowerCase().includes(q)
@@ -72,7 +102,7 @@ export default function ClientesPage() {
   // genérico "Sem grupo econômico" — pedido do Marco Polo em 11/08: o grupo
   // econômico de quem está sozinho é ele mesmo.
   const grupos = useMemo(() => {
-    const map = new Map<string, { id: string; nome: string; clientes: any[]; vpmTotal: number; areaTotal: number; synthetic: boolean }>();
+    const map = new Map<string, { id: string; nome: string; clientes: Cliente[]; vpmTotal: number; areaTotal: number; synthetic: boolean }>();
     for (const c of clientesFiltrados) {
       const gid = c.grupoEconomicoId || `cliente:${c.id}`;
       const gnome = c.grupoEconomicoId ? (c.grupoEconomicoNome || '—') : c.name;
@@ -84,7 +114,7 @@ export default function ClientesPage() {
     }
 
     const dir = sortDir === 'asc' ? 1 : -1;
-    const cmpCliente = (a: any, b: any) => {
+    const cmpCliente = (a: Cliente, b: Cliente) => {
       if (sortField === 'nome') return dir * String(a.name).localeCompare(b.name, 'pt-BR');
       if (sortField === 'area') return dir * (totalAreaHa(a) - totalAreaHa(b));
       return dir * (Number(a.vpmTotalCentavos || 0) - Number(b.vpmTotalCentavos || 0));
@@ -102,14 +132,15 @@ export default function ClientesPage() {
   }, [clientesFiltrados, sortField, sortDir]);
 
   const totais = useMemo(() => ({
-    area: clientesFiltrados.reduce((s: number, c: any) => s + totalAreaHa(c), 0),
-    vpm: clientesFiltrados.reduce((s: number, c: any) => s + Number(c.vpmTotalCentavos || 0), 0),
+    area: clientesFiltrados.reduce((s: number, c) => s + totalAreaHa(c), 0),
+    vpm: clientesFiltrados.reduce((s: number, c) => s + Number(c.vpmTotalCentavos || 0), 0),
   }), [clientesFiltrados]);
 
   const toggleGroup = (id: string) => {
     setCollapsedGroups(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -179,9 +210,9 @@ export default function ClientesPage() {
     );
   }
 
-  const renderClienteRow = (c: any) => {
+  const renderClienteRow = (c: Cliente) => {
     const area = c.areas?.[0];
-    const pendencia = (c.areas || []).find((a: any) => a.aviso)?.aviso ?? null;
+    const pendencia = (c.areas || []).find((a) => a.aviso)?.aviso ?? null;
     const textoPendencia =
       pendencia === 'CULTURA_NAO_CADASTRADA'
         ? 'Cultura não cadastrada'
@@ -322,12 +353,12 @@ export default function ClientesPage() {
         </div>
       )}
 
-      {configuracao?.culturasNaoCadastradas?.length > 0 && (
+      {(configuracao?.culturasNaoCadastradas?.length ?? 0) > 0 && (
         <div className="flex items-start gap-3 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900">
           <AlertTriangle size={18} className="mt-0.5 shrink-0" />
           <div className="text-sm">
             <p className="font-bold">
-              Cultura não cadastrada: {configuracao.culturasNaoCadastradas.join(', ')}
+              Cultura não cadastrada: {configuracao?.culturasNaoCadastradas.join(', ')}
             </p>
             <p>
               Há áreas registradas com cultura que não existe na configuração do tenant.
@@ -483,7 +514,7 @@ export default function ClientesPage() {
 
       {showModal && (
         <NovoClienteModal
-          clienteToEdit={editClient}
+          clienteToEdit={editClient ?? undefined}
           onClose={() => {
             setShowModal(false);
             setEditClient(null);

@@ -39,9 +39,8 @@ describe("useSession", () => {
     });
 
     const { result } = renderHook(() => useSession(), {
-      wrapper: ({ children }) => (
-        React.createElement(QueryClientProvider, { client: queryClient }, children)
-      ) as any,
+      wrapper: ({ children }) =>
+        React.createElement(QueryClientProvider, { client: queryClient }, children),
     });
 
     await waitFor(() => {

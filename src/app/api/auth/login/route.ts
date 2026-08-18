@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAnonClient } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 import { checkRateLimit, getRetryAfter } from '@/lib/rateLimiter';
+import { getErrorMessage } from '@/lib/utils';
 
 /** Helper: extrai IP real mesmo atrás de CDN — mesmo padrão de auth/register. */
 function getClientIp(req: Request): string {
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
   const ip = getClientIp(request);
   const allowed = checkRateLimit(ip, 10, 60_000);
   if (!allowed) {
-    const retryAfter = getRetryAfter(ip, 60_000);
+    const retryAfter = getRetryAfter(ip);
     return NextResponse.json(
       { error: 'Muitas tentativas. Aguarde e tente novamente.' },
       { status: 429, headers: { 'Retry-After': retryAfter.toString() } }
@@ -44,8 +45,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 401 });
       }
       sessionData = data.session;
-    } catch (e: any) {
-      console.error('[auth/login] Supabase inalcançável:', e?.message);
+    } catch (e) {
+      console.error('[auth/login] Supabase inalcançável:', getErrorMessage(e));
       return NextResponse.json(
         {
           error: 'AUTH_SOURCE_UNAVAILABLE',
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, user: sessionData.user });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

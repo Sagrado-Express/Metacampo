@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   // ------------------------------------------------------------------
   const allowed = checkRateLimit(ip, 5, 60_000)
   if (!allowed) {
-    const retryAfter = getRetryAfter(ip, 60_000)
+    const retryAfter = getRetryAfter(ip)
     return NextResponse.json(
       { message: 'Muitas tentativas. Por favor aguarde e tente novamente.' },
       { status: 429, headers: { 'Retry-After': retryAfter.toString() } },

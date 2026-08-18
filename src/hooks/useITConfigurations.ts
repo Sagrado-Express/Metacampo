@@ -70,7 +70,7 @@ async function deleteITConfiguration(id: string): Promise<void> {
 
 export function useITConfigurations(safra: string) {
   const queryClient = useQueryClient();
-  const QUERY_KEY = ["it-configurations", safra];
+  const QUERY_KEY = useMemo(() => ["it-configurations", safra], [safra]);
 
   const query = useQuery({
     queryKey: QUERY_KEY,
@@ -107,7 +107,7 @@ export function useITConfigurations(safra: string) {
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEY });
-  }, [queryClient]);
+  }, [queryClient, QUERY_KEY]);
 
   const upsertMutation = useMutation({
     mutationFn: async (input: UpsertITConfigInput) => {

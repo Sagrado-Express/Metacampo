@@ -1,3 +1,5 @@
+import type { PostgrestError } from '@supabase/supabase-js';
+
 /**
  * O PostgREST (Supabase) trunca silenciosamente por volta de 1000 linhas
  * quando a query não usa `.range()` — sem erro, sem aviso. Pra rotas que
@@ -8,12 +10,11 @@
  * a página vir menor que o tamanho pedido.
  */
 export async function fetchAllRows<T>(
-  buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>,
+  buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: PostgrestError | null }>,
   pageSize = 1000
 ): Promise<T[]> {
   const all: T[] = [];
   let offset = 0;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { data, error } = await buildQuery(offset, offset + pageSize - 1);
     if (error) throw error;

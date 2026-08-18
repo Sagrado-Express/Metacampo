@@ -157,8 +157,8 @@ export interface AuditLog {
   entityType: string;
   changedBy: string; // userId
   changedAt: Date;
-  previousValue: any;
-  newValue: any;
+  previousValue: unknown;
+  newValue: unknown;
   reason?: string;
 }
 
@@ -261,5 +261,5 @@ export interface OfficialSafraPlan {
   createdAt: Date;
   approvedAt?: Date;
   approvedBy?: string;
-  snapshotData: any; // JSONB
+  snapshotData: unknown; // JSONB
 }
