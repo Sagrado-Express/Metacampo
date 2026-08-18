@@ -3,6 +3,7 @@ import { getAuthedContext } from '@/lib/auth';
 import { getTenantMembers, setMemberManager } from '@/lib/services/TenantMembersService';
 import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
 import { getErrorMessage } from '@/lib/utils';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 interface ClassificacaoRow {
   custom_name: string;
@@ -109,6 +110,8 @@ export async function PATCH(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
   if (ctx.role !== 'admin') return FORBIDDEN;
+  const limited = rateLimitResponse(ctx.userId, 30);
+  if (limited) return limited;
 
   try {
     const body = await request.json();

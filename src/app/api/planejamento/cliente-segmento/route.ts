@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 export async function GET() {
   const ctx = await getAuthedContext();
@@ -44,6 +45,10 @@ export async function POST(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const { supabase, tenantId, userId: ctvId } = ctx;
+  // Uma requisição por célula editada no Heatmap — sessão real de edição
+  // pode disparar bem mais chamadas por minuto que uma rota de config comum.
+  const limited = rateLimitResponse(ctvId, 120);
+  if (limited) return limited;
 
   try {
     const body = await request.json();

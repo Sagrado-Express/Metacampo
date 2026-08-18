@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type AuthResult =
-  | { error: NextResponse; supabase: null; tenantId: null; role: null }
-  | { error: null; supabase: SupabaseClient; tenantId: string; role: string };
+  | { error: NextResponse; supabase: null; tenantId: null; role: null; userId: null }
+  | { error: null; supabase: SupabaseClient; tenantId: string; role: string; userId: string };
 
 interface ItUpdatePayload {
   safra?: string;
@@ -22,9 +23,9 @@ const FORBIDDEN = NextResponse.json(
 async function checkAuth(): Promise<AuthResult> {
   const ctx = await getAuthedContext();
   if (!ctx) {
-    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), supabase: null, tenantId: null, role: null };
+    return { error: NextResponse.json({ error: 'Não autenticado' }, { status: 401 }), supabase: null, tenantId: null, role: null, userId: null };
   }
-  return { error: null, supabase: ctx.supabase, tenantId: ctx.tenantId, role: ctx.role };
+  return { error: null, supabase: ctx.supabase, tenantId: ctx.tenantId, role: ctx.role, userId: ctx.userId };
 }
 
 export async function GET(request: Request) {
@@ -77,9 +78,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error, supabase, tenantId, role } = await checkAuth();
+  const { error, supabase, tenantId, role, userId } = await checkAuth();
   if (error) return error;
   if (role !== 'admin') return FORBIDDEN;
+  const limited = rateLimitResponse(userId, 30);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -125,9 +128,11 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { error, supabase, tenantId, role } = await checkAuth();
+  const { error, supabase, tenantId, role, userId } = await checkAuth();
   if (error) return error;
   if (role !== 'admin') return FORBIDDEN;
+  const limited = rateLimitResponse(userId, 30);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -175,9 +180,11 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error, supabase, tenantId, role } = await checkAuth();
+  const { error, supabase, tenantId, role, userId } = await checkAuth();
   if (error) return error;
   if (role !== 'admin') return FORBIDDEN;
+  const limited = rateLimitResponse(userId, 30);
+  if (limited) return limited;
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

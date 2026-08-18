@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { buildItLookup, calcClientVpmTotal } from '@/lib/services/VpmService';
 import { fetchAllRows } from '@/lib/db';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const SAFRA_PADRAO = '25/26';
@@ -106,6 +107,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  const limited = rateLimitResponse(ctx.userId, 30);
+  if (limited) return limited;
 
   try {
     const body = await request.json();

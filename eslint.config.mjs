@@ -28,15 +28,6 @@ const eslintConfig = defineConfig([
     // de task em background, nada a ver com o código deste commit).
     ".claude/worktrees/**",
   ]),
-  {
-    rules: {
-      // 134 ocorrências pré-existentes em 04/08/2026, nenhuma delas um bug
-      // real encontrado nesta auditoria — é dívida de tipagem, não
-      // correção de comportamento. Rebaixado para warning (não bloqueia
-      // commit/lint) até que exista uma tarefa dedicada de tipagem.
-      "@typescript-eslint/no-explicit-any": "warn",
-    },
-  },
 ]);
 
 export default eslintConfig;

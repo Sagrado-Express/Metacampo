@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 interface FaturamentoRow {
   id: string;
@@ -68,6 +69,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const limited = rateLimitResponse(ctx.userId, 30);
+  if (limited) return limited;
   const { supabase, tenantId } = ctx;
 
   try {

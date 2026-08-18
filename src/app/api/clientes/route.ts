@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 import type { SupabaseClient, PostgrestError } from '@supabase/supabase-js';
 
 type AuthResult =
@@ -273,6 +274,8 @@ export async function POST(request: Request) {
   const { error, supabase, tenantId, userId } = await checkAuth();
   if (error) return error;
   const ctvId = userId;
+  const limited = rateLimitResponse(userId, 60);
+  if (limited) return limited;
 
   try {
     const body = await request.json() as ClienteRequestBody;
@@ -395,8 +398,10 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const { error, supabase, tenantId } = await checkAuth();
+  const { error, supabase, tenantId, userId } = await checkAuth();
   if (error) return error;
+  const limited = rateLimitResponse(userId, 60);
+  if (limited) return limited;
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
@@ -527,8 +532,10 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { error, supabase, tenantId } = await checkAuth();
+  const { error, supabase, tenantId, userId } = await checkAuth();
   if (error) return error;
+  const limited = rateLimitResponse(userId, 60);
+  if (limited) return limited;
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 

@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test
+
+      # Sem NEXT_PUBLIC_SUPABASE_* configurado como secret: confirmado
+      # localmente (build com .env.local temporariamente removido, exit 0)
+      # que isso é seguro. As rotas de API são dinâmicas (server-rendered
+      # on demand) e nenhuma página busca dado real do Supabase em
+      # build-time — só aparece o aviso "Supabase credentials missing" nas
+      # rotas, sem falhar o build.
+      - name: Build
+        run: npm run build

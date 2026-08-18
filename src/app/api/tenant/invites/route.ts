@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { getAuthedContext } from '@/lib/auth';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
@@ -45,6 +46,8 @@ export async function POST(request: Request) {
   // 11/08/2026: antes desta checagem, um CTV comum podia se auto-promover
   // a admin chamando esta rota direto com role:'admin' no corpo.
   if (ctx.role !== 'admin') return FORBIDDEN;
+  const limited = rateLimitResponse(ctx.userId, 20);
+  if (limited) return limited;
 
   try {
     const body = await request.json();

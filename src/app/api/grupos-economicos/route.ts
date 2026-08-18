@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
@@ -42,6 +43,11 @@ export async function POST(request: Request) {
   // gerava duplicidade por erro de digitação ("Família Lima" x "familia
   // lima 2") — restrito a admin, igual a cultures/classifications.
   if (ctx.role !== 'admin') return FORBIDDEN;
+  // Get-or-create chamado rotineiramente ao cadastrar cliente (não é
+  // ação rara de admin como as outras rotas de config) — limite mais
+  // folgado que classifications/cultures/indice-tecnologico.
+  const limited = rateLimitResponse(ctx.userId, 60);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -80,6 +86,8 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  const limited = rateLimitResponse(ctx.userId, 30);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -116,6 +124,8 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
+  const limited = rateLimitResponse(ctx.userId, 30);
+  if (limited) return limited;
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');

@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { createAnonClient, supabaseAdmin } from '@/lib/supabase';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.user?.id || !session.user.email) {
     return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
   }
+  // Reautentica com signInWithPassword a cada chamada — mesma superfície de
+  // brute-force que o login, limite igual de estrito.
+  const limited = rateLimitResponse(session.user.id, 10);
+  if (limited) return limited;
 
   let body: { currentPassword?: string; newPassword?: string };
   try {

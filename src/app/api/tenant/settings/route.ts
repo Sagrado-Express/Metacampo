@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
+import { rateLimitResponse } from '@/lib/rateLimiter';
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
@@ -40,6 +41,8 @@ export async function PATCH(request: Request) {
   const ctx = await getAuthedContext();
   if (!ctx) return UNAUTHORIZED;
   if (ctx.role !== 'admin') return FORBIDDEN;
+  const limited = rateLimitResponse(ctx.userId, 30);
+  if (limited) return limited;
 
   try {
     const body = await request.json();
