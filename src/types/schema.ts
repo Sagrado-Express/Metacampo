@@ -78,6 +78,7 @@ export interface TenantClassificacao {
   isActive: boolean;
   displayOrder: number;
   color: string;
+  createdAt?: Date;
 }
 
 /**
@@ -90,8 +91,12 @@ export interface TenantCultura {
   internalKey: string;
   customName: string;
   aliases: string[];
+  /** Item do catalogo IBGE de origem. Null em culturas proprias (ex.: HF). */
+  ibgeProduto: string | null;
+  ibgeTipo: 'temporaria' | 'permanente' | null;
   isActive: boolean;
   displayOrder: number;
+  createdAt?: Date;
 }
 
 /**

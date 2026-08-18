@@ -58,8 +58,14 @@ interface SegmentSettingsProps {
   onDeleteCultura: (id: string) => Promise<void>;
   /** When true, renders only the Culturas section (used by the Cultivos tab). */
   showOnlyCulturas?: boolean;
-  /** When true, renders only the Classificações section (used by the Classificações tab). */
+  /** When true, renders only the Grupos de Produtos section (used by the Grupos de Produtos tab). */
   showOnlyClassifications?: boolean;
+  /** Apelido do tenant pro conceito "Grupo de Produtos" (ex.: "Segmento").
+   *  Undefined/vazio usa o rótulo padrão. */
+  labelGrupoProduto?: string;
+  /** Quando presente, o título da seção vira editável (clique pra trocar o
+   *  apelido). null limpa o apelido e volta pro rótulo padrão. */
+  onChangeLabelGrupoProduto?: (label: string | null) => Promise<void>;
 }
 
 // ============================================================
@@ -76,7 +82,9 @@ interface SegmentSettingsProps {
  * "Como você quer chamar esse campo? O cara dá o nome."
  *
  * Design: Morning Dew (Glass cards, Framer Motion micro-animations)
- * UI Label: "Classificação de Produtos" (not "Segmento")
+ * UI Label: "Grupo de Produtos" (renomeado de "Classificação de Produtos"
+ * a pedido do Marco Polo, 13/08/2026 — o tenant também pode trocar esse
+ * rótulo pelo termo que já usa, ex. "Segmento" (17/08/2026).
  */
 export function SegmentSettings({
   tenantId,
@@ -91,7 +99,12 @@ export function SegmentSettings({
   onDeleteCultura,
   showOnlyCulturas = false,
   showOnlyClassifications = false,
+  labelGrupoProduto: labelGrupoProdutoProp,
+  onChangeLabelGrupoProduto,
 }: SegmentSettingsProps) {
+  const labelGrupoProduto = labelGrupoProdutoProp?.trim() || "Grupo de Produtos";
+  const [editingLabel, setEditingLabel] = useState(false);
+  const [labelDraft, setLabelDraft] = useState(labelGrupoProduto);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [newClassName, setNewClassName] = useState("");
   const [newSubClassName, setNewSubClassName] = useState<Record<string, string>>({});
@@ -116,14 +129,28 @@ export function SegmentSettings({
     });
   };
 
+  const commitLabelGrupoProduto = async () => {
+    setEditingLabel(false);
+    const trimmed = labelDraft.trim();
+    if (!onChangeLabelGrupoProduto || trimmed === labelGrupoProduto) return;
+    try {
+      // Campo vazio = volta pro rótulo padrão "Grupo de Produtos".
+      await onChangeLabelGrupoProduto(trimmed || null);
+      toast.success("Nome do grupo de produtos atualizado");
+    } catch (err: any) {
+      setLabelDraft(labelGrupoProduto);
+      toast.error(err?.message || "Erro ao salvar o nome");
+    }
+  };
+
   const handleCreateClassificacao = async () => {
     if (!newClassName.trim()) return;
     try {
       await onCreateClassificacao(newClassName.trim());
       setNewClassName("");
-      toast.success("Classificação criada");
+      toast.success("Grupo de produto criado");
     } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar classificação");
+      toast.error(err?.message || "Erro ao criar grupo de produto");
     }
   };
 
@@ -133,9 +160,9 @@ export function SegmentSettings({
     try {
       await onCreateClassificacao(name, parentKey);
       setNewSubClassName((prev) => ({ ...prev, [parentKey]: "" }));
-      toast.success("Sub-classificação criada");
+      toast.success("Subgrupo criado");
     } catch (err: any) {
-      toast.error(err?.message || "Erro ao criar sub-classificação");
+      toast.error(err?.message || "Erro ao criar subgrupo");
     }
   };
 
@@ -167,7 +194,7 @@ export function SegmentSettings({
   const handlePromoteAlias = async (item: ClassificacaoItem, alias: string) => {
     if (
       !window.confirm(
-        `Usar "${alias}" como nome desta classificação?\n\n` +
+        `Usar "${alias}" como nome deste grupo de produto?\n\n` +
           `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
           `O código interno (${item.internalKey}) não muda.`
       )
@@ -293,12 +320,12 @@ export function SegmentSettings({
   };
 
   const handleDeleteClassificacaoClick = async (item: ClassificacaoItem) => {
-    if (!window.confirm(`Excluir a classificação "${item.customName}"?\nEssa ação não pode ser desfeita.`)) return;
+    if (!window.confirm(`Excluir o grupo de produto "${item.customName}"?\nEssa ação não pode ser desfeita.`)) return;
     try {
       await onDeleteClassificacao(item.id);
-      toast.success("Classificação excluída");
+      toast.success("Grupo de produto excluído");
     } catch (err: any) {
-      toast.error(err?.message || "Erro ao excluir classificação");
+      toast.error(err?.message || "Erro ao excluir grupo de produto");
     }
   };
 
@@ -372,7 +399,7 @@ export function SegmentSettings({
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Parametrização</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Configure as culturas e classificações de produto do seu negócio.
+            Configure as culturas e grupos de produtos do seu negócio.
             O sistema usará esses nomes em todos os relatórios e dashboards.
           </p>
         </div>
@@ -394,7 +421,10 @@ export function SegmentSettings({
           <div>
             <h2 className="text-lg font-semibold">Culturas</h2>
             <p className="text-xs text-muted-foreground">
-              Quais cultivos sua empresa trabalha?
+              Quais cultivos sua empresa trabalha? Esta é a lista usada no
+              planejamento (VPM) — pra ligar/desligar itens do catálogo
+              oficial do IBGE ou dar apelido a eles, use a aba{" "}
+              <strong>Culturas</strong>, ao lado.
             </p>
           </div>
         </div>
@@ -483,8 +513,8 @@ export function SegmentSettings({
                         Apelidos (nomes alternativos para matching do CSV/ERP)
                       </p>
                       <div className="flex flex-wrap gap-1.5 mb-1">
-                        {/* O nome em uso aparece junto dos apelidos, mesmo padrão da
-                            Classificação de Produtos — deixa claro qual rótulo vale hoje. */}
+                        {/* O nome em uso aparece junto dos apelidos, mesmo padrão do
+                            Grupo de Produtos — deixa claro qual rótulo vale hoje. */}
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                           <Check size={10} />
                           {cultura.customName}
@@ -586,7 +616,7 @@ export function SegmentSettings({
       )}
 
       {/* ========================================== */}
-      {/* Section 2: Classificação de Produtos */}
+      {/* Section 2: Grupo de Produtos */}
       {/* ========================================== */}
       {showClassificacoes && (
       <motion.section
@@ -600,9 +630,44 @@ export function SegmentSettings({
             <Layers size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Classificação de Produtos</h2>
+            {onChangeLabelGrupoProduto && editingLabel ? (
+              <input
+                autoFocus
+                value={labelDraft}
+                onChange={(e) => setLabelDraft(e.target.value)}
+                onBlur={commitLabelGrupoProduto}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                  if (e.key === "Escape") {
+                    setLabelDraft(labelGrupoProduto);
+                    setEditingLabel(false);
+                  }
+                }}
+                placeholder="Grupo de Produtos"
+                className="text-lg font-semibold px-2 py-0.5 -mx-2 rounded-lg border-2 border-primary/60 bg-white outline-none w-56"
+              />
+            ) : onChangeLabelGrupoProduto ? (
+              <button
+                onClick={() => {
+                  setLabelDraft(labelGrupoProduto);
+                  setEditingLabel(true);
+                }}
+                className="text-lg font-semibold underline decoration-dotted decoration-blue-400 underline-offset-4 hover:text-blue-700 transition-colors"
+                title="Clique pra dar seu próprio nome (ex.: Segmento)"
+              >
+                {labelGrupoProduto}
+              </button>
+            ) : (
+              <h2 className="text-lg font-semibold">{labelGrupoProduto}</h2>
+            )}
             <p className="text-xs text-muted-foreground">
-              Como você organiza seu portfólio? Dê o nome que quiser.
+              Como você organiza seu portfólio? Dê o nome que quiser
+              {onChangeLabelGrupoProduto && (
+                <>
+                  {" "}— inclusive pro guarda-chuva em si, clicando no título
+                  acima (ex.: chamar de &quot;Segmento&quot;).
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -698,7 +763,7 @@ export function SegmentSettings({
                       <button
                         onClick={() => handleDeleteClassificacaoClick(root)}
                         className="text-muted-foreground/50 hover:text-destructive transition-colors"
-                        title="Excluir classificação"
+                        title="Excluir grupo de produto"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -735,7 +800,7 @@ export function SegmentSettings({
                                 <button
                                   onClick={() => handlePromoteAlias(root, alias)}
                                   className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 transition-colors"
-                                  title={`Usar "${alias}" como nome desta classificação`}
+                                  title={`Usar "${alias}" como nome deste grupo de produto`}
                                 >
                                   usar como nome
                                 </button>
@@ -838,7 +903,7 @@ export function SegmentSettings({
                             <button
                               onClick={() => handleDeleteClassificacaoClick(child)}
                               className="text-muted-foreground/50 hover:text-destructive transition-colors"
-                              title="Excluir sub-classificação"
+                              title="Excluir subgrupo"
                             >
                               <Trash2 size={12} />
                             </button>
@@ -888,7 +953,7 @@ export function SegmentSettings({
             value={newClassName}
             onChange={(e) => setNewClassName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreateClassificacao()}
-            placeholder="Nome da classificação (ex: Defensivos, Sementes...)"
+            placeholder="Nome do grupo de produto (ex: Defensivos, Sementes...)"
             className="flex-1 px-4 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button

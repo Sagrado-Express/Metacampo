@@ -142,7 +142,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
 
     const segmento = segmentoAtivo;
     if (!segmento) {
-      toast.error('Configure ao menos uma classificação de produto antes de planejar.');
+      toast.error('Configure ao menos um grupo de produto antes de planejar.');
       return;
     }
 
@@ -257,7 +257,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
         {/* Cards por segmento */}
         <div>
           <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-2">
-            <Layers className="text-emerald-600" size={16} /> Por Classificação de Produto
+            <Layers className="text-emerald-600" size={16} /> Por Grupo de Produto
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {bySegment.map((seg: any) => {
@@ -306,7 +306,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
               : 'bg-muted/30 text-muted-foreground hover:bg-muted/50'
           }`}
         >
-          Matriz (Classificação × Cultivo)
+          Matriz (Grupo de Produto × Cultivo)
         </button>
       </div>
 
@@ -316,13 +316,13 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
               e o heatmap edita um segmento por vez. */}
           {segmentosAtivos.length === 0 ? (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800">
-              Nenhuma classificação de produto cadastrada. Configure em{' '}
-              <strong>Configurações → Classificações</strong> antes de planejar.
+              Nenhum grupo de produto cadastrado. Configure em{' '}
+              <strong>Configurações → Grupos de Produtos</strong> antes de planejar.
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-1">
-                Classificação
+                Grupo de Produto
               </span>
               {segmentosAtivos.map((s: any) => {
                 const nome = s.custom_name;
@@ -361,7 +361,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
       {editView === 'matriz' && (
         <div className="glass-card-premium p-6 overflow-x-auto">
           <h3 className="text-lg font-bold mb-1 flex items-center gap-2">
-            <LayoutGrid className="text-emerald-600" size={18} /> Matriz Classificação × Cultivo
+            <LayoutGrid className="text-emerald-600" size={18} /> Matriz Grupo de Produto × Cultivo
           </h3>
           <p className="text-[11px] text-muted-foreground mb-4">
             Valores planejados consolidados. Para alterar, edite pelo Apetite (Cliente × Cultivo).
@@ -369,7 +369,7 @@ export default function PlanejamentoTabs({ tab, tenantId, onGoToEditar }: Planej
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border/40">
-                <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Classificação</th>
+                <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Grupo de Produto</th>
                 {activeCrops.map((crop) => (
                   <th key={crop} className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest px-2">
                     {crop}

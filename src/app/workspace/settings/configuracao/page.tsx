@@ -23,13 +23,16 @@ import { ITMatrix } from "@/components/admin/ITMatrix";
 import { useSegmentDictionary } from "@/hooks/useSegmentDictionary";
 import { useCultureDictionary } from "@/hooks/useCultureDictionary";
 import { useSession } from "@/hooks/useSession";
+import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { cn } from "@/lib/utils";
 
 /**
  * /workspace/settings/configuracao
  *
  * Unified 3-tab tenant settings page:
- *   - Classificações (Product Segments)
+ *   - Grupos de Produtos (Product Segments — nome de exibição trocado de
+ *     "Classificação" a pedido do Marco Polo, 13/08/2026; internalKey/
+ *     tabela/rotas continuam "classificac(oes|ao)" de propósito)
  *   - Cultivos (Crops)
  *   - Índice Tecnológico (matriz R$/ha)
  *
@@ -39,13 +42,11 @@ import { cn } from "@/lib/utils";
 
 type Tab = "classificacoes" | "culturas" | "cultivos" | "it-se" | "usuarios";
 
+// Ordem pedida pelo Marco Polo (13/08/2026): cultivo, depois grupo de
+// produtos, depois Índice Tecnológico — a matriz do IT cruza cultivo x
+// grupo de produto, então faz sentido o usuário já ter passado pelos dois
+// antes de chegar nela.
 const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: string }[] = [
-  {
-    id: "classificacoes",
-    label: "Classificações",
-    icon: Layers,
-    color: "text-blue-600",
-  },
   {
     id: "culturas",
     label: "Culturas",
@@ -57,6 +58,12 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: str
     label: "Cultivos",
     icon: Sprout,
     color: "text-green-600",
+  },
+  {
+    id: "classificacoes",
+    label: "Grupos de Produtos",
+    icon: Layers,
+    color: "text-blue-600",
   },
   {
     id: "it-se",
@@ -75,8 +82,9 @@ const TABS: { id: Tab; label: string; icon: React.ComponentType<any>; color: str
 export default function ConfiguracaoPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
   const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
-  const [activeTab, setActiveTab] = useState<Tab>("classificacoes");
+  const [activeTab, setActiveTab] = useState<Tab>("culturas");
   const [safra, setSafra] = useState("25/26");
+  const { labelGrupoProduto, setLabelGrupoProduto } = useTenantSettings();
 
   const {
     classifications,
@@ -123,7 +131,7 @@ export default function ConfiguracaoPage() {
     });
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error || "Erro ao salvar classificação");
+      throw new Error(err.error || "Erro ao salvar grupo de produto");
     }
     invalidateClassifications();
   };
@@ -152,7 +160,7 @@ export default function ConfiguracaoPage() {
     });
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error || "Erro ao criar classificação");
+      throw new Error(err.error || "Erro ao criar grupo de produto");
     }
     invalidateClassifications();
   };
@@ -164,7 +172,7 @@ export default function ConfiguracaoPage() {
     );
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error || "Erro ao deletar classificação");
+      throw new Error(err.error || "Erro ao deletar grupo de produto");
     }
     invalidateClassifications();
   };
@@ -221,6 +229,26 @@ export default function ConfiguracaoPage() {
     if (!response.ok) {
       const err = await response.json();
       throw new Error(err.error || "Erro ao habilitar cultura");
+    }
+    invalidateCultures();
+    refetchTodasCulturas();
+  };
+
+  // Cria um SEGUNDO cultivo apontando pro mesmo produto do catálogo, com nome
+  // próprio — não reaproveita registro existente de propósito, é sempre um
+  // novo (diferente de handleHabilitarDoCatalogo). Caso de uso pedido pelo
+  // Marco Polo (13/08/2026): Milho 1ª safra e Milho 2ª safra/safrinha usam
+  // tecnologia muito diferente, mas são o mesmo produto "Milho (em grão)" no
+  // IBGE — ver Regra Nº6 do CLAUDE.md.
+  const handleAdicionarVariante = async (produto: string, tipo: TipoCultura, customName: string) => {
+    const response = await fetch("/api/cultures", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tenantId, customName, ibgeProduto: produto, ibgeTipo: tipo }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao criar variante");
     }
     invalidateCultures();
     refetchTodasCulturas();
@@ -316,19 +344,19 @@ export default function ConfiguracaoPage() {
             <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Defina suas classificações de produto, cultivos e Índice Tecnológico (R$/ha).
+            Defina seus grupos de produtos, cultivos e Índice Tecnológico (R$/ha).
           </p>
         </div>
       </div>
 
-      {/* Aviso de somente-leitura: classificações/culturas/cultivos/Índice
-          Tecnológico passaram a ser admin-only numa auditoria de segurança
-          (11/08/2026) — configurar isso afeta o VPM de todos os CTVs do
-          tenant. A aba Usuários já mostra o próprio aviso. */}
+      {/* Aviso de somente-leitura: grupos de produtos/culturas/cultivos/
+          Índice Tecnológico passaram a ser admin-only numa auditoria de
+          segurança (11/08/2026) — configurar isso afeta o VPM de todos os
+          CTVs do tenant. A aba Usuários já mostra o próprio aviso. */}
       {sessionData?.role && sessionData.role !== "admin" && activeTab !== "usuarios" && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
           <strong>⚠ Somente leitura.</strong> Só administradores podem alterar
-          classificações, culturas, cultivos e o Índice Tecnológico do tenant.
+          grupos de produtos, culturas, cultivos e o Índice Tecnológico do tenant.
         </div>
       )}
 
@@ -361,10 +389,12 @@ export default function ConfiguracaoPage() {
                 size={15}
                 className={isActive ? tab.color : "text-muted-foreground/60"}
               />
-              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="hidden sm:inline">
+                {tab.id === "classificacoes" && labelGrupoProduto ? labelGrupoProduto : tab.label}
+              </span>
               <span className="sm:hidden">
                 {tab.id === "classificacoes"
-                  ? "Class."
+                  ? "Grupos"
                   : tab.id === "culturas"
                   ? "Cultur."
                   : tab.id === "cultivos"
@@ -401,7 +431,7 @@ export default function ConfiguracaoPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.18 }}
           >
-            {/* ── Classificações ── */}
+            {/* ── Grupos de Produtos ── */}
             {activeTab === "classificacoes" && (
               <div className="glass-card p-6">
                 <SegmentSettings
@@ -415,6 +445,10 @@ export default function ConfiguracaoPage() {
                   onSaveCultura={handleSaveCultura}
                   onCreateCultura={handleCreateCultura}
                   onDeleteCultura={handleDeleteCultura}
+                  labelGrupoProduto={labelGrupoProduto || undefined}
+                  onChangeLabelGrupoProduto={async (label) => {
+                    await setLabelGrupoProduto(label);
+                  }}
                   showOnlyClassifications
                 />
               </div>
@@ -428,6 +462,7 @@ export default function ConfiguracaoPage() {
                   onHabilitar={handleHabilitarDoCatalogo}
                   onDesabilitar={handleDesabilitarDoCatalogo}
                   onDefinirApelido={handleDefinirApelidoCultura}
+                  onAdicionarVariante={handleAdicionarVariante}
                 />
               </div>
             )}

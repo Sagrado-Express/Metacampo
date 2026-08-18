@@ -216,7 +216,7 @@ export function ITMatrix({
         <p className="text-sm font-medium">
           {activeCulturas.length === 0
             ? "Nenhuma cultura ativa. Adicione culturas na aba Cultivos."
-            : "Nenhuma classificação ativa. Adicione classificações na aba Classificações."}
+            : "Nenhum grupo de produto ativo. Adicione na aba Grupos de Produtos."}
         </p>
       </div>
     );
@@ -237,7 +237,7 @@ export function ITMatrix({
           <div>
             <h2 className="text-lg font-semibold">Índice Tecnológico</h2>
             <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-              Valor de referência R$/ha por cultivo × classificação — Safra{" "}
+              Valor de referência R$/ha por cultivo × grupo de produto — Safra{" "}
               {editingSafra ? (
                 <input
                   autoFocus
@@ -305,7 +305,7 @@ export function ITMatrix({
       <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50/60 border border-blue-100 text-xs text-blue-700">
         <Info size={12} className="mt-0.5 shrink-0" />
         <span>
-          Edite o valor R$/ha para cada combinação cultivo × classificação.
+          Edite o valor R$/ha para cada combinação cultivo × grupo de produto.
           Clique em{" "}
           <strong>Salvar</strong> para persistir as alterações no banco de dados.
         </span>
@@ -317,7 +317,7 @@ export function ITMatrix({
           <thead>
             <tr className="bg-muted/30">
               <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider border-b border-border/40 min-w-[140px]">
-                Cultivo ↓ / Classificação →
+                Cultivo ↓ / Grupo de Produto →
               </th>
               {activeSegmentos.map((seg) => (
                 <th

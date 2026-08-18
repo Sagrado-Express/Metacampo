@@ -4,7 +4,7 @@ import { SegmentDictionaryService } from '@/domain/services/segmentDictionary.se
 
 const UNAUTHORIZED = NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 const FORBIDDEN = NextResponse.json(
-  { error: 'FORBIDDEN', message: 'Só administradores podem configurar classificações do tenant.' },
+  { error: 'FORBIDDEN', message: 'Só administradores podem configurar grupos de produtos do tenant.' },
   { status: 403 }
 );
 

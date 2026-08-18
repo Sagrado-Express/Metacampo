@@ -17,37 +17,20 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import type { TenantClassificacao, TenantCultura } from '@/types/schema';
 
 // ============================================================
 // Types
 // ============================================================
+//
+// TenantClassificacao e TenantCultura vem de @/types/schema — fonte unica.
+// Ate 17/08/2026 este arquivo tinha sua propria copia de TenantCultura com
+// ibgeProduto/ibgeTipo que a copia em @/types/schema nao tinha, forcando
+// CatalogoCulturas.tsx a manter um terceiro tipo local so pra contornar o
+// tipo compartilhado incompleto. Reexportar aqui mantem quem ja importa
+// { TenantClassificacao, TenantCultura } deste arquivo funcionando.
 
-export interface TenantClassificacao {
-  id: string;
-  tenantId: string;
-  internalKey: string;
-  parentKey: string | null;
-  customName: string;
-  aliases: string[];
-  isActive: boolean;
-  displayOrder: number;
-  color: string;
-  createdAt?: Date;
-}
-
-export interface TenantCultura {
-  id: string;
-  tenantId: string;
-  internalKey: string;
-  customName: string;
-  aliases: string[];
-  /** Item do catalogo IBGE de origem. Null em culturas proprias (ex.: HF). */
-  ibgeProduto: string | null;
-  ibgeTipo: 'temporaria' | 'permanente' | null;
-  isActive: boolean;
-  displayOrder: number;
-  createdAt?: Date;
-}
+export type { TenantClassificacao, TenantCultura };
 
 export interface ClassificacaoTree {
   root: TenantClassificacao;
@@ -146,7 +129,7 @@ export class SegmentDictionaryService {
 
       if (checkError) throw checkError;
       if (existing) {
-        throw new Error(`Classificação com chave "${internalKey}" já existe para este tenant.`);
+        throw new Error(`Grupo de produto com chave "${internalKey}" já existe para este tenant.`);
       }
 
       // If parent_key is provided, validate it exists
@@ -161,7 +144,7 @@ export class SegmentDictionaryService {
 
         if (parentError) throw parentError;
         if (!parent) {
-          throw new Error(`Classificação pai "${input.parentKey}" não encontrada ou inativa.`);
+          throw new Error(`Grupo de produto pai "${input.parentKey}" não encontrado ou inativo.`);
         }
       }
 

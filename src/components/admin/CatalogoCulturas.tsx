@@ -29,14 +29,19 @@ interface Props {
   onHabilitar: (produto: string, tipo: TipoCultura) => Promise<void>;
   onDesabilitar: (id: string) => Promise<void>;
   onDefinirApelido: (id: string, apelido: string) => Promise<void>;
+  /** Cria um segundo (ou terceiro) cultivo apontando pro mesmo produto do
+   *  catalogo, com nome proprio — caso de Milho safra vs. Milho safrinha. */
+  onAdicionarVariante: (produto: string, tipo: TipoCultura, customName: string) => Promise<void>;
 }
 
-export function CatalogoCulturas({ culturas, onHabilitar, onDesabilitar, onDefinirApelido }: Props) {
+export function CatalogoCulturas({ culturas, onHabilitar, onDesabilitar, onDefinirApelido, onAdicionarVariante }: Props) {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<"todas" | TipoCultura | "ativas">("todas");
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [editandoApelido, setEditandoApelido] = useState<string | null>(null);
   const [rascunhoApelido, setRascunhoApelido] = useState("");
+  const [adicionandoVariante, setAdicionandoVariante] = useState<string | null>(null);
+  const [rascunhoVariante, setRascunhoVariante] = useState("");
 
   // Mapa produto IBGE -> cultura do tenant. Mais de uma cultura pode apontar
   // para o mesmo produto (Milho safra e Milho safrinha), então guardamos lista.
@@ -91,18 +96,29 @@ export function CatalogoCulturas({ culturas, onHabilitar, onDesabilitar, onDefin
     await acao(c.id, () => onDefinirApelido(c.id, apelido), "Apelido salvo");
   };
 
+  const salvarVariante = async (produto: string, tipo: TipoCultura) => {
+    const nome = rascunhoVariante.trim();
+    setAdicionandoVariante(null);
+    setRascunhoVariante("");
+    if (!nome) return;
+    await acao(`variante-${produto}`, () => onAdicionarVariante(produto, tipo, nome), "Variante criada");
+  };
+
   return (
     <div className="space-y-5">
       {/* Cabeçalho */}
       <div>
         <p className="text-sm text-muted-foreground">
-          Catálogo do IBGE com {TOTAL_TEMPORARIAS} culturas temporárias e {TOTAL_PERMANENTES}{" "}
-          permanentes. Habilite as que a sua carteira atende e, se quiser, dê um apelido —
-          o nome oficial costuma ser longo demais para o dia a dia.
+          Catálogo oficial do IBGE com {TOTAL_TEMPORARIAS} culturas temporárias e{" "}
+          {TOTAL_PERMANENTES} permanentes — é só a lista de referência. Habilite as
+          que a sua carteira atende e, se quiser, dê um apelido — o nome oficial
+          costuma ser longo demais para o dia a dia.
         </p>
         <p className="text-xs text-muted-foreground mt-1.5">
-          O catálogo não limita: culturas próprias como <strong>HF</strong> ou{" "}
-          <strong>Milho safrinha</strong> continuam sendo criadas na aba Cultivos.
+          Quem entra de fato no planejamento (VPM) é a aba <strong>Cultivos</strong>,
+          ao lado — habilitar aqui só adiciona o item lá. O catálogo não limita:
+          culturas próprias como <strong>HF</strong> ou <strong>Milho safrinha</strong>{" "}
+          continuam sendo criadas direto na aba Cultivos.
         </p>
       </div>
 
@@ -216,6 +232,40 @@ export function CatalogoCulturas({ culturas, onHabilitar, onDesabilitar, onDefin
                   <p className="text-[10px] text-muted-foreground mt-1">
                     {vinculadas.filter((c) => c.isActive).map((c) => c.customName).join(" · ")}
                   </p>
+                )}
+
+                {/* Segundo cultivo no mesmo produto — ex.: separar por safra */}
+                {ativa && (
+                  <div className="mt-1">
+                    {adicionandoVariante === produto.nome ? (
+                      <input
+                        autoFocus
+                        value={rascunhoVariante}
+                        onChange={(e) => setRascunhoVariante(e.target.value)}
+                        onBlur={() => salvarVariante(produto.nome, produto.tipo)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") salvarVariante(produto.nome, produto.tipo);
+                          if (e.key === "Escape") {
+                            setAdicionandoVariante(null);
+                            setRascunhoVariante("");
+                          }
+                        }}
+                        placeholder="ex: Milho safrinha"
+                        className="px-2 py-0.5 rounded-full border border-emerald-300 text-[10px] w-36 focus:outline-none"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setAdicionandoVariante(produto.nome);
+                          setRascunhoVariante("");
+                        }}
+                        className="text-[10px] text-emerald-700 hover:underline font-semibold"
+                        title="Criar outro cultivo apontando pra este mesmo produto — ex.: separar por safra"
+                      >
+                        + variante (outra safra/uso)
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 

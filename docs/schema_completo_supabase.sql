@@ -22,7 +22,11 @@ CREATE TABLE IF NOT EXISTS public.tenants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nome TEXT NOT NULL,
     plano TEXT DEFAULT 'MVP',
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    -- Apelido do tenant pro conceito "Grupo de Produtos" (ex.: "Segmento").
+    -- NULL = usa o rótulo padrão. Migration 20260817180000, pedido do
+    -- Marco Polo (13/08/2026).
+    label_grupo_produto TEXT
 );
 
 -- 2. Clientes (produtores) — nome de produção é `clientes`, não `customers`.
@@ -318,6 +322,14 @@ CREATE POLICY user_tenants_self ON public.user_tenants
 -- tenants: cada usuário só enxerga o próprio tenant
 CREATE POLICY tenant_self ON public.tenants
   FOR SELECT USING (id = public.current_tenant_id());
+
+-- tenants: UPDATE tenant-scoped (igual toda outra tabela); admin-only é
+-- reforçado na API route (/api/tenant/settings), não em RLS — este schema
+-- não tem helper de role em policy nenhuma.
+CREATE POLICY tenant_update_own ON public.tenants
+  FOR UPDATE
+  USING (id = public.current_tenant_id())
+  WITH CHECK (id = public.current_tenant_id());
 
 -- ============================================================
 -- ÍNDICES
