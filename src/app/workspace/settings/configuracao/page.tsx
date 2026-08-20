@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Layers,
@@ -9,13 +8,11 @@ import {
   TrendingUp,
   Settings2,
   ChevronLeft,
-  Leaf,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { SegmentSettings, type ClassificacaoItem, type CulturaItem } from "@/components/admin/SegmentSettings";
-import { CatalogoCulturas } from "@/components/admin/CatalogoCulturas";
 import { UserInvites } from "@/components/admin/UserInvites";
 import { EstruturaComercial } from "@/components/admin/EstruturaComercial";
 import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
@@ -26,38 +23,38 @@ import { useCultureDictionary } from "@/hooks/useCultureDictionary";
 import { useSession } from "@/hooks/useSession";
 import { useTenantSettings } from "@/hooks/useTenantSettings";
 import { cn } from "@/lib/utils";
-import type { TenantCultura } from "@/types/schema";
 
 /**
  * /workspace/settings/configuracao
  *
- * Unified 3-tab tenant settings page:
+ * Unified tenant settings page:
+ *   - Cultura (catálogo IBGE + dicionário do tenant — unificados numa aba só
+ *     a pedido do Marco Polo, 19/08/2026; eram "Culturas" e "Cultivos"
+ *     separadas, o que ele achou confuso desde o feedback de 13/08)
  *   - Grupos de Produtos (Product Segments — nome de exibição trocado de
  *     "Classificação" a pedido do Marco Polo, 13/08/2026; internalKey/
  *     tabela/rotas continuam "classificac(oes|ao)" de propósito)
- *   - Cultivos (Crops)
  *   - Índice Tecnológico (matriz R$/ha)
  *
  * Uses existing SegmentSettings component + new ITMatrix.
  * tenantId: resolved dynamically via useSession.
  */
 
-type Tab = "classificacoes" | "culturas" | "cultivos" | "it-se" | "usuarios";
+type Tab = "classificacoes" | "cultura" | "it-se" | "usuarios";
 
-// Ordem pedida pelo Marco Polo (13/08/2026): cultivo, depois grupo de
-// produtos, depois Índice Tecnológico — a matriz do IT cruza cultivo x
+// Ordem pedida pelo Marco Polo (13/08/2026): cultura, depois grupo de
+// produtos, depois Índice Tecnológico — a matriz do IT cruza cultura x
 // grupo de produto, então faz sentido o usuário já ter passado pelos dois
 // antes de chegar nela.
+//
+// "Culturas" (catálogo IBGE) e "Cultivos" (dicionário do tenant) eram duas
+// abas separadas até 19/08/2026 — unificadas numa só a pedido do Marco Polo
+// (feedback de 13/08 já apontava a nomenclatura como confusa; o texto
+// explicativo adicionado em 17/08 não foi suficiente). Ver reunião 19/08.
 const TABS: { id: Tab; label: string; icon: LucideIcon; color: string }[] = [
   {
-    id: "culturas",
-    label: "Culturas",
-    icon: Leaf,
-    color: "text-emerald-600",
-  },
-  {
-    id: "cultivos",
-    label: "Cultivos",
+    id: "cultura",
+    label: "Cultura",
     icon: Sprout,
     color: "text-green-600",
   },
@@ -84,7 +81,7 @@ const TABS: { id: Tab; label: string; icon: LucideIcon; color: string }[] = [
 export default function ConfiguracaoPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
   const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
-  const [activeTab, setActiveTab] = useState<Tab>("culturas");
+  const [activeTab, setActiveTab] = useState<Tab>("cultura");
   const [safra, setSafra] = useState("25/26");
   const { labelGrupoProduto, setLabelGrupoProduto } = useTenantSettings();
 
@@ -101,17 +98,6 @@ export default function ConfiguracaoPage() {
     isLoading: isLoadingCultures,
     isError: isErrorCultures,
   } = useCultureDictionary(tenantId);
-
-  // O catálogo precisa também das culturas desligadas, que o hook acima não traz.
-  const { data: todasCulturas = [], refetch: refetchTodasCulturas } = useQuery({
-    queryKey: ["culturas-todas", tenantId],
-    queryFn: async (): Promise<TenantCultura[]> => {
-      const res = await fetch("/api/cultures?todas=true");
-      if (!res.ok) throw new Error("Falha ao carregar culturas");
-      return res.json();
-    },
-    enabled: !!tenantId,
-  });
 
   // ============================================================
   // Classification handlers
@@ -201,12 +187,7 @@ export default function ConfiguracaoPage() {
       const err = await response.json();
       throw new Error(err.error || "Erro ao salvar cultura");
     }
-    // Duas queries cobrem culturas: esta (só a aba Cultivos) e todasCulturas
-    // (aba Culturas/catálogo, que também precisa saber de toggle/rename/apelido
-    // feitos aqui — sem isso a aba Culturas ficava com dado velho depois de
-    // qualquer ação na aba Cultivos).
     invalidateCultures();
-    refetchTodasCulturas();
   };
 
   // ── Catálogo IBGE ──────────────────────────────────────────
@@ -214,7 +195,7 @@ export default function ConfiguracaoPage() {
   // em vez de criar outro com o mesmo internal_key (que a unique bloquearia).
 
   const handleHabilitarDoCatalogo = async (produto: string, tipo: TipoCultura) => {
-    const existente = todasCulturas.find((c) => c.ibgeProduto === produto);
+    const existente = cultures.find((c) => c.ibgeProduto === produto);
 
     const response = existente
       ? await fetch("/api/cultures", {
@@ -233,7 +214,6 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao habilitar cultura");
     }
     invalidateCultures();
-    refetchTodasCulturas();
   };
 
   // Cria um SEGUNDO cultivo apontando pro mesmo produto do catálogo, com nome
@@ -253,38 +233,6 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao criar variante");
     }
     invalidateCultures();
-    refetchTodasCulturas();
-  };
-
-  const handleDesabilitarDoCatalogo = async (id: string) => {
-    const response = await fetch("/api/cultures", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, isActive: false }),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || "Erro ao desabilitar cultura");
-    }
-    invalidateCultures();
-    refetchTodasCulturas();
-  };
-
-  const handleDefinirApelidoCultura = async (id: string, apelido: string) => {
-    const atual = todasCulturas.find((c) => c.id === id);
-    const aliases = [...(atual?.aliases ?? []), apelido];
-
-    const response = await fetch("/api/cultures", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, aliases }),
-    });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || "Erro ao salvar apelido");
-    }
-    invalidateCultures();
-    refetchTodasCulturas();
   };
 
   const handleCreateCultura = async (customName: string) => {
@@ -298,7 +246,6 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao criar cultura");
     }
     invalidateCultures();
-    refetchTodasCulturas();
   };
 
   const handleDeleteCultura = async (id: string) => {
@@ -311,7 +258,6 @@ export default function ConfiguracaoPage() {
       throw new Error(err.error || "Erro ao deletar cultura");
     }
     invalidateCultures();
-    refetchTodasCulturas();
   };
 
   // ============================================================
@@ -346,7 +292,7 @@ export default function ConfiguracaoPage() {
             <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Defina seus grupos de produtos, cultivos e Índice Tecnológico (R$/ha).
+            Defina suas culturas, grupos de produtos e Índice Tecnológico (R$/ha).
           </p>
         </div>
       </div>
@@ -358,7 +304,7 @@ export default function ConfiguracaoPage() {
       {sessionData?.role && sessionData.role !== "admin" && activeTab !== "usuarios" && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
           <strong>⚠ Somente leitura.</strong> Só administradores podem alterar
-          grupos de produtos, culturas, cultivos e o Índice Tecnológico do tenant.
+          grupos de produtos, culturas e o Índice Tecnológico do tenant.
         </div>
       )}
 
@@ -397,10 +343,8 @@ export default function ConfiguracaoPage() {
               <span className="sm:hidden">
                 {tab.id === "classificacoes"
                   ? "Grupos"
-                  : tab.id === "culturas"
-                  ? "Cultur."
-                  : tab.id === "cultivos"
-                  ? "Cultiv."
+                  : tab.id === "cultura"
+                  ? "Cultura"
                   : tab.id === "usuarios"
                   ? "Users"
                   : "IT"}
@@ -455,21 +399,8 @@ export default function ConfiguracaoPage() {
               </div>
             )}
 
-            {/* ── Culturas (catalogo IBGE) ── */}
-            {activeTab === "culturas" && (
-              <div className="glass-card p-6">
-                <CatalogoCulturas
-                  culturas={todasCulturas}
-                  onHabilitar={handleHabilitarDoCatalogo}
-                  onDesabilitar={handleDesabilitarDoCatalogo}
-                  onDefinirApelido={handleDefinirApelidoCultura}
-                  onAdicionarVariante={handleAdicionarVariante}
-                />
-              </div>
-            )}
-
-            {/* ── Cultivos ── */}
-            {activeTab === "cultivos" && (
+            {/* ── Cultura (catálogo IBGE + dicionário do tenant, unificados 19/08/2026) ── */}
+            {activeTab === "cultura" && (
               <div className="glass-card p-6">
                 <SegmentSettings
                   classificacoes={classifications}
@@ -481,6 +412,8 @@ export default function ConfiguracaoPage() {
                   onSaveCultura={handleSaveCultura}
                   onCreateCultura={handleCreateCultura}
                   onDeleteCultura={handleDeleteCultura}
+                  onHabilitarDoCatalogo={handleHabilitarDoCatalogo}
+                  onAdicionarVariante={handleAdicionarVariante}
                   showOnlyCulturas
                 />
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -12,12 +12,14 @@ import {
   ToggleRight,
   Trash2,
   Sprout,
+  TreePine,
   Layers,
   X,
   Check,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/utils";
+import { CATALOGO_IBGE, type TipoCultura } from "@/data/culturas_ibge";
 
 // ============================================================
 // Types (local to this component, mirrors TenantClassificacao)
@@ -41,6 +43,10 @@ export interface CulturaItem {
   aliases: string[];
   isActive: boolean;
   displayOrder: number;
+  /** Item do catálogo IBGE de origem, se habilitada a partir dele. Null em
+   *  culturas próprias (ex.: HF). */
+  ibgeProduto: string | null;
+  ibgeTipo: TipoCultura | null;
 }
 
 interface SegmentSettingsProps {
@@ -54,7 +60,14 @@ interface SegmentSettingsProps {
   onSaveCultura: (item: CulturaItem) => Promise<void>;
   onCreateCultura: (customName: string) => Promise<void>;
   onDeleteCultura: (id: string) => Promise<void>;
-  /** When true, renders only the Culturas section (used by the Cultivos tab). */
+  /** Habilita um produto do catálogo IBGE, reaproveitando o registro do tenant
+   *  se ele já existiu e foi desligado. Sem isto, o campo de busca só cria
+   *  culturas próprias (sem vínculo IBGE). */
+  onHabilitarDoCatalogo?: (produto: string, tipo: TipoCultura) => Promise<void>;
+  /** Cria um segundo cultivo apontando pro mesmo produto do catálogo, com nome
+   *  próprio — caso de Milho safra vs. Milho safrinha. */
+  onAdicionarVariante?: (produto: string, tipo: TipoCultura, customName: string) => Promise<void>;
+  /** When true, renders only the Culturas section (used by the Cultura tab). */
   showOnlyCulturas?: boolean;
   /** When true, renders only the Grupos de Produtos section (used by the Grupos de Produtos tab). */
   showOnlyClassifications?: boolean;
@@ -94,6 +107,8 @@ export function SegmentSettings({
   onSaveCultura,
   onCreateCultura,
   onDeleteCultura,
+  onHabilitarDoCatalogo,
+  onAdicionarVariante,
   showOnlyCulturas = false,
   showOnlyClassifications = false,
   labelGrupoProduto: labelGrupoProdutoProp,
@@ -105,7 +120,10 @@ export function SegmentSettings({
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [newClassName, setNewClassName] = useState("");
   const [newSubClassName, setNewSubClassName] = useState<Record<string, string>>({});
-  const [newCulturaName, setNewCulturaName] = useState("");
+  const [culturaSearch, setCulturaSearch] = useState("");
+  const [showCulturaSuggestions, setShowCulturaSuggestions] = useState(false);
+  const [addingVarianteFor, setAddingVarianteFor] = useState<string | null>(null);
+  const [varianteDraft, setVarianteDraft] = useState("");
   const [editingAliases, setEditingAliases] = useState<Record<string, string>>({});
   const [renaming, setRenaming] = useState<{ kind: "classificacao" | "cultura"; id: string } | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
@@ -163,14 +181,65 @@ export function SegmentSettings({
     }
   };
 
-  const handleCreateCultura = async () => {
-    if (!newCulturaName.trim()) return;
+  // ─── Busca no catálogo IBGE + criação livre (tela unificada, 19/08/2026) ───
+  // Produtos do catálogo que já têm uma cultura ATIVA vinculada não aparecem
+  // mais como sugestão (não faz sentido "habilitar" de novo o que já está na
+  // lista) — inativos continuam aparecendo, escolhê-los reativa o registro
+  // existente (mesma lógica de onHabilitarDoCatalogo).
+  const produtosAtivos = useMemo(() => {
+    const set = new Set<string>();
+    culturas.forEach((c) => {
+      if (c.isActive && c.ibgeProduto) set.add(c.ibgeProduto);
+    });
+    return set;
+  }, [culturas]);
+
+  const normalizar = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+  const sugestoesCatalogo = useMemo(() => {
+    const q = normalizar(culturaSearch.trim());
+    if (!q) return [];
+    return CATALOGO_IBGE.filter(
+      (p) => !produtosAtivos.has(p.nome) && normalizar(p.nome).includes(q)
+    ).slice(0, 6);
+  }, [culturaSearch, produtosAtivos]);
+
+  const handleSelecionarCatalogo = async (produto: string, tipo: TipoCultura) => {
+    if (!onHabilitarDoCatalogo) return;
+    setCulturaSearch("");
+    setShowCulturaSuggestions(false);
     try {
-      await onCreateCultura(newCulturaName.trim());
-      setNewCulturaName("");
+      await onHabilitarDoCatalogo(produto, tipo);
+      toast.success(`${produto} habilitada`);
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao habilitar cultura");
+    }
+  };
+
+  const handleCreateCultura = async () => {
+    const nome = culturaSearch.trim();
+    if (!nome) return;
+    setCulturaSearch("");
+    setShowCulturaSuggestions(false);
+    try {
+      await onCreateCultura(nome);
       toast.success("Cultura criada");
     } catch (err) {
       toast.error(getErrorMessage(err) || "Erro ao criar cultura");
+    }
+  };
+
+  const salvarVariante = async (produto: string, tipo: TipoCultura) => {
+    const nome = varianteDraft.trim();
+    setAddingVarianteFor(null);
+    setVarianteDraft("");
+    if (!nome || !onAdicionarVariante) return;
+    try {
+      await onAdicionarVariante(produto, tipo, nome);
+      toast.success("Variante criada");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao criar variante");
     }
   };
 
@@ -416,12 +485,18 @@ export function SegmentSettings({
             <Sprout size={20} />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Culturas</h2>
+            <h2 className="text-lg font-semibold">Cultura</h2>
             <p className="text-xs text-muted-foreground">
-              Quais cultivos sua empresa trabalha? Esta é a lista usada no
-              planejamento (VPM) — pra ligar/desligar itens do catálogo
-              oficial do IBGE ou dar apelido a eles, use a aba{" "}
-              <strong>Culturas</strong>, ao lado.
+              Quais culturas sua empresa trabalha? Esta é a lista usada no
+              planejamento (VPM). Digite pra buscar no catálogo oficial do
+              IBGE — habilitar de lá poupa digitação — ou crie uma cultura
+              própria, sem correspondência no catálogo (ex.: <strong>HF</strong>).
+            </p>
+            <p className="text-[10px] text-muted-foreground/70 mt-1">
+              Catálogo: PAM/IBGE (Produção Agrícola Municipal). Milho, Feijão,
+              Batata-inglesa e Amendoim já vêm separados por safra, e Café por
+              variedade — segundo o LSPA/IBGE (Levantamento Sistemático da
+              Produção Agrícola), fonte de referência para essa separação.
             </p>
           </div>
         </div>
@@ -465,6 +540,19 @@ export function SegmentSettings({
                   <span className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full">
                     {cultura.internalKey}
                   </span>
+                  {cultura.ibgeProduto && (
+                    <span
+                      className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full"
+                      title={`Do catálogo IBGE: ${cultura.ibgeProduto}`}
+                    >
+                      {cultura.ibgeTipo === "permanente" ? (
+                        <TreePine size={10} />
+                      ) : (
+                        <Sprout size={10} />
+                      )}
+                      IBGE
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -568,6 +656,43 @@ export function SegmentSettings({
                           <Plus size={12} />
                         </button>
                       </div>
+
+                      {/* Segundo cultivo no mesmo produto — ex.: separar por safra */}
+                      {cultura.ibgeProduto && onAdicionarVariante && (
+                        <div className="mt-2 pt-2 border-t border-border/20">
+                          {addingVarianteFor === cultura.ibgeProduto ? (
+                            <input
+                              autoFocus
+                              value={varianteDraft}
+                              onChange={(e) => setVarianteDraft(e.target.value)}
+                              onBlur={() =>
+                                salvarVariante(cultura.ibgeProduto!, cultura.ibgeTipo!)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  salvarVariante(cultura.ibgeProduto!, cultura.ibgeTipo!);
+                                if (e.key === "Escape") {
+                                  setAddingVarianteFor(null);
+                                  setVarianteDraft("");
+                                }
+                              }}
+                              placeholder="ex: Milho safrinha"
+                              className="px-2 py-1 rounded-lg border border-emerald-300 text-xs w-40 focus:outline-none"
+                            />
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setAddingVarianteFor(cultura.ibgeProduto);
+                                setVarianteDraft("");
+                              }}
+                              className="text-[10px] text-emerald-700 hover:underline font-semibold"
+                              title="Criar outro cultivo apontando pra este mesmo produto — ex.: separar por safra"
+                            >
+                              + variante (outra safra/uso)
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -576,24 +701,60 @@ export function SegmentSettings({
           ))}
         </div>
 
-        {/* Add Cultura */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newCulturaName}
-            onChange={(e) => setNewCulturaName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreateCultura()}
-            placeholder="Nome da cultura (ex: Soja, Milho...)"
-            className="flex-1 px-4 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <button
-            onClick={handleCreateCultura}
-            disabled={!newCulturaName.trim()}
-            className="px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-medium hover:bg-green-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
-          >
-            <Plus size={14} />
-            Adicionar
-          </button>
+        {/* Add Cultura — busca no catálogo IBGE com fallback pra criação livre */}
+        <div className="relative">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={culturaSearch}
+              onChange={(e) => {
+                setCulturaSearch(e.target.value);
+                setShowCulturaSuggestions(true);
+              }}
+              onFocus={() => setShowCulturaSuggestions(true)}
+              onBlur={() => {
+                // Delay pra permitir o clique numa sugestão antes do dropdown sumir.
+                setTimeout(() => setShowCulturaSuggestions(false), 150);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateCultura();
+                if (e.key === "Escape") setShowCulturaSuggestions(false);
+              }}
+              placeholder="Buscar no catálogo IBGE ou digitar uma cultura própria..."
+              className="flex-1 px-4 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+            <button
+              onClick={handleCreateCultura}
+              disabled={!culturaSearch.trim()}
+              className="px-4 py-2 rounded-xl bg-green-500 text-white text-sm font-medium hover:bg-green-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              title="Cria uma cultura própria, sem vínculo com o catálogo IBGE"
+            >
+              <Plus size={14} />
+              Criar própria
+            </button>
+          </div>
+
+          {showCulturaSuggestions && sugestoesCatalogo.length > 0 && onHabilitarDoCatalogo && (
+            <div className="absolute z-10 mt-1 w-full max-w-md bg-white rounded-xl border border-border/40 shadow-lg overflow-hidden">
+              <p className="px-3 pt-2 pb-1 text-[9px] font-black uppercase tracking-wider text-muted-foreground">
+                Do catálogo IBGE
+              </p>
+              {sugestoesCatalogo.map((p) => (
+                <button
+                  key={p.nome}
+                  onClick={() => handleSelecionarCatalogo(p.nome, p.tipo)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-emerald-50 transition-colors"
+                >
+                  {p.tipo === "permanente" ? (
+                    <TreePine size={13} className="text-muted-foreground/60 shrink-0" />
+                  ) : (
+                    <Sprout size={13} className="text-muted-foreground/60 shrink-0" />
+                  )}
+                  {p.nome}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Totalizador */}
