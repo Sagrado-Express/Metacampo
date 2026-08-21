@@ -71,7 +71,7 @@ export default function Heatmap({ data, clients, crops, validCombos, onCellChang
           <tr className="border-b border-border/40">
             <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest pl-2">Cliente / Produtor</th>
             {crops.map(crop => (
-              <th key={crop} className="pb-3 text-center font-black text-muted-foreground uppercase tracking-widest px-4">{crop}</th>
+              <th key={crop} className="pb-3 text-center font-black text-muted-foreground tracking-widest px-4">{crop}</th>
             ))}
           </tr>
         </thead>

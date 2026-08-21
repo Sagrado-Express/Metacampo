@@ -487,7 +487,7 @@ segunda metade da lógica.
 | E2-S2 Cadastro de Admin + convite | 🟡 Parcial | Convidar usuário **para um tenant existente** funciona ponta a ponta, agora com escolha de papel (admin vs CTV) — ver 16.5. Criar tenant novo via self-service **não existe** — tenants só nascem via SQL/seed manual |
 | E3-S1 Corrigir build (`SEGMENTOS` legacy) | ➖ Obsoleto | As rotas afetadas (`/ctv`, `/governance`, `/manager`, `/admin`) foram removidas, não corrigidas |
 | E3-S2 Renomear ITAA → Índice Tecnológico | 🟡 Parcial | UI 100% correta. Tabela continua `it_se_configurations` (nome técnico, não visível ao usuário) |
-| E3-S3 Segmentos/cultivos configuráveis | ✅ Feito | Além do escopo original: apelidos, promoção de apelido a nome, catálogo IBGE |
+| E3-S3 Segmentos/cultivos configuráveis | ✅ Feito | Além do escopo original: apelidos, promoção de apelido a nome, catálogo IBGE (64 culturas da PAM, 5 com separação por safra via LSPA, ver 16.7). Abas Culturas/Cultivos unificadas em uma só, "Cultura" (19-20/08/2026) |
 | E4-S1 Religar `/workspace` a dados reais | ✅ Feito | Via rota diferente da prevista: a tela foi substituída (Início), não "religada" |
 | E4-S2 Religar `/ctv`/`/manager`/`/admin`/`/governance` | ➖ Obsoleto | Removidas por serem código morto (mock, zero rota apontando pra elas), não religadas |
 | E5-S1 Persistir CSV | ❌ Não feito | Sem parser, sem conciliação, sem tela |
@@ -745,3 +745,71 @@ cookies, sem GET com efeito colateral); chave hardcoded em scripts
 antigos confirmada inócua (projeto Supabase morto, já documentado);
 `GET /api/tenant/members` é rota sem consumidor HTTP (import resolve
 in-process) — código morto opcional, não bug.
+
+### 16.7 Árvore comercial, feedback de 13/08, saúde técnica e unificação Cultura/Cultivo (11-20/08/2026)
+
+Esta seção estava desatualizada desde 11/08/2026 — encontrado numa auditoria
+de código em 19/08/2026 (a própria árvore comercial, em produção desde
+11/08, nunca tinha ganhado entrada aqui). Board de acompanhamento vivo,
+compartilhado com o Marco Polo, publicado como Artifact:
+https://claude.ai/code/artifact/600fc4f3-bcd2-46a4-a6a8-4c1c9d7d7ebc.
+
+**Árvore comercial CTV → Gerente → Diretor regional (11/08/2026, commit
+`f4c1747`)** — `EstruturaComercial.tsx`, aba Usuários. Rollup de VPM
+verificado batendo a conta manual (R$ 1.177.000 do admin = R$ 430.000 de
+carteira própria + R$ 747.000 do subordinado). "Gerente" não é um papel do
+sistema — é só o campo `manager_id` em `user_tenants`, atribuível entre
+membros já convidados via `PATCH /api/tenant/members` (sem `POST`
+dedicado — falta uma tela de cadastro direto de gerente, registrado como
+pendência no board).
+
+**Feedback do Marco Polo de 13/08 — 9 dos 10 itens corrigidos (17/08/2026,
+commits `6ee85dd` e `0502750`)**: bug de desabilitar/reabilitar cultivo,
+apelido de cultivo inconsistente entre abas, variante de cultivo por safra
+(Milho safra/safrinha), reordenação de abas, "Grupo de Produtos" renomeado
+e apelidável por tenant, seletor de safra no Índice Tecnológico, remoção de
+soma inválida entre cultivos distintos. O 10º item (nomenclatura confusa
+Cultura×Cultivo) recebeu só texto explicativo nessa rodada — insuficiente,
+ver unificação abaixo.
+
+**Saúde técnica geral (18/08/2026, commits `cd3cbf0` e `2d0b5da`)**: 224
+warnings de lint zerados (`no-explicit-any` retipado contra o schema real);
+rate limit em 13 rotas que gravavam sem proteção; CI (`ci.yml`, type-check +
+lint + test + build em todo push); Sentry migrado pro padrão compatível com
+Turbopack; `error.tsx`/`global-error.tsx` com retry; lógica de agrupamento
+do import de clientes extraída e testada (15 testes novos); dependências
+vulneráveis de 34 para 1 (Next.js, Vitest, `uuid` morto removido) —
+sobrou só `xlsx`, sem correção disponível do mantenedor, usado em 2 scripts
+de extração de planilha (decisão pendente do usuário: aceitar o risco ou
+remover os scripts).
+
+**Unificação Cultura/Cultivo + catálogo IBGE com safra via LSPA
+(19-20/08/2026, commit `12af6bc`)**: as abas "Culturas" (catálogo IBGE) e
+"Cultivos" (dicionário do tenant) — cuja nomenclatura confusa o item 1 do
+feedback de 13/08 já apontava — foram fundidas numa aba só, "Cultura"
+(`SegmentSettings.tsx`; `CatalogoCulturas.tsx` removido). O campo de
+adicionar cultura busca no catálogo IBGE por digitação (habilitar reaproveita
+registro desativado se existir) ou cria uma cultura própria sem
+correspondência no catálogo (ex.: HF); item vinculado ao catálogo ganha selo
+"IBGE" e a ação "+ variante" direto na lista. Catálogo (`culturas_ibge.ts`)
+continua com as 64 culturas da PAM — extraídos 96 arquivos LSPA/IBGE
+(nov/2025-dez/2026) pra confirmar que só 5 produtos têm separação oficial
+por safra: Milho (1ª/2ª — sem 3ª), Feijão (1ª/2ª/3ª), Batata-inglesa
+(1ª/2ª/3ª), Amendoim (1ª/2ª) e Café por variedade (Arábica/Canephora); só
+esses 5 foram desdobrados, nada removido. Tela informa a fonte (PAM como
+base, LSPA para a separação por safra). Testado ao vivo (login
+`teste1@metacampo.com`): busca no catálogo, habilitar, criar cultura livre e
+criar variante persistiram via API (POST/DELETE 200 confirmados na rede,
+dados de teste removidos depois).
+
+**Padronização de UX na carteira de clientes (20/08/2026)**: nome do grupo
+econômico e nomes de cultivo eram forçados para maiúsculas em alguns lugares
+(cabeçalho de grupo em `/workspace/clientes`, colunas do Heatmap de
+planejamento) mas não em outros (célula "Produtor", lista de Cultura) — a
+mesma informação (nome de pessoa/cultivo) mudava de aparência dependendo de
+onde aparecia na tela. Padronizado para o estilo normal (não forçado a
+maiúsculas) nos dois pontos, consistente com o resto do app. Botão
+"Colapsar/Expandir tudo" renomeado para "Agrupar/Desagrupar tudo" (pedido
+explícito do Marco Polo — "colapsar" é tradução direta do inglês). Coluna
+"Cultivo Principal" da lista de clientes ganhou ordenação (A-Z/Z-A),
+reaproveitando a mesma infraestrutura de ordenação de Produtor/Área/VPM.

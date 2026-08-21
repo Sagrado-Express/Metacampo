@@ -16,7 +16,7 @@ import { useToast } from '@/components/Toast/ToastContext';
 const fmt = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
 
-type SortField = 'nome' | 'area' | 'vpm';
+type SortField = 'nome' | 'area' | 'vpm' | 'cultivo';
 
 interface AreaCliente {
   id: string;
@@ -117,11 +117,25 @@ export default function ClientesPage() {
     const cmpCliente = (a: Cliente, b: Cliente) => {
       if (sortField === 'nome') return dir * String(a.name).localeCompare(b.name, 'pt-BR');
       if (sortField === 'area') return dir * (totalAreaHa(a) - totalAreaHa(b));
+      if (sortField === 'cultivo') {
+        return dir * String(a.areas?.[0]?.cropName || '').localeCompare(String(b.areas?.[0]?.cropName || ''), 'pt-BR');
+      }
       return dir * (Number(a.vpmTotalCentavos || 0) - Number(b.vpmTotalCentavos || 0));
     };
-    const cmpGrupo = (a: { nome: string; areaTotal: number; vpmTotal: number }, b: { nome: string; areaTotal: number; vpmTotal: number }) => {
+    // cultivo não tem um valor "de grupo" — várias fazendas da mesma família
+    // podem plantar coisas diferentes. Usa o cultivo do primeiro cliente do
+    // grupo (já ordenado por cmpCliente antes deste sort rodar) como critério.
+    const cmpGrupo = (
+      a: { nome: string; areaTotal: number; vpmTotal: number; clientes: Cliente[] },
+      b: { nome: string; areaTotal: number; vpmTotal: number; clientes: Cliente[] }
+    ) => {
       if (sortField === 'nome') return dir * a.nome.localeCompare(b.nome, 'pt-BR');
       if (sortField === 'area') return dir * (a.areaTotal - b.areaTotal);
+      if (sortField === 'cultivo') {
+        const ca = a.clientes[0]?.areas?.[0]?.cropName || '';
+        const cb = b.clientes[0]?.areas?.[0]?.cropName || '';
+        return dir * ca.localeCompare(cb, 'pt-BR');
+      }
       return dir * (a.vpmTotal - b.vpmTotal);
     };
 
@@ -396,7 +410,7 @@ export default function ClientesPage() {
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:bg-muted/20 transition-colors"
               >
                 {allCollapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
-                {allCollapsed ? 'Expandir tudo' : 'Colapsar tudo'}
+                {allCollapsed ? 'Desagrupar tudo' : 'Agrupar tudo'}
               </button>
             )}
           </div>
@@ -410,7 +424,11 @@ export default function ClientesPage() {
                   </button>
                 </th>
                 <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Município / UF</th>
-                <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">Cultivo Principal</th>
+                <th className="pb-3 text-left font-black text-muted-foreground uppercase tracking-widest">
+                  <button onClick={() => toggleSort('cultivo')} className="flex items-center gap-1 hover:text-foreground transition-colors">
+                    Cultivo Principal <SortIcon field="cultivo" sortField={sortField} sortDir={sortDir} />
+                  </button>
+                </th>
                 <th className="pb-3 text-right font-black text-muted-foreground uppercase tracking-widest">
                   <button onClick={() => toggleSort('area')} className="flex items-center gap-1 ml-auto hover:text-foreground transition-colors">
                     Área (ha) <SortIcon field="area" sortField={sortField} sortDir={sortDir} />
@@ -468,12 +486,12 @@ export default function ClientesPage() {
                                   if (e.key === 'Enter') renameGroup(g.id, (e.target as HTMLInputElement).value);
                                   if (e.key === 'Escape') setEditingGroup(null);
                                 }}
-                                className="px-2 py-0.5 rounded-lg border border-emerald-300 text-xs font-black uppercase tracking-wider focus:outline-none"
+                                className="px-2 py-0.5 rounded-lg border border-emerald-300 text-xs font-black tracking-wider focus:outline-none"
                               />
                             ) : (
                               <span
                                 onDoubleClick={() => !g.synthetic && setEditingGroup({ id: g.id, nome: g.nome })}
-                                className={`text-xs font-black uppercase tracking-wider ${g.synthetic ? 'text-muted-foreground' : 'text-slate-700 cursor-text'}`}
+                                className={`text-xs font-black tracking-wider ${g.synthetic ? 'text-muted-foreground' : 'text-slate-700 cursor-text'}`}
                                 title={g.synthetic ? undefined : 'Duplo clique para renomear'}
                               >
                                 {g.nome}
