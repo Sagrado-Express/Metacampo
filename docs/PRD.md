@@ -813,3 +813,58 @@ maiúsculas) nos dois pontos, consistente com o resto do app. Botão
 explícito do Marco Polo — "colapsar" é tradução direta do inglês). Coluna
 "Cultivo Principal" da lista de clientes ganhou ordenação (A-Z/Z-A),
 reaproveitando a mesma infraestrutura de ordenação de Produtor/Área/VPM.
+
+### 16.8 Configurações vira submenu + Estrutura Comercial com Regional/Distrital/Território (20/08/2026)
+
+Pedido do usuário: o menu lateral "Configuração" (antes uma página única com
+abas internas) virou um item expansível com 5 submenus navegáveis —
+Índice Tecnológico, Cultura, Grupo de Produtos, Usuários, Estrutura
+Comercial. `/workspace/settings/configuracao` virou um índice que redireciona
+pro primeiro submenu; cada submenu é sua própria rota
+(`.../cultura`, `.../grupos-de-produtos`, etc.), com um `layout.tsx`
+compartilhando só o cabeçalho. `Sidebar.tsx` ganhou suporte a item de menu
+com filhos (não existia antes — só lista plana); o submenu aberto é
+derivado do `pathname` a cada render (não guardado em `useEffect`+`setState`,
+que o lint do projeto bloqueia como anti-padrão — `react-hooks/set-state-in-effect`).
+
+**Estrutura Comercial redesenhada**: a árvore antiga (CTV → gerente →
+diretor, só por `manager_id` entre pessoas já convidadas, sem unidade
+organizacional nomeada) foi substituída por uma hierarquia com código:
+Regional (código, ex. "SP") → Distrital (código, ex. "SP-1") → Território
+(nome, ex. "Oeste") → CTV. Decisão confirmada com o usuário: os 3 níveis
+precisam de login de verdade (cada responsável é um `user_id` real de
+`user_tenants`, atribuído a partir da aba Usuários — não um nome livre).
+`manager_id` **não foi removido** do schema, só parou de ser a fonte desta
+tela.
+
+- **Schema**: `regionais`, `distritais`, `territorios` (migration
+  `20260820120000_hierarquia_regional_distrital_territorio.sql`), cada uma
+  tenant-scoped com RLS (`tenant_isolation`, mesmo padrão de
+  `grupos_economicos`), FK composta pro responsável em `user_tenants`.
+  Cadastro em linha (planilha): `POST /api/estrutura-comercial` faz
+  get-or-create por código de Regional/Distrital e cria/atualiza o
+  Território — reenviar um código já usado reatribui o responsável em vez
+  de duplicar.
+- **Verificado que não havia nada pra migrar**: consulta direta no banco de
+  produção mostrou **zero** `manager_id` preenchido nos 4 tenants existentes
+  — a afirmação anterior desta mesma seção ("árvore comercial CTV → gerente
+  → diretor regional, em produção desde 11/08") descrevia dado de teste que
+  não sobreviveu (provavelmente limpo ao fim daquela sessão de verificação).
+  Card antigo `EstruturaComercial.tsx` (o componente da árvore por
+  `manager_id`) removido — órfão, sem nenhum import restante.
+- **Testado ao vivo, ponta a ponta** (login real, servidor dev contra banco
+  de produção): cadastro de uma linha (Regional SP/Tenant A → Distrital
+  SP-1/Nao Admin Teste → Território Oeste/CTV Nao Admin Teste) — POST 201,
+  árvore renderizou os 3 níveis com rollup de VPM correto em cada um
+  (R$ 747.000,00, batendo o VPM potencial do CTV). Reatribuição de
+  responsável (PATCH) e exclusão em cascata de uma regional (DELETE,
+  `ON DELETE CASCADE` apagou distrital e território junto) — confirmados
+  via rede, não só visual. Bloqueio de não-admin confirmado nos dois
+  níveis: formulário escondido na UI **e** `POST` retornando `403 FORBIDDEN`
+  de verdade pro usuário `naoadmin.teste@metacampo.com` (JWT com
+  `role: user`), não só escondido no front.
+- **Não verificado**: isolamento de RLS entre dois tenants diferentes nas 3
+  tabelas novas não foi reexercitado com `test_rls_dashboard.js` (que é
+  hardcoded pras tabelas que já cobria) — a policy é estruturalmente
+  idêntica à de `grupos_economicos`, já provada, mas não é o mesmo que
+  rodar o teste de novo.

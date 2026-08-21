@@ -50,8 +50,10 @@ export interface CulturaItem {
 }
 
 interface SegmentSettingsProps {
-  classificacoes: ClassificacaoItem[];
-  culturas: CulturaItem[];
+  /** Só é lido quando a seção de Grupo de Produtos está visível (showOnlyClassifications). */
+  classificacoes?: ClassificacaoItem[];
+  /** Só é lido quando a seção de Cultura está visível (showOnlyCulturas). */
+  culturas?: CulturaItem[];
   onSaveClassificacao: (item: ClassificacaoItem) => Promise<void>;
   /** Troca um apelido com o nome de exibição atual. */
   onPromoteAlias: (id: string, alias: string) => Promise<void>;
@@ -98,8 +100,8 @@ interface SegmentSettingsProps {
  * rótulo pelo termo que já usa, ex. "Segmento" (17/08/2026).
  */
 export function SegmentSettings({
-  classificacoes,
-  culturas,
+  classificacoes = [],
+  culturas = [],
   onSaveClassificacao,
   onPromoteAlias,
   onCreateClassificacao,
