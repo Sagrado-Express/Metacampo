@@ -110,9 +110,18 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    await SegmentDictionaryService.deactivateCultura(ctx.supabase, ctx.tenantId, id);
+    await SegmentDictionaryService.deleteCultura(ctx.supabase, ctx.tenantId, id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (getErrorMessage(error) === 'CULTURA_EM_USO') {
+      return NextResponse.json(
+        {
+          error: 'CULTURA_EM_USO',
+          message: 'Essa cultura já tem dado de cliente, Índice Tecnológico ou planejamento associado — não pode ser excluída. Desabilite em vez de excluir.',
+        },
+        { status: 409 }
+      );
+    }
     console.error('[Cultures API] Supabase error (DELETE):', error);
     return unavailable('excluir');
   }

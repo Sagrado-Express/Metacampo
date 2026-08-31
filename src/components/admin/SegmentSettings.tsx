@@ -378,10 +378,16 @@ export function SegmentSettings({
 
   // ─── Exclusão com confirmação ───
   const handleDeleteCulturaClick = async (cultura: CulturaItem) => {
-    if (!window.confirm(`Excluir a cultura "${cultura.customName}"?\nEssa ação não pode ser desfeita.`)) return;
+    if (
+      !window.confirm(
+        `Excluir "${cultura.customName}" de vez?\n\n` +
+          `Só funciona se nenhum cliente, Índice Tecnológico ou planejamento já usa essa cultura — nesse caso, use o interruptor ao lado pra desabilitar em vez de excluir.`
+      )
+    )
+      return;
     try {
       await onDeleteCultura(cultura.id);
-      toast.success("Cultura excluída");
+      toast.success("Cultura excluída de vez");
     } catch (err) {
       toast.error(getErrorMessage(err) || "Erro ao excluir cultura");
     }
@@ -737,7 +743,16 @@ export function SegmentSettings({
           </div>
 
           {showCulturaSuggestions && sugestoesCatalogo.length > 0 && onHabilitarDoCatalogo && (
-            <div className="absolute z-10 mt-1 w-full max-w-md bg-white rounded-xl border border-border/40 shadow-lg overflow-hidden">
+            <div
+              // onMouseDown com preventDefault evita que o clique numa
+              // sugestão dispare blur no input antes do onClick rodar — sem
+              // isso, o fechamento do dropdown por blur (mais abaixo) podia
+              // vencer a corrida contra o clique em conexões/interações mais
+              // lentas, e o clique "não fazia nada" (bug real reportado pelo
+              // Marco Polo, 25/08/2026, não reproduzia sempre).
+              onMouseDown={(e) => e.preventDefault()}
+              className="absolute z-10 mt-1 w-full max-w-md bg-white rounded-xl border border-border/40 shadow-lg overflow-hidden"
+            >
               <p className="px-3 pt-2 pb-1 text-[9px] font-black uppercase tracking-wider text-muted-foreground">
                 Do catálogo IBGE
               </p>

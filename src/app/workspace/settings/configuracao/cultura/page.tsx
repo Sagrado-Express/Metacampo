@@ -85,7 +85,7 @@ export default function CulturaPage() {
     const response = await fetch(`/api/cultures?tenantId=${tenantId}&id=${id}`, { method: "DELETE" });
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error || "Erro ao deletar cultura");
+      throw new Error(err.message || err.error || "Erro ao deletar cultura");
     }
     invalidateCultures();
   };

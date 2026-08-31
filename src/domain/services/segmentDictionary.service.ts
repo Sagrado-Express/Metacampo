@@ -647,7 +647,7 @@ export class SegmentDictionaryService {
   }
 
   /**
-   * Deactivates a crop (soft-delete).
+   * Deactivates a crop (soft-delete) — usada pelo toggle habilitar/desabilitar.
    */
   static async deactivateCultura(
     supabase: SupabaseClient,
@@ -665,6 +665,49 @@ export class SegmentDictionaryService {
     } catch (err) {
       throw err;
     }
+  }
+
+  /**
+   * Exclui de verdade uma cultura — só quando nenhum dado real usa o nome
+   * dela ainda (mesmas 3 tabelas que updateCultura propaga rename para:
+   * it_se_configurations, customer_crop_areas, planejamento_cliente_segmento
+   * — todas casam por nome, não por FK). Se estiver em uso, lança
+   * 'CULTURA_EM_USO' em vez de apagar — o botão "Excluir" antes fazia um
+   * soft-delete disfarçado de exclusão permanente (dizia "não pode ser
+   * desfeita" e o item nunca sumia da lista, já que a aba Cultura mostra
+   * ativas e inativas) — bug relatado pelo Marco Polo em 25/08/2026.
+   */
+  static async deleteCultura(supabase: SupabaseClient, tenantId: string, id: string): Promise<void> {
+    const { data: cultura, error: buscaError } = await supabase
+      .from('tenant_config_culturas')
+      .select('custom_name')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single();
+    if (buscaError) throw buscaError;
+
+    const nome = cultura.custom_name;
+
+    const [itUso, areasUso, planejamentoUso] = await Promise.all([
+      supabase.from('it_se_configurations').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('crop_name', nome),
+      supabase.from('customer_crop_areas').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('crop_name', nome),
+      supabase.from('planejamento_cliente_segmento').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('cultivo', nome),
+    ]);
+    if (itUso.error) throw itUso.error;
+    if (areasUso.error) throw areasUso.error;
+    if (planejamentoUso.error) throw planejamentoUso.error;
+
+    const totalEmUso = (itUso.count || 0) + (areasUso.count || 0) + (planejamentoUso.count || 0);
+    if (totalEmUso > 0) {
+      throw new Error('CULTURA_EM_USO');
+    }
+
+    const { error: deleteError } = await supabase
+      .from('tenant_config_culturas')
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', tenantId);
+    if (deleteError) throw deleteError;
   }
 }
 

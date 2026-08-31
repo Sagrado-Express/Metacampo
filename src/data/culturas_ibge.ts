@@ -21,9 +21,14 @@
  * Agrícola) sim. Extraído de 96 arquivos LSPA (nov/2025-dez/2026, ver
  * memória `reuniao_2026-08-19_marco_polo.md`): só 5 produtos têm essa
  * separação nacionalmente — Milho (1ª/2ª safra), Feijão (1ª/2ª/3ª),
- * Batata-inglesa (1ª/2ª/3ª), Amendoim (1ª/2ª), e Café por variedade
- * (Arábica/Canephora, não safra). Os outros 21 produtos do LSPA já existiam
- * na PAM sem diferença de nome — não duplicados aqui.
+ * Batata-inglesa (1ª/2ª/3ª), Amendoim (1ª/2ª), e Café por variedade (não
+ * safra). Os outros 21 produtos do LSPA já existiam na PAM sem diferença
+ * de nome — não duplicados aqui.
+ *
+ * Nomenclatura do Café (25/08/2026): o LSPA usa o termo botânico
+ * "Canephora", mas quem produz no Brasil chama de "Conilon" — trocado aqui
+ * pelo nome que o produtor realmente busca (pedido do Marco Polo). Mesma
+ * espécie (Coffea canephora), não é um produto a mais.
  */
 
 export type TipoCultura = 'temporaria' | 'permanente';
@@ -82,7 +87,7 @@ export const CULTURAS_PERMANENTES: string[] = [
   'Banana (cacho)',
   'Cacau (em amêndoa)',
   'Café (em grão) Arábica',
-  'Café (em grão) Canephora',
+  'Café (em grão) Conilon',
   'Cajá',
   'Caju',
   'Caqui',
