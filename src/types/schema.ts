@@ -81,6 +81,13 @@ export interface TenantClassificacao {
   createdAt?: Date;
 }
 
+/** Um produto do catálogo IBGE associado a uma cultura do tenant (de-para). */
+export interface CulturaIbgeProduto {
+  produto: string;
+  /** Null quando o produto não está no catálogo oficial (ex.: "hortaliça folhosa"). */
+  tipo: 'temporaria' | 'permanente' | null;
+}
+
 /**
  * TenantCultura: Crop from tenant dictionary.
  * Maps to tenant_config_culturas table.
@@ -91,9 +98,13 @@ export interface TenantCultura {
   internalKey: string;
   customName: string;
   aliases: string[];
-  /** Item do catalogo IBGE de origem. Null em culturas proprias (ex.: HF). */
-  ibgeProduto: string | null;
-  ibgeTipo: 'temporaria' | 'permanente' | null;
+  /**
+   * Produtos do catálogo IBGE associados (de-para) — 0, 1 ou N. Uma cultura
+   * própria (ex.: HF) pode agregar vários (ex.: Tomate + Batata-inglesa).
+   * Vem de tenant_cultura_ibge_produtos (20260831120000); até 31/08/2026 era
+   * uma string única (ibgeProduto/ibgeTipo), removida do schema.
+   */
+  ibgeProdutos: CulturaIbgeProduto[];
   isActive: boolean;
   displayOrder: number;
   createdAt?: Date;

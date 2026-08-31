@@ -34,7 +34,7 @@ export default function CulturaPage() {
   // Habilitar reaproveita o registro se a cultura já existiu e foi desligada,
   // em vez de criar outro com o mesmo internal_key (que a unique bloquearia).
   const handleHabilitarDoCatalogo = async (produto: string, tipo: TipoCultura) => {
-    const existente = cultures.find((c) => c.ibgeProduto === produto);
+    const existente = cultures.find((c) => c.ibgeProdutos.some((p) => p.produto === produto));
     const response = existente
       ? await fetch("/api/cultures", {
           method: "POST",
@@ -90,6 +90,34 @@ export default function CulturaPage() {
     invalidateCultures();
   };
 
+  // De-Para (31/08/2026): uma cultura própria (ex.: HF) pode agregar vários
+  // produtos IBGE (ex.: Tomate + Batata-inglesa), incluindo fora do catálogo
+  // — pedido do Marco Polo, 25/08/2026, reabre item adiado em 04/08.
+  const handleAddProdutoIbge = async (culturaId: string, produto: string, tipo: TipoCultura | null) => {
+    const response = await fetch("/api/cultures", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: culturaId, addProdutoIbge: { produto, tipo } }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao associar produto");
+    }
+    invalidateCultures();
+  };
+
+  const handleRemoveProdutoIbge = async (culturaId: string, produto: string) => {
+    const response = await fetch(
+      `/api/cultures?tenantId=${tenantId}&id=${culturaId}&removeProduto=${encodeURIComponent(produto)}`,
+      { method: "DELETE" }
+    );
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || "Erro ao remover associação");
+    }
+    invalidateCultures();
+  };
+
   if (isLoadingSession || (isLoading && !isError)) {
     return (
       <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">
@@ -123,6 +151,8 @@ export default function CulturaPage() {
           onDeleteCultura={handleDeleteCultura}
           onHabilitarDoCatalogo={handleHabilitarDoCatalogo}
           onAdicionarVariante={handleAdicionarVariante}
+          onAddProdutoIbge={handleAddProdutoIbge}
+          onRemoveProdutoIbge={handleRemoveProdutoIbge}
           showOnlyCulturas
         />
       </div>

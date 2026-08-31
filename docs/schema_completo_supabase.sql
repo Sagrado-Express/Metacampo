@@ -121,13 +121,26 @@ CREATE TABLE IF NOT EXISTS public.tenant_config_culturas (
     custom_name TEXT NOT NULL,
     internal_key TEXT NOT NULL,   -- UPPER_SNAKE_CASE, gerado 1x, nunca regerado
     aliases TEXT[] NOT NULL DEFAULT '{}',
-    ibge_produto TEXT,            -- nullable, não único (ver acima)
-    ibge_tipo TEXT CHECK (ibge_tipo IS NULL OR ibge_tipo IN ('temporaria', 'permanente')),
     is_active BOOLEAN DEFAULT true,
     display_order INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(tenant_id, internal_key)
+);
+
+-- De-Para: produtos IBGE associados a uma cultura, 0/1/N (31/08/2026,
+-- migration 20260831120000). Substituiu ibge_produto/ibge_tipo (1 string)
+-- direto em tenant_config_culturas — uma cultura própria (ex.: HF) pode
+-- agregar vários produtos (ex.: Tomate + Batata-inglesa + algo fora do
+-- catálogo, daí ibge_tipo nullable).
+CREATE TABLE IF NOT EXISTS public.tenant_cultura_ibge_produtos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    tenant_cultura_id UUID NOT NULL REFERENCES public.tenant_config_culturas(id) ON DELETE CASCADE,
+    ibge_produto TEXT NOT NULL,
+    ibge_tipo TEXT CHECK (ibge_tipo IS NULL OR ibge_tipo IN ('temporaria', 'permanente')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_cultura_id, ibge_produto)
 );
 
 -- 7. Classificações de produto (segmentos) configuráveis por tenant.
@@ -263,6 +276,7 @@ ALTER TABLE public.customer_crop_areas           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.it_se_configurations          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.faturamento_snapshots         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_config_culturas        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenant_cultura_ibge_produtos  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_config_classificacoes  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.planejamento_cliente_segmento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_invites                ENABLE ROW LEVEL SECURITY;
@@ -297,6 +311,9 @@ CREATE POLICY tenant_isolation ON public.faturamento_snapshots
   FOR ALL USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
 CREATE POLICY tenant_isolation ON public.tenant_config_culturas
+  FOR ALL USING (tenant_id = public.current_tenant_id())
+  WITH CHECK (tenant_id = public.current_tenant_id());
+CREATE POLICY tenant_isolation ON public.tenant_cultura_ibge_produtos
   FOR ALL USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
 CREATE POLICY tenant_isolation ON public.tenant_config_classificacoes
@@ -346,7 +363,8 @@ CREATE INDEX IF NOT EXISTS idx_it_se_configurations_tenant_crop      ON public.i
 CREATE INDEX IF NOT EXISTS idx_faturamento_snapshots_tenant_id       ON public.faturamento_snapshots(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_faturamento_snapshots_tenant_mes      ON public.faturamento_snapshots(tenant_id, mes);
 CREATE INDEX IF NOT EXISTS idx_tenant_config_culturas_tenant_id      ON public.tenant_config_culturas(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_culturas_tenant_ibge                  ON public.tenant_config_culturas(tenant_id, ibge_produto);
+CREATE INDEX IF NOT EXISTS idx_cultura_ibge_produtos_tenant_id       ON public.tenant_cultura_ibge_produtos(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_cultura_ibge_produtos_cultura_id      ON public.tenant_cultura_ibge_produtos(tenant_cultura_id);
 CREATE INDEX IF NOT EXISTS idx_tenant_config_classificacoes_tenant_id ON public.tenant_config_classificacoes(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_planejamento_tenant_id                ON public.planejamento_cliente_segmento(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_planejamento_cliente_id               ON public.planejamento_cliente_segmento(cliente_id);

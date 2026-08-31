@@ -55,8 +55,8 @@ export interface CreateCulturaInput {
   customName: string;
   displayOrder?: number;
   aliases?: string[];
-  ibgeProduto?: string | null;
-  ibgeTipo?: 'temporaria' | 'permanente' | null;
+  /** De-para inicial (0, 1 ou N produtos IBGE) — ver CulturaIbgeProduto. */
+  ibgeProdutos?: { produto: string; tipo: 'temporaria' | 'permanente' | null }[];
 }
 
 interface ClassificacaoUpdatePayload {
@@ -96,11 +96,16 @@ interface CulturaRow {
   internal_key: string;
   custom_name: string;
   aliases: string[] | null;
-  ibge_produto: string | null;
-  ibge_tipo: 'temporaria' | 'permanente' | null;
   is_active: boolean | null;
   display_order: number | null;
   created_at: string | null;
+}
+
+// Linha de tenant_cultura_ibge_produtos (de-para, N produtos por cultura).
+interface CulturaIbgeProdutoRow {
+  tenant_cultura_id: string;
+  ibge_produto: string;
+  ibge_tipo: 'temporaria' | 'permanente' | null;
 }
 
 // ============================================================
@@ -509,14 +514,18 @@ export class SegmentDictionaryService {
         // Já existiu e foi desabilitada: reativa em vez de bloquear com um
         // erro sem saída. Sem isso, um usuário que digitasse o mesmo nome de
         // novo (não achando como reabilitar) criava um registro órfão sem
-        // ibge_produto, que sobrava listado como "fora do catálogo" enquanto
+        // produto, que sobrava listado como "fora do catálogo" enquanto
         // o original ficava desabilitado e invisível pra sempre — relato
         // Marco Polo, 13/08/2026.
-        return this.updateCultura(supabase, tenantId, existing.id, {
+        const reativada = await this.updateCultura(supabase, tenantId, existing.id, {
           customName: input.customName,
           isActive: true,
           aliases: input.aliases,
         });
+        for (const p of input.ibgeProdutos ?? []) {
+          await this.addProdutoIbge(supabase, tenantId, existing.id, p.produto, p.tipo);
+        }
+        return input.ibgeProdutos?.length ? this.getCultura(supabase, tenantId, existing.id) : reativada;
       }
 
       const { data, error } = await supabase
@@ -527,17 +536,83 @@ export class SegmentDictionaryService {
           custom_name: input.customName,
           display_order: input.displayOrder ?? 0,
           aliases: input.aliases ?? [],
-          ibge_produto: input.ibgeProduto ?? null,
-          ibge_tipo: input.ibgeTipo ?? null,
         })
         .select()
         .single();
 
       if (error) throw error;
-      return mapRowToCultura(data);
+
+      if (input.ibgeProdutos?.length) {
+        const { error: produtosError } = await supabase.from('tenant_cultura_ibge_produtos').insert(
+          input.ibgeProdutos.map((p) => ({
+            tenant_id: tenantId,
+            tenant_cultura_id: data.id,
+            ibge_produto: p.produto,
+            ibge_tipo: p.tipo,
+          }))
+        );
+        if (produtosError) throw produtosError;
+      }
+
+      return mapRowToCultura(
+        data,
+        (input.ibgeProdutos ?? []).map((p) => ({ tenant_cultura_id: data.id, ibge_produto: p.produto, ibge_tipo: p.tipo }))
+      );
     } catch (err) {
       throw err;
     }
+  }
+
+  /** Uma cultura só, com o de-para já anexado. */
+  static async getCultura(supabase: SupabaseClient, tenantId: string, id: string): Promise<TenantCultura> {
+    const { data, error } = await supabase
+      .from('tenant_config_culturas')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single();
+    if (error) throw error;
+    const produtos = await fetchProdutosPorCultura(supabase, tenantId, [id]);
+    return mapRowToCultura(data, produtos.get(id) ?? []);
+  }
+
+  /**
+   * Associa mais um produto IBGE a uma cultura já existente (de-para) — o
+   * mesmo produto pode estar fora do catálogo oficial (ibgeTipo null).
+   */
+  static async addProdutoIbge(
+    supabase: SupabaseClient,
+    tenantId: string,
+    culturaId: string,
+    produto: string,
+    tipo: 'temporaria' | 'permanente' | null
+  ): Promise<void> {
+    const { error } = await supabase.from('tenant_cultura_ibge_produtos').insert({
+      tenant_id: tenantId,
+      tenant_cultura_id: culturaId,
+      ibge_produto: produto,
+      ibge_tipo: tipo,
+    });
+    if (error) {
+      if (error.code === '23505') throw new Error('Esse produto já está associado a esta cultura.');
+      throw error;
+    }
+  }
+
+  /** Remove uma associação do de-para — a cultura em si não é afetada. */
+  static async removeProdutoIbge(
+    supabase: SupabaseClient,
+    tenantId: string,
+    culturaId: string,
+    produto: string
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('tenant_cultura_ibge_produtos')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('tenant_cultura_id', culturaId)
+      .eq('ibge_produto', produto);
+    if (error) throw error;
   }
 
   /**
@@ -556,7 +631,9 @@ export class SegmentDictionaryService {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      return (data || []).map(mapRowToCultura);
+      const rows = (data as CulturaRow[]) || [];
+      const produtos = await fetchProdutosPorCultura(supabase, tenantId, rows.map((r) => r.id));
+      return rows.map((r) => mapRowToCultura(r, produtos.get(r.id) ?? []));
     } catch (err) {
       throw err;
     }
@@ -577,7 +654,9 @@ export class SegmentDictionaryService {
       .order('display_order', { ascending: true });
 
     if (error) throw error;
-    return (data || []).map(mapRowToCultura);
+    const rows = (data as CulturaRow[]) || [];
+    const produtos = await fetchProdutosPorCultura(supabase, tenantId, rows.map((r) => r.id));
+    return rows.map((r) => mapRowToCultura(r, produtos.get(r.id) ?? []));
   }
 
   /**
@@ -643,7 +722,8 @@ export class SegmentDictionaryService {
         .eq('cultivo', nomeAnterior);
     }
 
-    return mapRowToCultura(data);
+    const produtos = await fetchProdutosPorCultura(supabase, tenantId, [id]);
+    return mapRowToCultura(data, produtos.get(id) ?? []);
   }
 
   /**
@@ -730,18 +810,41 @@ function mapRowToClassificacao(row: ClassificacaoRow): TenantClassificacao {
   };
 }
 
-function mapRowToCultura(row: CulturaRow): TenantCultura {
+function mapRowToCultura(row: CulturaRow, produtos: CulturaIbgeProdutoRow[] = []): TenantCultura {
   return {
     id: row.id,
     tenantId: row.tenant_id,
     internalKey: row.internal_key,
     customName: row.custom_name,
     aliases: row.aliases || [],
-    ibgeProduto: row.ibge_produto ?? null,
-    ibgeTipo: row.ibge_tipo ?? null,
+    ibgeProdutos: produtos.map((p) => ({ produto: p.ibge_produto, tipo: p.ibge_tipo })),
     isActive: row.is_active ?? true,
     displayOrder: row.display_order ?? 0,
     createdAt: row.created_at ? new Date(row.created_at) : undefined,
   };
+}
+
+/** Busca o de-para de um conjunto de culturas de uma vez, agrupado por cultura. */
+async function fetchProdutosPorCultura(
+  supabase: SupabaseClient,
+  tenantId: string,
+  culturaIds: string[]
+): Promise<Map<string, CulturaIbgeProdutoRow[]>> {
+  const map = new Map<string, CulturaIbgeProdutoRow[]>();
+  if (culturaIds.length === 0) return map;
+
+  const { data, error } = await supabase
+    .from('tenant_cultura_ibge_produtos')
+    .select('tenant_cultura_id, ibge_produto, ibge_tipo')
+    .eq('tenant_id', tenantId)
+    .in('tenant_cultura_id', culturaIds);
+  if (error) throw error;
+
+  for (const row of (data as CulturaIbgeProdutoRow[]) || []) {
+    const lista = map.get(row.tenant_cultura_id) || [];
+    lista.push(row);
+    map.set(row.tenant_cultura_id, lista);
+  }
+  return map;
 }
 

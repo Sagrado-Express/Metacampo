@@ -57,7 +57,21 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { customName, displayOrder, id, isActive, aliases, ibgeProduto, ibgeTipo } = body;
+    const { customName, displayOrder, id, isActive, aliases, ibgeProduto, ibgeTipo, addProdutoIbge } = body;
+
+    // Associar mais um produto IBGE a uma cultura já existente (de-para,
+    // 31/08/2026) — corpo { id, addProdutoIbge: { produto, tipo } }.
+    if (id && addProdutoIbge) {
+      await SegmentDictionaryService.addProdutoIbge(
+        ctx.supabase,
+        ctx.tenantId,
+        id,
+        addProdutoIbge.produto,
+        addProdutoIbge.tipo ?? null
+      );
+      const atualizada = await SegmentDictionaryService.getCultura(ctx.supabase, ctx.tenantId, id);
+      return NextResponse.json(atualizada);
+    }
 
     // Atualização de um registro existente.
     // Antes, qualquer corpo com { id, isActive } caía no toggle e o customName
@@ -77,19 +91,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'customName is required' }, { status: 400 });
     }
 
+    // Wire fica no formato singular (ibgeProduto/ibgeTipo) pro caso comum de
+    // habilitar 1 produto do catálogo — internamente já é uma lista de 1.
     const newCult = await SegmentDictionaryService.createCultura(ctx.supabase, ctx.tenantId, {
       customName,
       displayOrder,
       aliases,
-      ibgeProduto,
-      ibgeTipo,
+      ibgeProdutos: ibgeProduto ? [{ produto: ibgeProduto, tipo: ibgeTipo ?? null }] : undefined,
     });
 
     return NextResponse.json(newCult);
   } catch (error) {
     console.error('[Cultures API] Supabase error (POST):', error);
     const message = getErrorMessage(error);
-    if (message.includes('já existe')) {
+    if (message.includes('já existe') || message.includes('já está associado')) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
     return unavailable('salvar');
@@ -105,11 +120,20 @@ export async function DELETE(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
+  const removeProduto = searchParams.get('removeProduto');
   if (!id) {
     return NextResponse.json({ error: 'id is required' }, { status: 400 });
   }
 
   try {
+    // Remove só uma associação do de-para (?id=<culturaId>&removeProduto=X) —
+    // a cultura em si continua existindo, mesmo padrão da rota POST/addProdutoIbge.
+    if (removeProduto) {
+      await SegmentDictionaryService.removeProdutoIbge(ctx.supabase, ctx.tenantId, id, removeProduto);
+      const atualizada = await SegmentDictionaryService.getCultura(ctx.supabase, ctx.tenantId, id);
+      return NextResponse.json(atualizada);
+    }
+
     await SegmentDictionaryService.deleteCultura(ctx.supabase, ctx.tenantId, id);
     return NextResponse.json({ success: true });
   } catch (error) {

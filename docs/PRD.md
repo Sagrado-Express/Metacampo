@@ -780,8 +780,8 @@ Turbopack; `error.tsx`/`global-error.tsx` com retry; lógica de agrupamento
 do import de clientes extraída e testada (15 testes novos); dependências
 vulneráveis de 34 para 1 (Next.js, Vitest, `uuid` morto removido) —
 sobrou só `xlsx`, sem correção disponível do mantenedor, usado em 2 scripts
-de extração de planilha (decisão pendente do usuário: aceitar o risco ou
-remover os scripts).
+de extração de planilha. **Decisão fechada em 31/08/2026: risco aceito,
+scripts mantidos** — motivo em 16.9.
 
 **Unificação Cultura/Cultivo + catálogo IBGE com safra via LSPA
 (19-20/08/2026, commit `12af6bc`)**: as abas "Culturas" (catálogo IBGE) e
@@ -868,3 +868,88 @@ tela.
   hardcoded pras tabelas que já cobria) — a policy é estruturalmente
   idêntica à de `grupos_economicos`, já provada, mas não é o mesmo que
   rodar o teste de novo.
+
+### 16.9 Cultura → vários produtos IBGE (de-para), corrige 2 bugs reais (25/08-31/08/2026)
+
+**2 bugs reais** reportados pelo Marco Polo testando a aba Cultura em
+produção (25/08/2026), ambos corrigidos e verificados contra o banco real
+(commit `c48bb21`):
+- "Excluir cultura" sempre foi um soft-delete disfarçado de exclusão
+  permanente (só setava `is_active=false`, mesma ação do interruptor ao
+  lado) — o item nunca sumia da lista, porque a aba Cultura mostra ativas e
+  inativas de propósito. `SegmentDictionaryService.deleteCultura()` agora
+  checa 3 tabelas por nome antes de decidir (`it_se_configurations.crop_name`,
+  `customer_crop_areas.crop_name`, `planejamento_cliente_segmento.cultivo` —
+  as mesmas que `updateCultura` já propaga rename): sem uso, `DELETE` de
+  verdade; em uso, `409 CULTURA_EM_USO`.
+- Clicar numa sugestão do catálogo IBGE podia não fazer nada: corrida real
+  entre o `blur` do campo de busca (fecha o dropdown via `setTimeout`
+  150ms) e o `click` da sugestão — numa interação mais lenta o `blur`
+  vencia e o React desmontava o botão no meio do evento. Corrigido com
+  `onMouseDown` + `preventDefault` no dropdown (impede o campo de perder
+  foco nesse clique). De quebra, catálogo de café renomeado de "Canephora"
+  (termo botânico do LSPA) pra "Conilon" (nome que o produtor usa).
+
+**De-Para multi-produto** (pedido explícito do Marco Polo, 25/08/2026,
+reabrindo o item adiado em 04/08 — ver 16.4): uma cultura própria (ex.:
+"HF") agora pode agregar vários produtos IBGE, não só um — inclusive
+produtos fora do catálogo oficial (ex.: "hortaliça folhosa", que a PAM não
+lista). `tenant_config_culturas.ibge_produto`/`ibge_tipo` (1 string) virou
+a tabela `tenant_cultura_ibge_produtos` (N-pra-1, migration `20260831120000`,
+aplicada em produção com backfill do dado existente antes de derrubar as
+colunas antigas — corte limpo, sem coluna duplicada pra trás). Toda a
+cadeia que lia o campo único foi reescrita: `SegmentDictionaryService`
+(`mapRowToCultura` recebe a lista de produtos já junta; `addProdutoIbge`/
+`removeProdutoIbge` novos), `/api/cultures` (`POST {id, addProdutoIbge}` e
+`DELETE ?id=&removeProduto=`), `SegmentSettings.tsx` (badge mostra
+contagem — "IBGE ×3" — e a seção "Produtos IBGE associados" no painel de
+apelidos permite adicionar/remover a qualquer momento, com busca no
+catálogo + fallback pra texto livre). "+variante" (Milho safra/safrinha)
+só aparece quando a cultura tem exatamente 1 produto — conceito diferente
+do de-para (divide um produto oficial em subcultivares, não agrega vários
+produtos numa cultura só).
+
+**Testado ao vivo, ponta a ponta** contra o banco de produção: as 5
+culturas existentes migraram corretamente (badge IBGE preservado depois do
+backfill); criada uma cultura de teste e associados 3 produtos — 2 do
+catálogo (Tomate, Batata-inglesa 1ª safra) e 1 fora dele (Hortaliça
+folhosa, zero sugestão do catálogo, confirmado o fallback pra texto livre)
+— badge mostrou "IBGE ×3" corretamente; removida 1 associação, as outras 2
+ficaram intactas; "+variante" confirmado escondido na cultura de 3
+produtos e presente numa cultura de 1 produto só; exclusão real da cultura
+de teste no fim (sem uso, apagou de verdade, cascata limpou as 3 linhas do
+de-para). `type-check`/`lint`/37 testes limpos antes e depois dos testes
+no navegador.
+
+### 16.10 Vulnerabilidade residual do `xlsx` — decisão fechada (31/08/2026)
+
+Pendência desde a auditoria de 18/08 (16.7): `xlsx` é a única dependência
+vulnerável restante (Prototype Pollution + ReDoS, `GHSA-4r6h-8v6p-xvw6` /
+`GHSA-5pgg-2g8v-p4x9`, sem correção do mantenedor), usada em 2 scripts —
+`scripts/extract_excel_to_json.js` e `scripts/read_excel.js`.
+
+**Levantamento antes de decidir:**
+- `xlsx` já está em `devDependencies` (não `dependencies`) — confirmado no
+  `package.json`, não precisou mudar. Build de produção (Vercel) não
+  instala `devDependencies`, então a dependência vulnerável **nunca chega
+  a rodar no app publicado** — o alcance real é só a máquina de quem roda
+  os scripts manualmente.
+- `.github/workflows/ci.yml` não roda `npm audit` como gate — confirmado
+  lendo o workflow inteiro. O achado do `npm audit` não bloqueia PR nem
+  deploy, só aparece pra quem roda o comando local.
+- Os 2 scripts são só `require('xlsx')` + leitura de arquivo local
+  (nenhum dos dois expõe upload nem processa arquivo de origem externa/não
+  confiável) — o vetor de ataque das duas CVEs (arquivo `.xlsx` malicioso)
+  só se materializa se alguém rodar os scripts contra um arquivo que não
+  escolheu/confia. `read_excel.js` tem uso real recente: foi a ferramenta
+  usada pra extrair os 96 arquivos LSPA/IBGE que embasaram a separação por
+  safra do catálogo (16.7).
+
+**Decisão: risco aceito, scripts mantidos, nada a apagar.** Remover os
+scripts eliminaria uma ferramenta com utilidade real por uma redução de
+risco marginal — a exposição já é baixa (dev-only, sem gate de CI, sem
+alcance em produção) e apagar não muda o `npm audit` de qualquer form a
+menos que `xlsx` saia do `package.json` também, o que mataria a
+capacidade de ler planilha pontualmente sem ganho de segurança
+proporcional. Reabrir só se `xlsx` ganhar um caminho de exploração real
+(ex.: algum fluxo passar a processar upload de usuário com essa lib).

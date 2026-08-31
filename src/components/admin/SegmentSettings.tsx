@@ -36,6 +36,12 @@ export interface ClassificacaoItem {
   color: string;
 }
 
+export interface CulturaIbgeProdutoItem {
+  produto: string;
+  /** Null quando o produto não está no catálogo oficial (de-para livre). */
+  tipo: TipoCultura | null;
+}
+
 export interface CulturaItem {
   id: string;
   internalKey: string;
@@ -43,10 +49,9 @@ export interface CulturaItem {
   aliases: string[];
   isActive: boolean;
   displayOrder: number;
-  /** Item do catálogo IBGE de origem, se habilitada a partir dele. Null em
-   *  culturas próprias (ex.: HF). */
-  ibgeProduto: string | null;
-  ibgeTipo: TipoCultura | null;
+  /** Produtos do catálogo IBGE associados (de-para) — 0, 1 ou N. Uma cultura
+   *  própria (ex.: HF) pode agregar vários (ex.: Tomate + Batata-inglesa). */
+  ibgeProdutos: CulturaIbgeProdutoItem[];
 }
 
 interface SegmentSettingsProps {
@@ -69,6 +74,11 @@ interface SegmentSettingsProps {
   /** Cria um segundo cultivo apontando pro mesmo produto do catálogo, com nome
    *  próprio — caso de Milho safra vs. Milho safrinha. */
   onAdicionarVariante?: (produto: string, tipo: TipoCultura, customName: string) => Promise<void>;
+  /** De-Para: associa mais um produto IBGE (ou fora do catálogo, tipo null)
+   *  a uma cultura já existente. */
+  onAddProdutoIbge?: (culturaId: string, produto: string, tipo: TipoCultura | null) => Promise<void>;
+  /** Remove uma associação do de-para — a cultura em si não é afetada. */
+  onRemoveProdutoIbge?: (culturaId: string, produto: string) => Promise<void>;
   /** When true, renders only the Culturas section (used by the Cultura tab). */
   showOnlyCulturas?: boolean;
   /** When true, renders only the Grupos de Produtos section (used by the Grupos de Produtos tab). */
@@ -111,6 +121,8 @@ export function SegmentSettings({
   onDeleteCultura,
   onHabilitarDoCatalogo,
   onAdicionarVariante,
+  onAddProdutoIbge,
+  onRemoveProdutoIbge,
   showOnlyCulturas = false,
   showOnlyClassifications = false,
   labelGrupoProduto: labelGrupoProdutoProp,
@@ -126,6 +138,8 @@ export function SegmentSettings({
   const [showCulturaSuggestions, setShowCulturaSuggestions] = useState(false);
   const [addingVarianteFor, setAddingVarianteFor] = useState<string | null>(null);
   const [varianteDraft, setVarianteDraft] = useState("");
+  const [addingProdutoFor, setAddingProdutoFor] = useState<string | null>(null);
+  const [produtoDraft, setProdutoDraft] = useState("");
   const [editingAliases, setEditingAliases] = useState<Record<string, string>>({});
   const [renaming, setRenaming] = useState<{ kind: "classificacao" | "cultura"; id: string } | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
@@ -191,7 +205,8 @@ export function SegmentSettings({
   const produtosAtivos = useMemo(() => {
     const set = new Set<string>();
     culturas.forEach((c) => {
-      if (c.isActive && c.ibgeProduto) set.add(c.ibgeProduto);
+      if (!c.isActive) return;
+      c.ibgeProdutos.forEach((p) => set.add(p.produto));
     });
     return set;
   }, [culturas]);
@@ -242,6 +257,40 @@ export function SegmentSettings({
       toast.success("Variante criada");
     } catch (err) {
       toast.error(getErrorMessage(err) || "Erro ao criar variante");
+    }
+  };
+
+  // ─── De-Para: N produtos IBGE por cultura (31/08/2026) ───
+  // Sugestões do mini-buscador de associação, restritas aos produtos que
+  // ESTA cultura ainda não tem — diferente de produtosAtivos (que olha o
+  // tenant inteiro), aqui o mesmo produto só não pode repetir na MESMA
+  // cultura (a unique é por tenant_cultura_id, não por tenant inteiro).
+  const sugerirProdutosParaCultura = (cultura: CulturaItem, query: string) => {
+    const q = normalizar(query.trim());
+    if (!q) return [];
+    const jaLigados = new Set(cultura.ibgeProdutos.map((p) => p.produto));
+    return CATALOGO_IBGE.filter((p) => !jaLigados.has(p.nome) && normalizar(p.nome).includes(q)).slice(0, 5);
+  };
+
+  const salvarProdutoIbge = async (cultura: CulturaItem, produto: string, tipo: TipoCultura | null) => {
+    setAddingProdutoFor(null);
+    setProdutoDraft("");
+    if (!produto.trim() || !onAddProdutoIbge) return;
+    try {
+      await onAddProdutoIbge(cultura.id, produto.trim(), tipo);
+      toast.success("Produto associado");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao associar produto");
+    }
+  };
+
+  const removerProdutoIbge = async (cultura: CulturaItem, produto: string) => {
+    if (!onRemoveProdutoIbge) return;
+    try {
+      await onRemoveProdutoIbge(cultura.id, produto);
+      toast.success("Associação removida");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao remover associação");
     }
   };
 
@@ -548,17 +597,17 @@ export function SegmentSettings({
                   <span className="text-[10px] text-muted-foreground font-mono bg-muted/40 px-2 py-0.5 rounded-full">
                     {cultura.internalKey}
                   </span>
-                  {cultura.ibgeProduto && (
+                  {cultura.ibgeProdutos.length > 0 && (
                     <span
                       className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full"
-                      title={`Do catálogo IBGE: ${cultura.ibgeProduto}`}
+                      title={`De-para IBGE: ${cultura.ibgeProdutos.map((p) => p.produto).join(", ")}`}
                     >
-                      {cultura.ibgeTipo === "permanente" ? (
+                      {cultura.ibgeProdutos[0].tipo === "permanente" ? (
                         <TreePine size={10} />
                       ) : (
                         <Sprout size={10} />
                       )}
-                      IBGE
+                      IBGE{cultura.ibgeProdutos.length > 1 ? ` ×${cultura.ibgeProdutos.length}` : ""}
                     </span>
                   )}
                 </div>
@@ -665,20 +714,116 @@ export function SegmentSettings({
                         </button>
                       </div>
 
-                      {/* Segundo cultivo no mesmo produto — ex.: separar por safra */}
-                      {cultura.ibgeProduto && onAdicionarVariante && (
+                      {/* De-Para: produtos IBGE associados a esta cultura (0, 1 ou N) */}
+                      <div className="mt-2 pt-2 border-t border-border/20">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 font-bold">
+                          Produtos IBGE associados (de-para)
+                        </p>
+                        {cultura.ibgeProdutos.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-1.5">
+                            {cultura.ibgeProdutos.map((p) => (
+                              <span
+                                key={p.produto}
+                                className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px]"
+                                title={p.tipo ? "Do catálogo IBGE" : "Fora do catálogo oficial"}
+                              >
+                                {p.tipo === "permanente" ? (
+                                  <TreePine size={10} />
+                                ) : p.tipo === "temporaria" ? (
+                                  <Sprout size={10} />
+                                ) : null}
+                                {p.produto}
+                                {onRemoveProdutoIbge && (
+                                  <button
+                                    onClick={() => removerProdutoIbge(cultura, p.produto)}
+                                    className="text-emerald-700/60 hover:text-destructive transition-colors"
+                                    title="Remover associação"
+                                  >
+                                    <X size={10} />
+                                  </button>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {onAddProdutoIbge &&
+                          (addingProdutoFor === cultura.id ? (
+                            <div className="relative">
+                              <div className="flex gap-1.5">
+                                <input
+                                  autoFocus
+                                  value={produtoDraft}
+                                  onChange={(e) => setProdutoDraft(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") salvarProdutoIbge(cultura, produtoDraft, null);
+                                    if (e.key === "Escape") {
+                                      setAddingProdutoFor(null);
+                                      setProdutoDraft("");
+                                    }
+                                  }}
+                                  placeholder="Buscar no catálogo ou digitar livre..."
+                                  className="px-2 py-1 rounded-lg border border-emerald-300 text-xs w-56 focus:outline-none"
+                                />
+                                <button
+                                  onClick={() => salvarProdutoIbge(cultura, produtoDraft, null)}
+                                  className="px-2 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-wide hover:bg-emerald-700 transition-colors"
+                                >
+                                  Associar
+                                </button>
+                              </div>
+                              {sugerirProdutosParaCultura(cultura, produtoDraft).length > 0 && (
+                                <div
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  className="absolute z-10 mt-1 w-56 bg-white rounded-lg border border-border/40 shadow-lg overflow-hidden"
+                                >
+                                  {sugerirProdutosParaCultura(cultura, produtoDraft).map((p) => (
+                                    <button
+                                      key={p.nome}
+                                      onClick={() => salvarProdutoIbge(cultura, p.nome, p.tipo)}
+                                      className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-left hover:bg-emerald-50 transition-colors"
+                                    >
+                                      {p.tipo === "permanente" ? (
+                                        <TreePine size={11} className="text-muted-foreground/60 shrink-0" />
+                                      ) : (
+                                        <Sprout size={11} className="text-muted-foreground/60 shrink-0" />
+                                      )}
+                                      {p.nome}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setAddingProdutoFor(cultura.id);
+                                setProdutoDraft("");
+                              }}
+                              className="text-[10px] text-emerald-700 hover:underline font-semibold"
+                              title="Associar mais um produto do catálogo IBGE (ou fora dele) a esta cultura"
+                            >
+                              + associar produto IBGE
+                            </button>
+                          ))}
+                      </div>
+
+                      {/* Segundo cultivo no mesmo produto — ex.: separar por safra. Só
+                          faz sentido quando a cultura tem exatamente 1 produto — "+variante"
+                          divide um produto oficial em sub-cultivares, diferente do de-para
+                          acima, que agrega vários produtos numa cultura só. */}
+                      {cultura.ibgeProdutos.length === 1 && onAdicionarVariante && (
                         <div className="mt-2 pt-2 border-t border-border/20">
-                          {addingVarianteFor === cultura.ibgeProduto ? (
+                          {addingVarianteFor === cultura.ibgeProdutos[0].produto ? (
                             <input
                               autoFocus
                               value={varianteDraft}
                               onChange={(e) => setVarianteDraft(e.target.value)}
                               onBlur={() =>
-                                salvarVariante(cultura.ibgeProduto!, cultura.ibgeTipo!)
+                                salvarVariante(cultura.ibgeProdutos[0].produto, cultura.ibgeProdutos[0].tipo!)
                               }
                               onKeyDown={(e) => {
                                 if (e.key === "Enter")
-                                  salvarVariante(cultura.ibgeProduto!, cultura.ibgeTipo!);
+                                  salvarVariante(cultura.ibgeProdutos[0].produto, cultura.ibgeProdutos[0].tipo!);
                                 if (e.key === "Escape") {
                                   setAddingVarianteFor(null);
                                   setVarianteDraft("");
@@ -690,7 +835,7 @@ export function SegmentSettings({
                           ) : (
                             <button
                               onClick={() => {
-                                setAddingVarianteFor(cultura.ibgeProduto);
+                                setAddingVarianteFor(cultura.ibgeProdutos[0].produto);
                                 setVarianteDraft("");
                               }}
                               className="text-[10px] text-emerald-700 hover:underline font-semibold"
