@@ -4,6 +4,7 @@ import { getTenantMembers, setMemberManager } from '@/lib/services/TenantMembers
 import { buildItLookup, calcVpm } from '@/lib/services/VpmService';
 import { getErrorMessage } from '@/lib/utils';
 import { rateLimitResponse } from '@/lib/rateLimiter';
+import { fetchAllRows } from '@/lib/db';
 
 interface ClassificacaoRow {
   custom_name: string;
@@ -39,30 +40,35 @@ export async function GET() {
   if (ctx.role !== 'admin') return FORBIDDEN;
 
   try {
-    const members = await getTenantMembers(ctx.tenantId);
-
-    const [{ data: areas }, { data: indices }, { data: segmentosAtivos }] = await Promise.all([
-      ctx.supabase.from('customer_crop_areas').select('customer_id, crop_name, area_ha'),
-      ctx.supabase.from('it_se_configurations').select('*'),
+    // fetchAllRows nas 3 tabelas que crescem com o tenant (o PostgREST
+    // trunca em ~1000 linhas sem erro), e tudo em paralelo — nenhuma das 5
+    // consultas depende do resultado de outra (achado em auditoria de
+    // performance 31/08/2026).
+    const [members, areas, indices, segmentosAtivos, clientes] = await Promise.all([
+      getTenantMembers(ctx.tenantId),
+      fetchAllRows<{ customer_id: string; crop_name: string; area_ha: number }>((from, to) =>
+        ctx.supabase.from('customer_crop_areas').select('customer_id, crop_name, area_ha').range(from, to)
+      ),
+      fetchAllRows<ItConfigRow>((from, to) => ctx.supabase.from('it_se_configurations').select('*').range(from, to)),
       ctx.supabase
         .from('tenant_config_classificacoes')
         .select('custom_name')
         .eq('is_active', true)
-        .is('parent_key', null),
+        .is('parent_key', null)
+        .then((r) => r.data),
+      fetchAllRows<ClienteRow>((from, to) => ctx.supabase.from('clientes').select('id, ctv_id').range(from, to)),
     ]);
-
-    const { data: clientes } = await ctx.supabase.from('clientes').select('id, ctv_id');
 
     const segNames: string[] = (segmentosAtivos as ClassificacaoRow[] || []).map((s) => s.custom_name);
     const itLookup = buildItLookup(
-      (indices as ItConfigRow[] || []).map((ind) => ({
+      (indices || []).map((ind) => ({
         cultivo: ind.crop_name,
         segmento: ind.segment_name,
         valorPorHectareCentavos: Number(ind.value_per_hectare),
       }))
     );
 
-    const ctvIdPorCliente = new Map((clientes as ClienteRow[] || []).map((c) => [c.id, c.ctv_id]));
+    const ctvIdPorCliente = new Map((clientes || []).map((c) => [c.id, c.ctv_id]));
     const vpmPorCtv = new Map<string, number>();
     for (const area of areas || []) {
       const ctvId = ctvIdPorCliente.get(area.customer_id);

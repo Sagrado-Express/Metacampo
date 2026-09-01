@@ -68,7 +68,10 @@ export default function ClientesPage() {
   const [sortField, setSortField] = useState<SortField>('nome');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
+  // String vazia, não um UUID placeholder: com "enabled: !!tenantId" abaixo,
+  // isso bloqueia o fetch até a sessão real resolver em vez de disparar 2x
+  // (achado em auditoria de performance 31/08/2026).
+  const tenantId = sessionData?.tenantId || "";
 
   const { data: payload, refetch, isLoading } = useQuery({
     queryKey: ['clientes', tenantId],
@@ -377,7 +380,10 @@ export default function ClientesPage() {
             <p>
               Há áreas registradas com cultura que não existe na configuração do tenant.
               O VPM dessas áreas não é calculado até a cultura ser cadastrada em{' '}
-              <Link href="/workspace/settings/configuracao" className="underline font-semibold">
+              <Link
+                href={`/workspace/settings/configuracao/cultura?buscar=${encodeURIComponent(configuracao!.culturasNaoCadastradas[0])}`}
+                className="underline font-semibold"
+              >
                 Configuração
               </Link>
               .

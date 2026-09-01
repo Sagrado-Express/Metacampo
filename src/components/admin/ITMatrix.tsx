@@ -85,11 +85,16 @@ export function ITMatrix({
   const [editingSafra, setEditingSafra] = useState(false);
   const [safraDraft, setSafraDraft] = useState(safra);
 
-  // Active classifications only (roots)
-  const activeSegmentos = classificacoes.filter(
-    (c) => c.isActive && c.parentKey === null
+  // Active classifications only (roots). Memoizado: sem isso, o array vinha
+  // com identidade nova a cada render (mesmo com os mesmos itens) e o
+  // useMemo de rowTotals abaixo, que depende deste array, nunca reaproveitava
+  // o cache — recalculava em toda tecla digitada mesmo assim. Achado em
+  // auditoria de performance 31/08/2026.
+  const activeSegmentos = useMemo(
+    () => classificacoes.filter((c) => c.isActive && c.parentKey === null),
+    [classificacoes]
   );
-  const activeCulturas = culturas.filter((c) => c.isActive);
+  const activeCulturas = useMemo(() => culturas.filter((c) => c.isActive), [culturas]);
 
   // Local draft for batch editing
   const [draft, setDraft] = useState<MatrixDraft>({});

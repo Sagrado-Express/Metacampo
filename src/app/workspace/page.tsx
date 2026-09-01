@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,6 +18,17 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+
+// Cada lista aqui só serve pra contar itens do checklist — cacheada 5min
+// (mesmo padrão dos hooks de dicionário) pra não recarregar do zero toda
+// vez que o usuário volta pra Início, a tela mais visitada do app (achado
+// em auditoria de performance 31/08/2026).
+async function fetchCount(url: string): Promise<number> {
+  const r = await fetch(url);
+  if (!r.ok) return 0;
+  const j = await r.json();
+  return Array.isArray(j) ? j.length : (j?.data ?? []).length;
+}
 
 /**
  * Início — porta de entrada do MetaCampo.
@@ -38,54 +50,33 @@ type Setup = {
 
 export default function InicioPage() {
   const router = useRouter();
-  const { data: sessionData, isLoading: isLoadingSession } = useSession();
-  const [loading, setLoading] = useState(true);
-  const [nome, setNome] = useState<string>("");
-  const [setup, setSetup] = useState<Setup | null>(null);
+  const { data: sessionData, isLoading: isLoadingSession, isError: isSessionError } = useSession();
+  const nome = sessionData?.fullName || "";
 
   useEffect(() => {
-    async function carregar() {
-      try {
-        const sessionRes = await fetch("/api/auth/session");
-        if (!sessionRes.ok) {
-          router.push("/login");
-          return;
-        }
-        const { session } = await sessionRes.json();
-        setNome(session?.user?.user_metadata?.full_name || session?.user?.email || "");
+    if (isSessionError) router.push("/login");
+  }, [isSessionError, router]);
 
-        const [cult, clas, it, cli] = await Promise.all([
-          fetch("/api/cultures"),
-          fetch("/api/classifications?activeOnly=true"),
-          fetch("/api/indice-tecnologico"),
-          fetch("/api/clientes"),
-        ]);
+  const staleTime = 5 * 60 * 1000;
+  const enabled = !isLoadingSession && !!sessionData;
+  const culturasQ = useQuery({ queryKey: ["inicio-count", "culturas"], queryFn: () => fetchCount("/api/cultures"), staleTime, enabled });
+  const segmentosQ = useQuery({ queryKey: ["inicio-count", "segmentos"], queryFn: () => fetchCount("/api/classifications?activeOnly=true"), staleTime, enabled });
+  const indicesQ = useQuery({ queryKey: ["inicio-count", "indices"], queryFn: () => fetchCount("/api/indice-tecnologico"), staleTime, enabled });
+  const clientesQ = useQuery({ queryKey: ["inicio-count", "clientes"], queryFn: () => fetchCount("/api/clientes"), staleTime, enabled });
 
-        const lista = async (r: Response) => {
-          if (!r.ok) return [];
-          const j = await r.json();
-          return Array.isArray(j) ? j : j?.data ?? [];
-        };
-
-        setSetup({
-          culturas: (await lista(cult)).length,
-          segmentos: (await lista(clas)).length,
-          indices: (await lista(it)).length,
-          clientes: (await lista(cli)).length,
-        });
-      } catch {
-        // Sem dados de configuração a tela ainda explica o fluxo; não trava.
-        setSetup(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    carregar();
-  }, [router]);
+  const loadingSetup = culturasQ.isLoading || segmentosQ.isLoading || indicesQ.isLoading || clientesQ.isLoading;
+  const setup: Setup | null = loadingSetup || isSessionError
+    ? null
+    : {
+        culturas: culturasQ.data ?? 0,
+        segmentos: segmentosQ.data ?? 0,
+        indices: indicesQ.data ?? 0,
+        clientes: clientesQ.data ?? 0,
+      };
 
   const isAdmin = sessionData?.role === "admin";
 
-  if (loading || isLoadingSession) {
+  if (isLoadingSession || loadingSetup) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-emerald-600" size={32} />

@@ -7,7 +7,10 @@ import { useTenantSettings } from "@/hooks/useTenantSettings";
 
 export default function GruposDeProdutosPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
-  const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
+  // String vazia, não um UUID placeholder: com "enabled: !!tenantId" no
+  // hook de dicionário, isso bloqueia o fetch até a sessão real resolver
+  // em vez de disparar 2x (achado em auditoria de performance 31/08/2026).
+  const tenantId = sessionData?.tenantId || "";
   const { labelGrupoProduto, setLabelGrupoProduto } = useTenantSettings();
 
   const { classifications, invalidate: invalidateClassifications, isLoading, isError } = useSegmentDictionary(tenantId);

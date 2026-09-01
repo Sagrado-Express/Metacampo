@@ -129,6 +129,45 @@ export default function PlanejamentoTabs({ tab, onGoToEditar }: PlanejamentoTabs
     return { planejadoPorCultivo: porCultivo, planejadoPorSegCrop: porSegCrop };
   }, [planejamento]);
 
+  // Mesmo motivo: precisam ficar antes dos returns condicionais pra poder
+  // usar useMemo. Achado em auditoria de performance 31/08/2026: antes eram
+  // recalculados a cada render (troca de aba, cada tecla no Heatmap).
+  const clients: ClienteResumo[] = useMemo(() => data?.clientes || [], [data?.clientes]);
+  const carteira: CarteiraLinha[] = useMemo(() => data?.carteira || [], [data?.carteira]);
+  const segmentosAtivos: SegmentoResumo[] = useMemo(() => data?.segmentos || [], [data?.segmentos]);
+
+  // Combinações cliente × cultivo que realmente existem (o cliente tem área
+  // cadastrada daquela cultura) — usado para desabilitar no Heatmap as
+  // células de cultivo que o cliente não planta. Achado em auditoria
+  // 11/08/2026: a Fazenda Boa Vista (só planta Milho) tinha a coluna Soja
+  // editável, e ao salvar um share ali a rota bloqueava com a mensagem
+  // "Sem Índice Tecnológico" — enganosa, já que o índice existe, só não há
+  // área daquela cultura para esse cliente.
+  const combosComArea = useMemo(
+    () => new Set<string>(carteira.map((l) => `${l.clienteNome}::${String(l.cultura).toUpperCase()}`)),
+    [carteira]
+  );
+
+  // O planejamento é por Cliente × Cultivo × Segmento. O heatmap é 2D, então
+  // edita-se um segmento por vez — com 10 cultivos e 5 segmentos, colunas
+  // aninhadas dariam 50 colunas.
+  const segmentoAtivo: string | undefined =
+    segmentoSelecionado ?? segmentosAtivos[0]?.custom_name;
+
+  const heatmapData = useMemo(() => {
+    const clientById = new Map(clients.map((c) => [c.id, c]));
+    return planejamento
+      .filter((p) => String(p.segmento ?? '') === String(segmentoAtivo ?? ''))
+      .map((p) => {
+        const client = clientById.get(p.cliente_id ?? p.clienteId ?? '');
+        return {
+          clientName: client ? client.name : 'Cliente Geral',
+          cropName: p.cultivo,
+          sharePercentual: Number(p.sharePercentual ?? p.share_percentual ?? 0),
+        };
+      });
+  }, [planejamento, segmentoAtivo, clients]);
+
   if (isLoading) return <PlanejamentoSkeleton />;
 
   if (isError || !data) {
@@ -139,12 +178,9 @@ export default function PlanejamentoTabs({ tab, onGoToEditar }: PlanejamentoTabs
     );
   }
 
-  const clients: ClienteResumo[] = data.clientes || [];
-  const carteira: CarteiraLinha[] = data.carteira || [];
   const byCrop: PorCultivo[] = data.porCultivo || [];
   const bySegment: PorSegmento[] = data.porSegmento || [];
   const culturas: CulturaResumo[] = data.culturas || [];
-  const segmentosAtivos: SegmentoResumo[] = data.segmentos || [];
 
   // Cultivos do tenant (Regra #6: nada hardcoded). Fallback: cultivos presentes na carteira.
   const activeCrops: string[] =
@@ -153,34 +189,6 @@ export default function PlanejamentoTabs({ tab, onGoToEditar }: PlanejamentoTabs
       : Array.from(new Set(byCrop.map((c) => c.cultivo)));
 
   const activeClientsNames = clients.slice(0, 15).map((c) => c.name);
-
-  // Combinações cliente × cultivo que realmente existem (o cliente tem área
-  // cadastrada daquela cultura) — usado para desabilitar no Heatmap as
-  // células de cultivo que o cliente não planta. Achado em auditoria
-  // 11/08/2026: a Fazenda Boa Vista (só planta Milho) tinha a coluna Soja
-  // editável, e ao salvar um share ali a rota bloqueava com a mensagem
-  // "Sem Índice Tecnológico" — enganosa, já que o índice existe, só não há
-  // área daquela cultura para esse cliente.
-  const combosComArea = new Set<string>(
-    carteira.map((l) => `${l.clienteNome}::${String(l.cultura).toUpperCase()}`)
-  );
-
-  // O planejamento é por Cliente × Cultivo × Segmento. O heatmap é 2D, então
-  // edita-se um segmento por vez — com 10 cultivos e 5 segmentos, colunas
-  // aninhadas dariam 50 colunas.
-  const segmentoAtivo: string | undefined =
-    segmentoSelecionado ?? segmentosAtivos[0]?.custom_name;
-
-  const heatmapData = planejamento
-    .filter((p) => String(p.segmento ?? '') === String(segmentoAtivo ?? ''))
-    .map((p) => {
-      const client = clients.find((c) => c.id === p.cliente_id || c.id === p.clienteId);
-      return {
-        clientName: client ? client.name : 'Cliente Geral',
-        cropName: p.cultivo,
-        sharePercentual: Number(p.sharePercentual ?? p.share_percentual ?? 0),
-      };
-    });
 
   /** VPM potencial de um cliente × cultivo × segmento, vindo de `carteira`. */
   const vpmDaCombinacao = (clienteId: string, cultivo: string, segmento: string): number =>

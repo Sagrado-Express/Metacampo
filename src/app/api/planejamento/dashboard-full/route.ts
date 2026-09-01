@@ -86,6 +86,11 @@ export async function GET() {
       }))
     );
 
+    // Só cultura ativa hoje entra na conta — evita que Índice Tecnológico
+    // órfão de uma cultura desativada/renomeada (crop_name antigo ainda
+    // com linhas em it_se_configurations) apareça como potencial real.
+    const culturasCadastradas = new Set((culturas || []).map((c) => String(c.custom_name).toUpperCase()));
+
     const carteira = (clientes || []).map((cliente) => {
       const areasDoCliente = (areas || []).filter((a) => a.customer_id === cliente.id);
       const linhas = areasDoCliente.flatMap((area) =>
@@ -95,12 +100,14 @@ export async function GET() {
           cultura: area.crop_name,
           segmento: segmento.custom_name,
           hectares: area.area_ha,
-          vpmCentavos: calcVpm({
-            hectares: area.area_ha,
-            cropName: area.crop_name,
-            segmentName: segmento.custom_name,
-            itLookup,
-          }),
+          vpmCentavos: culturasCadastradas.has(String(area.crop_name).toUpperCase())
+            ? calcVpm({
+                hectares: area.area_ha,
+                cropName: area.crop_name,
+                segmentName: segmento.custom_name,
+                itLookup,
+              })
+            : 0,
         }))
       );
       return linhas;

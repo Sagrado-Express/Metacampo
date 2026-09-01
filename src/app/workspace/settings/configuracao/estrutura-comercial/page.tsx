@@ -92,6 +92,28 @@ export default function EstruturaComercialPage() {
 
   const nomeDe = (userId: string) => memberById.get(userId)?.fullName || memberById.get(userId)?.email || "—";
 
+  // VPM por distrital/regional pré-calculado (Map por id) em vez de
+  // filter().reduce() encadeado recomputado a cada keystroke do formulário
+  // "Adicionar linha" — hoje barato (hierarquia pequena), mas cresce
+  // O(regionais×distritais×territórios) por render. Achado em auditoria de
+  // performance 31/08/2026.
+  const vpmPorDistrital = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const t of tree?.territorios || []) {
+      const vpm = Number(memberById.get(t.ctvUserId)?.vpmPotencialCentavos || 0);
+      map.set(t.distritalId, (map.get(t.distritalId) || 0) + vpm);
+    }
+    return map;
+  }, [tree?.territorios, memberById]);
+
+  const vpmPorRegional = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const d of tree?.distritais || []) {
+      map.set(d.regionalId, (map.get(d.regionalId) || 0) + (vpmPorDistrital.get(d.id) || 0));
+    }
+    return map;
+  }, [tree?.distritais, vpmPorDistrital]);
+
   const toggle = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -189,10 +211,8 @@ export default function EstruturaComercialPage() {
   const distritais = tree?.distritais || [];
   const territorios = tree?.territorios || [];
   const vpmDoCtv = (ctvUserId: string) => Number(memberById.get(ctvUserId)?.vpmPotencialCentavos || 0);
-  const vpmDoDistrital = (distritalId: string) =>
-    territorios.filter((t) => t.distritalId === distritalId).reduce((s, t) => s + vpmDoCtv(t.ctvUserId), 0);
-  const vpmDaRegional = (regionalId: string) =>
-    distritais.filter((d) => d.regionalId === regionalId).reduce((s, d) => s + vpmDoDistrital(d.id), 0);
+  const vpmDoDistrital = (distritalId: string) => vpmPorDistrital.get(distritalId) || 0;
+  const vpmDaRegional = (regionalId: string) => vpmPorRegional.get(regionalId) || 0;
 
   return (
     <div className="space-y-6">
@@ -222,61 +242,82 @@ export default function EstruturaComercialPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
-            <input
-              value={linha.regionalCodigo}
-              onChange={(e) => setLinha((p) => ({ ...p, regionalCodigo: e.target.value }))}
-              placeholder="Regional (ex: SP)"
-              className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <select
-              value={linha.regionalUserId}
-              onChange={(e) => setLinha((p) => ({ ...p, regionalUserId: e.target.value }))}
-              className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">Nome Regional…</option>
-              {members.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.fullName || m.email}
-                </option>
-              ))}
-            </select>
-            <input
-              value={linha.distritalCodigo}
-              onChange={(e) => setLinha((p) => ({ ...p, distritalCodigo: e.target.value }))}
-              placeholder="Distrital (ex: SP-1)"
-              className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <select
-              value={linha.distritalUserId}
-              onChange={(e) => setLinha((p) => ({ ...p, distritalUserId: e.target.value }))}
-              className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">Nome Distrital…</option>
-              {members.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.fullName || m.email}
-                </option>
-              ))}
-            </select>
-            <input
-              value={linha.territorioNome}
-              onChange={(e) => setLinha((p) => ({ ...p, territorioNome: e.target.value }))}
-              placeholder="Território (ex: Oeste)"
-              className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-            <select
-              value={linha.ctvUserId}
-              onChange={(e) => setLinha((p) => ({ ...p, ctvUserId: e.target.value }))}
-              className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              <option value="">Nome CTV…</option>
-              {members.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.fullName || m.email}
-                </option>
-              ))}
-            </select>
+          {/* 3 blocos (Regional/Distrital/Território), cada um com código +
+              responsável — em vez de 6 campos soltos numa régua só, que
+              truncava os placeholders em telas mais estreitas que um
+              desktop largo. Achado de UX em auditoria 31/08/2026. */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Regional</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={linha.regionalCodigo}
+                  onChange={(e) => setLinha((p) => ({ ...p, regionalCodigo: e.target.value }))}
+                  placeholder="Código (ex: SP)"
+                  className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <select
+                  value={linha.regionalUserId}
+                  onChange={(e) => setLinha((p) => ({ ...p, regionalUserId: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">Responsável…</option>
+                  {members.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.fullName || m.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Distrital</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={linha.distritalCodigo}
+                  onChange={(e) => setLinha((p) => ({ ...p, distritalCodigo: e.target.value }))}
+                  placeholder="Código (ex: SP-1)"
+                  className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <select
+                  value={linha.distritalUserId}
+                  onChange={(e) => setLinha((p) => ({ ...p, distritalUserId: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">Responsável…</option>
+                  {members.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.fullName || m.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Território</label>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  value={linha.territorioNome}
+                  onChange={(e) => setLinha((p) => ({ ...p, territorioNome: e.target.value }))}
+                  placeholder="Nome (ex: Oeste)"
+                  className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <select
+                  value={linha.ctvUserId}
+                  onChange={(e) => setLinha((p) => ({ ...p, ctvUserId: e.target.value }))}
+                  className="px-3 py-2 rounded-xl border border-border/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <option value="">CTV…</option>
+                  {members.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.fullName || m.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <button

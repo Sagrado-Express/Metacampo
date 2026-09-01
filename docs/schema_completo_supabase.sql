@@ -251,6 +251,45 @@ CREATE TABLE IF NOT EXISTS public.ctv_metas (
     UNIQUE(tenant_id, ctv_id, safra)
 );
 
+-- 13. Hierarquia comercial com código: Regional → Distrital → Território →
+--     CTV (migration 20260820120000, pedido do usuário em 20/08/2026).
+--     Substitui a árvore por manager_id (tabela 11 acima) como fonte da
+--     tela Estrutura Comercial — manager_id continua existindo mas não é
+--     mais lido por ela. Os 3 níveis exigem login real: cada responsável é
+--     um user_id de user_tenants, nunca texto livre.
+CREATE TABLE IF NOT EXISTS public.regionais (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    codigo TEXT NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, codigo),
+    FOREIGN KEY (user_id, tenant_id) REFERENCES public.user_tenants(user_id, tenant_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.distritais (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    regional_id UUID NOT NULL REFERENCES public.regionais(id) ON DELETE CASCADE,
+    codigo TEXT NOT NULL,
+    user_id UUID NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(tenant_id, codigo),
+    FOREIGN KEY (user_id, tenant_id) REFERENCES public.user_tenants(user_id, tenant_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.territorios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    distrital_id UUID NOT NULL REFERENCES public.distritais(id) ON DELETE CASCADE,
+    nome TEXT NOT NULL,
+    ctv_user_id UUID NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(distrital_id, nome),
+    UNIQUE(tenant_id, ctv_user_id),
+    FOREIGN KEY (ctv_user_id, tenant_id) REFERENCES public.user_tenants(user_id, tenant_id)
+);
+
 -- Seed do tenant Piloto (dados pedagógicos/demo)
 INSERT INTO public.tenants (id, nome, plano)
 VALUES ('00000000-0000-0000-0000-000000000000', 'Cliente Piloto V4', 'Piloto')
@@ -284,6 +323,9 @@ ALTER TABLE public.grupos_economicos             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ctv_metas                     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_tenants                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenants                       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.regionais                     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.distritais                    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.territorios                   ENABLE ROW LEVEL SECURITY;
 
 CREATE OR REPLACE FUNCTION public.current_tenant_id()
 RETURNS UUID
@@ -331,6 +373,15 @@ CREATE POLICY tenant_isolation ON public.grupos_economicos
 CREATE POLICY tenant_isolation ON public.ctv_metas
   FOR ALL USING (tenant_id = public.current_tenant_id())
   WITH CHECK (tenant_id = public.current_tenant_id());
+CREATE POLICY tenant_isolation ON public.regionais
+  FOR ALL USING (tenant_id = public.current_tenant_id())
+  WITH CHECK (tenant_id = public.current_tenant_id());
+CREATE POLICY tenant_isolation ON public.distritais
+  FOR ALL USING (tenant_id = public.current_tenant_id())
+  WITH CHECK (tenant_id = public.current_tenant_id());
+CREATE POLICY tenant_isolation ON public.territorios
+  FOR ALL USING (tenant_id = public.current_tenant_id())
+  WITH CHECK (tenant_id = public.current_tenant_id());
 
 -- user_tenants: cada usuário só enxerga os próprios vínculos
 CREATE POLICY user_tenants_self ON public.user_tenants
@@ -368,6 +419,8 @@ CREATE INDEX IF NOT EXISTS idx_cultura_ibge_produtos_cultura_id      ON public.t
 CREATE INDEX IF NOT EXISTS idx_tenant_config_classificacoes_tenant_id ON public.tenant_config_classificacoes(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_planejamento_tenant_id                ON public.planejamento_cliente_segmento(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_planejamento_cliente_id               ON public.planejamento_cliente_segmento(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_planejamento_ctv_id                   ON public.planejamento_cliente_segmento(ctv_id);
+CREATE INDEX IF NOT EXISTS idx_it_se_configurations_safra            ON public.it_se_configurations(tenant_id, safra);
 CREATE INDEX IF NOT EXISTS idx_tenant_invites_tenant_id              ON public.tenant_invites(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_tenant_invites_token                  ON public.tenant_invites(token);
 CREATE INDEX IF NOT EXISTS idx_grupos_economicos_tenant_id           ON public.grupos_economicos(tenant_id);
@@ -376,6 +429,11 @@ CREATE INDEX IF NOT EXISTS idx_ctv_metas_tenant_id                   ON public.c
 CREATE INDEX IF NOT EXISTS idx_user_tenants_user_id                  ON public.user_tenants(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_tenant_id                ON public.user_tenants(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_user_tenants_manager_id               ON public.user_tenants(manager_id);
+CREATE INDEX IF NOT EXISTS idx_regionais_tenant_id                   ON public.regionais(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_distritais_tenant_id                  ON public.distritais(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_distritais_regional_id                ON public.distritais(regional_id);
+CREATE INDEX IF NOT EXISTS idx_territorios_tenant_id                 ON public.territorios(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_territorios_distrital_id              ON public.territorios(distrital_id);
 
 -- ============================================================
 -- Tabelas removidas em 04/08/2026 (auditoria de funcionalidades)

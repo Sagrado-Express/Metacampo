@@ -117,6 +117,38 @@ export async function POST(request: Request) {
       });
     }
 
+    // Nomes de grupo econômico novos (sem match no fetch inicial) que se
+    // repetem em mais de uma linha do lote — pré-resolve cada nome distinto
+    // uma vez só, em vez de um lookup-or-create por grupo dentro do loop de
+    // gravação abaixo. Achado em auditoria de performance 31/08/2026.
+    const nomesGrupoNovosDistintos = [
+      ...new Set(
+        results
+          .filter((g) => g.action !== 'error' && !g.grupoEconomicoId && g.grupoEconomicoNome)
+          .map((g) => g.grupoEconomicoNome as string)
+      ),
+    ];
+    const grupoIdPorNomeNovo = new Map<string, string>();
+    for (const nome of nomesGrupoNovosDistintos) {
+      const { data: jaExiste } = await ctx.supabase
+        .from('grupos_economicos')
+        .select('id')
+        .ilike('nome', nome)
+        .maybeSingle();
+      if (jaExiste) {
+        grupoIdPorNomeNovo.set(nome, jaExiste.id);
+      } else {
+        const { data: novoGrupo, error: grupoError } = await ctx.supabase
+          .from('grupos_economicos')
+          .insert({ tenant_id: ctx.tenantId, nome })
+          .select('id')
+          .single();
+        if (!grupoError) grupoIdPorNomeNovo.set(nome, novoGrupo.id);
+        // Erro na pré-criação não aborta o lote — cai no fallback per-grupo
+        // dentro do loop abaixo, que trata o erro por cliente.
+      }
+    }
+
     // ---- 3. Gravar (best-effort por cliente, não tudo-ou-nada) ----
     for (const g of results) {
       if (g.action === 'error') {
@@ -128,23 +160,27 @@ export async function POST(request: Request) {
       try {
         let grupoEconomicoId = g.grupoEconomicoId;
         if (!grupoEconomicoId && g.grupoEconomicoNome) {
-          // Get-or-create: re-checa antes de criar pra não duplicar se o
-          // mesmo grupo novo aparecer em mais de uma linha do lote.
-          const { data: jaExiste } = await ctx.supabase
-            .from('grupos_economicos')
-            .select('id')
-            .ilike('nome', g.grupoEconomicoNome)
-            .maybeSingle();
-          if (jaExiste) {
-            grupoEconomicoId = jaExiste.id;
-          } else {
-            const { data: novoGrupo, error: grupoError } = await ctx.supabase
+          grupoEconomicoId = grupoIdPorNomeNovo.get(g.grupoEconomicoNome) ?? null;
+          if (!grupoEconomicoId) {
+            // Fallback: a pré-resolução em lote (acima) não conseguiu criar
+            // esse nome — tenta de novo, isolado, pra não travar só este
+            // cliente por causa de um erro que talvez já tenha se resolvido.
+            const { data: jaExiste } = await ctx.supabase
               .from('grupos_economicos')
-              .insert({ tenant_id: ctx.tenantId, nome: g.grupoEconomicoNome })
               .select('id')
-              .single();
-            if (grupoError) throw grupoError;
-            grupoEconomicoId = novoGrupo.id;
+              .ilike('nome', g.grupoEconomicoNome)
+              .maybeSingle();
+            if (jaExiste) {
+              grupoEconomicoId = jaExiste.id;
+            } else {
+              const { data: novoGrupo, error: grupoError } = await ctx.supabase
+                .from('grupos_economicos')
+                .insert({ tenant_id: ctx.tenantId, nome: g.grupoEconomicoNome })
+                .select('id')
+                .single();
+              if (grupoError) throw grupoError;
+              grupoEconomicoId = novoGrupo.id;
+            }
           }
         }
 
@@ -181,9 +217,17 @@ export async function POST(request: Request) {
             .eq('id', clienteId);
         }
 
-        for (const area of g.areas.filter((a) => a.valida)) {
+        const areasValidas = g.areas.filter((a) => a.valida);
+        if (areasValidas.length > 0) {
+          // Uma chamada em lote (array de linhas) em vez de um upsert por
+          // área — cliente com 5 cultivos gravava 5 ida-e-voltas antes.
           const { error: areaError } = await ctx.supabase.from('customer_crop_areas').upsert(
-            { tenant_id: ctx.tenantId, customer_id: clienteId, crop_name: area.cultivo, area_ha: area.hectares },
+            areasValidas.map((area) => ({
+              tenant_id: ctx.tenantId,
+              customer_id: clienteId,
+              crop_name: area.cultivo,
+              area_ha: area.hectares,
+            })),
             { onConflict: 'customer_id,crop_name' }
           );
           if (areaError) throw areaError;

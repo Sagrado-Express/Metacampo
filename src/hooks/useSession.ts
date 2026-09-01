@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 interface SessionData {
   tenantId: string;
   email: string;
+  fullName: string;
   userId: string;
   role: string;
 }
@@ -18,6 +19,7 @@ export function useSession() {
       return {
         tenantId: user?.app_metadata?.tenant_id || "00000000-0000-0000-0000-000000000000",
         email: user?.email || "",
+        fullName: user?.user_metadata?.full_name || user?.email || "",
         userId: user?.id || "",
         role: user?.app_metadata?.role || "",
       };

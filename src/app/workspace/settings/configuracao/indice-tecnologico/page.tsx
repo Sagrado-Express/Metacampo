@@ -8,7 +8,10 @@ import { useSession } from "@/hooks/useSession";
 
 export default function IndiceTecnologicoPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
-  const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
+  // String vazia, não um UUID placeholder: com "enabled: !!tenantId" nos
+  // hooks de dicionário, isso bloqueia o fetch até a sessão real resolver
+  // em vez de disparar 2x (achado em auditoria de performance 31/08/2026).
+  const tenantId = sessionData?.tenantId || "";
   const [safra, setSafra] = useState("25/26");
 
   const { classifications, isLoading: isLoadingClassifications, isError: isErrorClassifications } = useSegmentDictionary(tenantId);

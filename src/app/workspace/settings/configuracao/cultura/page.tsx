@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { SegmentSettings, type CulturaItem } from "@/components/admin/SegmentSettings";
 import type { TipoCultura } from "@/data/culturas_ibge";
 import { useCultureDictionary } from "@/hooks/useCultureDictionary";
@@ -7,7 +8,14 @@ import { useSession } from "@/hooks/useSession";
 
 export default function CulturaPage() {
   const { data: sessionData, isLoading: isLoadingSession } = useSession();
-  const tenantId = sessionData?.tenantId || "00000000-0000-0000-0000-000000000000";
+  // Deep-link do aviso "Cultura não cadastrada: X" em Meus Clientes — chega
+  // aqui como ?buscar=X pra pré-preencher a busca em vez do usuário ter que
+  // digitar o nome de novo (achado de UX em auditoria 31/08/2026).
+  const buscarInicial = useSearchParams().get("buscar") || undefined;
+  // String vazia, não um UUID placeholder: com "enabled: !!tenantId" no
+  // hook de dicionário, isso bloqueia o fetch até a sessão real resolver
+  // em vez de disparar 2x (achado em auditoria de performance 31/08/2026).
+  const tenantId = sessionData?.tenantId || "";
 
   const { cultures, invalidate: invalidateCultures, isLoading, isError } = useCultureDictionary(tenantId);
 
@@ -154,6 +162,7 @@ export default function CulturaPage() {
           onAddProdutoIbge={handleAddProdutoIbge}
           onRemoveProdutoIbge={handleRemoveProdutoIbge}
           showOnlyCulturas
+          initialCulturaSearch={buscarInicial}
         />
       </div>
     </div>

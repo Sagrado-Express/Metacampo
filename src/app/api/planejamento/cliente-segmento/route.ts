@@ -1,6 +1,19 @@
 ﻿import { NextResponse } from 'next/server';
 import { getAuthedContext } from '@/lib/auth';
 import { rateLimitResponse } from '@/lib/rateLimiter';
+import { fetchAllRows } from '@/lib/db';
+
+interface PlanejamentoRow {
+  id: string;
+  tenant_id: string;
+  ctv_id: string;
+  cliente_id: string;
+  cultivo: string;
+  segmento: string;
+  valor_planejado_centavos: number;
+  share_percentual: number;
+  status: string;
+}
 
 export async function GET() {
   const ctx = await getAuthedContext();
@@ -8,13 +21,14 @@ export async function GET() {
   const { supabase, tenantId } = ctx;
 
   try {
-    const { data, error } = await supabase
-      .from('planejamento_cliente_segmento')
-      .select('*')
-      .eq('tenant_id', tenantId);
+    // fetchAllRows em vez de select('*') puro: é a tabela que mais cresce
+    // do sistema (combinação cliente × cultivo × segmento), a primeira a
+    // bater o truncamento silencioso de ~1000 linhas do PostgREST — achado
+    // em auditoria de performance 31/08/2026.
+    const data = await fetchAllRows<PlanejamentoRow>((from, to) =>
+      supabase.from('planejamento_cliente_segmento').select('*').eq('tenant_id', tenantId).range(from, to)
+    );
 
-    if (error) throw error;
-    
     // Map db structure back to model structure
     const mapped = data.map(item => ({
       id: item.id,

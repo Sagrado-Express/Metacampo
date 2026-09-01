@@ -111,19 +111,21 @@ export async function GET(request: Request) {
 
     if (areasError) throw areasError;
 
-    // 3. Fetch all IT configurations and build lookup
-    const { data: indices } = await supabase
-      .from('it_se_configurations')
-      .select('*')
-      .eq('tenant_id', tenantId);
-
-    // 4. Fetch active segments for VPM calculation
-    const { data: segments } = await supabase
-      .from('tenant_config_classificacoes')
-      .select('custom_name')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .is('parent_key', null);
+    // 3-6. Quatro consultas independentes entre si (nenhuma depende do
+    // resultado de outra) — rodavam uma atrás da outra, medido em
+    // 250-628ms; em paralelo numa só ida-e-volta de rede (achado em
+    // auditoria de performance 31/08/2026).
+    const [{ data: indices }, { data: segments }, { data: culturasCfg }, { data: gruposCfg }] = await Promise.all([
+      supabase.from('it_se_configurations').select('*').eq('tenant_id', tenantId),
+      supabase
+        .from('tenant_config_classificacoes')
+        .select('custom_name')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .is('parent_key', null),
+      supabase.from('tenant_config_culturas').select('custom_name').eq('tenant_id', tenantId).eq('is_active', true),
+      supabase.from('grupos_economicos').select('id, nome').eq('tenant_id', tenantId),
+    ]);
 
     // Sem fallback para uma lista fixa de segmentos (Regra Nº6): se o tenant
     // não configurou segmento nenhum, o VPM é 0 e a resposta diz o porquê.
@@ -132,26 +134,15 @@ export async function GET(request: Request) {
     const segNames: string[] = ((segments as ClassificacaoRow[]) || []).map((s) => s.custom_name);
     const semSegmentosConfigurados = segNames.length === 0;
 
-    // 5. Culturas cadastradas do tenant — usadas para distinguir
-    //    "cultura não cadastrada" de "Índice Tecnológico não definido".
-    //    Os dois zeram o VPM, mas exigem ações diferentes do usuário.
-    const { data: culturasCfg } = await supabase
-      .from('tenant_config_culturas')
-      .select('custom_name')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true);
-
+    // Culturas cadastradas do tenant — usadas para distinguir "cultura não
+    // cadastrada" de "Índice Tecnológico não definido". Os dois zeram o
+    // VPM, mas exigem ações diferentes do usuário.
     const culturasCadastradas = new Set(
       ((culturasCfg as CulturaRow[]) || []).map((c) => String(c.custom_name).toUpperCase())
     );
 
-    // 6. Grupos econômicos do tenant, para exibir o nome junto de cada cliente
-    //    sem precisar de uma segunda ida ao banco por linha.
-    const { data: gruposCfg } = await supabase
-      .from('grupos_economicos')
-      .select('id, nome')
-      .eq('tenant_id', tenantId);
-
+    // Grupos econômicos do tenant, para exibir o nome junto de cada cliente
+    // sem precisar de uma segunda ida ao banco por linha.
     const gruposPorId = new Map(((gruposCfg as GrupoEconomicoRow[]) || []).map((g) => [g.id, g.nome]));
 
     const itLookup = buildItLookup(
@@ -169,16 +160,23 @@ export async function GET(request: Request) {
       let vpmTotalCentavos = 0;
       const mappedAreas = areas.map(area => {
         const areaHa = Number(area.area_ha);
-        let areaVpm = 0;
+        const culturaCadastrada = culturasCadastradas.has(String(area.crop_name).toUpperCase());
 
-        // Calculate VPM across all segments for this crop area
-        for (const seg of segNames) {
-          areaVpm += calcVpm({
-            hectares: areaHa,
-            cropName: area.crop_name,
-            segmentName: seg,
-            itLookup,
-          });
+        // Cultura desativada/renomeada pode deixar Índice Tecnológico órfão
+        // pra trás (crop_name antigo ainda com linhas em it_se_configurations).
+        // VPM só soma se a cultura está ativa hoje — nunca sobre configuração
+        // de uma cultura que o tenant não reconhece mais (achado em auditoria
+        // 31/08/2026: "Soja" desativada ainda contribuía VPM via IT órfão).
+        let areaVpm = 0;
+        if (culturaCadastrada) {
+          for (const seg of segNames) {
+            areaVpm += calcVpm({
+              hectares: areaHa,
+              cropName: area.crop_name,
+              segmentName: seg,
+              itLookup,
+            });
+          }
         }
         vpmTotalCentavos += areaVpm;
 
@@ -187,8 +185,6 @@ export async function GET(request: Request) {
           const key = `${area.crop_name.toUpperCase()}::${seg.toUpperCase()}`;
           return itLookup[key] != null && itLookup[key] > 0;
         });
-
-        const culturaCadastrada = culturasCadastradas.has(String(area.crop_name).toUpperCase());
 
         // Um único motivo, na ordem em que o usuário precisa resolver:
         // não adianta pedir Índice Tecnológico de uma cultura que nem existe.
@@ -295,11 +291,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Informe ao menos um cultivo com área.' }, { status: 400 });
     }
 
-    // Fetch IT configurations from database for this tenant
-    const { data: indices } = await supabase
-      .from('it_se_configurations')
-      .select('*')
-      .eq('tenant_id', tenantId);
+    // IT configurations e segmentos ativos são independentes entre si —
+    // em paralelo em vez de sequencial (achado em auditoria de performance
+    // 31/08/2026).
+    const [{ data: indices }, { data: segments }] = await Promise.all([
+      supabase.from('it_se_configurations').select('*').eq('tenant_id', tenantId),
+      supabase
+        .from('tenant_config_classificacoes')
+        .select('custom_name')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true)
+        .is('parent_key', null),
+    ]);
 
     const itLookup = buildItLookup(
       ((indices as ItConfigRow[]) || []).map((ind) => ({
@@ -308,14 +311,6 @@ export async function POST(request: Request) {
         valorPorHectareCentavos: Number(ind.value_per_hectare),
       }))
     );
-
-    // Fetch active segments to calculate VPM across all of them
-    const { data: segments } = await supabase
-      .from('tenant_config_classificacoes')
-      .select('custom_name')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .is('parent_key', null);
 
     // Sem fallback para lista fixa de segmentos (Regra Nº6): tenant sem
     // segmento configurado resulta em VPM 0, nunca em VPM sobre segmento fantasma.

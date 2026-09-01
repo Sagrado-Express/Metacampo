@@ -14,8 +14,11 @@ export interface TenantMember {
  * usuário ver a própria linha em user_tenants via RLS, e auth.users não é
  * exposto via PostgREST de jeito nenhum — só pela Admin Auth API.
  *
- * listUsers() é global ao projeto Supabase (todos os tenants), não só
- * deste — pagina até esgotar e filtra pelo Map de user_id do tenant.
+ * Busca cada membro por getUserById em vez de paginar listUsers() (que é
+ * global ao projeto Supabase, todos os tenants, não só deste) — o tenant já
+ * sabe exatamente quais user_id precisa via user_tenants, então não há
+ * motivo pra varrer o projeto inteiro pra filtrar depois. Achado em
+ * auditoria de performance 31/08/2026 (780-1149ms medido ao vivo).
  */
 export async function getTenantMembers(tenantId: string): Promise<TenantMember[]> {
   const { data: memberships, error: membershipsError } = await supabaseAdmin
@@ -24,31 +27,24 @@ export async function getTenantMembers(tenantId: string): Promise<TenantMember[]
     .eq('tenant_id', tenantId);
 
   if (membershipsError) throw membershipsError;
+  if (!memberships || memberships.length === 0) return [];
 
-  const membershipByUserId = new Map((memberships || []).map((m) => [m.user_id, m]));
-  if (membershipByUserId.size === 0) return [];
+  const users = await Promise.all(
+    memberships.map((m) => supabaseAdmin.auth.admin.getUserById(m.user_id))
+  );
 
   const members: TenantMember[] = [];
-  let page = 1;
-  while (true) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw error;
-
-    for (const u of data.users) {
-      const membership = membershipByUserId.get(u.id);
-      if (membership) {
-        members.push({
-          userId: u.id,
-          email: u.email || '',
-          fullName: (u.user_metadata as { full_name?: string })?.full_name || u.email || '',
-          role: membership.role,
-          managerId: membership.manager_id,
-        });
-      }
-    }
-
-    if (!data.nextPage) break;
-    page = data.nextPage;
+  for (let i = 0; i < memberships.length; i++) {
+    const membership = memberships[i];
+    const u = users[i].data.user;
+    if (!u) continue; // usuário removido do Auth mas ainda com linha em user_tenants
+    members.push({
+      userId: u.id,
+      email: u.email || '',
+      fullName: (u.user_metadata as { full_name?: string })?.full_name || u.email || '',
+      role: membership.role,
+      managerId: membership.manager_id,
+    });
   }
 
   return members;

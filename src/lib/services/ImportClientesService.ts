@@ -119,6 +119,24 @@ export function resolveImportGroups(rows: CsvRow[], ctx: ResolveImportContext): 
   const { membersByEmail, culturasAtivas, clientesExistentes, areasExistentes, gruposExistentes } = ctx;
   const rawGroups = agruparPorCliente(rows);
 
+  // Índices em memória em vez de .find() dentro do map abaixo — evitava
+  // varredura O(grupos × clientesExistentes) e, pra área, O(grupos × linhas
+  // × areasExistentes), refeita a cada import (achado em auditoria de
+  // performance 31/08/2026).
+  const clientesPorDocumento = new Map<string, ClienteExistenteRow>();
+  const clientesPorNomeCidadeUfCtv = new Map<string, ClienteExistenteRow>();
+  for (const c of clientesExistentes) {
+    if (c.document) clientesPorDocumento.set(c.document, c);
+    clientesPorNomeCidadeUfCtv.set(
+      `${String(c.name).trim().toUpperCase()}|${String(c.city).trim().toUpperCase()}|${String(c.state).trim().toUpperCase()}|${c.ctv_id}`,
+      c
+    );
+  }
+  const areasPorClienteECultivo = new Map<string, AreaExistenteRow>();
+  for (const a of areasExistentes) {
+    areasPorClienteECultivo.set(`${a.customer_id}|${String(a.crop_name).toUpperCase()}`, a);
+  }
+
   return rawGroups.map((g, idx) => {
     const first = g.rows[0];
     const nome = String(first.nome_cliente || '').trim();
@@ -147,15 +165,10 @@ export function resolveImportGroups(rows: CsvRow[], ctx: ResolveImportContext): 
     }
 
     const existente = g.documento
-      ? clientesExistentes.find((c) => c.document === g.documento)
-      : clientesExistentes.find(
-          (c) =>
-            String(c.name).trim().toUpperCase() === nome.toUpperCase() &&
-            String(c.city).trim().toUpperCase() === cidade.toUpperCase() &&
-            String(c.state).trim().toUpperCase() === uf &&
-            member &&
-            c.ctv_id === member.userId
-        );
+      ? clientesPorDocumento.get(g.documento)
+      : member
+        ? clientesPorNomeCidadeUfCtv.get(`${nome.toUpperCase()}|${cidade.toUpperCase()}|${uf}|${member.userId}`)
+        : undefined;
 
     const areas: AreaResolvida[] = g.rows.map((row) => {
       const cultivoRaw = String(row.cultivo || '').trim();
@@ -169,9 +182,7 @@ export function resolveImportGroups(rows: CsvRow[], ctx: ResolveImportContext): 
         return { cultivo: cultivoResolvido, hectares: 0, valida: false, motivo: 'hectares deve ser maior que zero' };
 
       const areaAnterior = existente
-        ? areasExistentes.find(
-            (a) => a.customer_id === existente.id && String(a.crop_name).toUpperCase() === cultivoResolvido.toUpperCase()
-          )
+        ? areasPorClienteECultivo.get(`${existente.id}|${cultivoResolvido.toUpperCase()}`)
         : undefined;
 
       return {

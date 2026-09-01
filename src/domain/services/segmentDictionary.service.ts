@@ -166,40 +166,45 @@ export class SegmentDictionaryService {
     const internalKey = normalizeToKey(input.customName);
 
     try {
-      // Validate uniqueness within tenant
-      const { data: existing, error: checkError } = await supabase
-        .from('tenant_config_classificacoes')
-        .select('id')
-        .eq('tenant_id', tenantId)
-        .eq('internal_key', internalKey)
-        .maybeSingle();
+      // As 3 checagens não dependem uma da outra — em paralelo em vez de
+      // sequencial (achado em auditoria de performance 31/08/2026).
+      const [
+        { data: existing, error: checkError },
+        parentCheck,
+        { count, error: countError },
+      ] = await Promise.all([
+        // Validate uniqueness within tenant
+        supabase
+          .from('tenant_config_classificacoes')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('internal_key', internalKey)
+          .maybeSingle(),
+        // If parent_key is provided, validate it exists
+        input.parentKey
+          ? supabase
+              .from('tenant_config_classificacoes')
+              .select('id')
+              .eq('tenant_id', tenantId)
+              .eq('internal_key', input.parentKey)
+              .eq('is_active', true)
+              .maybeSingle()
+          : Promise.resolve(null),
+        // Determine next color from palette
+        supabase.from('tenant_config_classificacoes').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+      ]);
 
       if (checkError) throw checkError;
       if (existing) {
         throw new Error(`Grupo de produto com chave "${internalKey}" já existe para este tenant.`);
       }
 
-      // If parent_key is provided, validate it exists
       if (input.parentKey) {
-        const { data: parent, error: parentError } = await supabase
-          .from('tenant_config_classificacoes')
-          .select('id')
-          .eq('tenant_id', tenantId)
-          .eq('internal_key', input.parentKey)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (parentError) throw parentError;
-        if (!parent) {
+        if (parentCheck?.error) throw parentCheck.error;
+        if (!parentCheck?.data) {
           throw new Error(`Grupo de produto pai "${input.parentKey}" não encontrado ou inativo.`);
         }
       }
-
-      // Determine next color from palette
-      const { count, error: countError } = await supabase
-        .from('tenant_config_classificacoes')
-        .select('*', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId);
 
       if (countError) throw countError;
 
@@ -274,17 +279,20 @@ export class SegmentDictionaryService {
       if (error) throw error;
 
       if (input.customName && nomeAnterior && nomeAnterior !== input.customName) {
-        await supabase
-          .from('it_se_configurations')
-          .update({ segment_name: input.customName })
-          .eq('tenant_id', tenantId)
-          .eq('segment_name', nomeAnterior);
-
-        await supabase
-          .from('planejamento_cliente_segmento')
-          .update({ segmento: input.customName })
-          .eq('tenant_id', tenantId)
-          .eq('segmento', nomeAnterior);
+        // As duas tabelas são independentes entre si — em paralelo (achado
+        // em auditoria de performance 31/08/2026).
+        await Promise.all([
+          supabase
+            .from('it_se_configurations')
+            .update({ segment_name: input.customName })
+            .eq('tenant_id', tenantId)
+            .eq('segment_name', nomeAnterior),
+          supabase
+            .from('planejamento_cliente_segmento')
+            .update({ segmento: input.customName })
+            .eq('tenant_id', tenantId)
+            .eq('segmento', nomeAnterior),
+        ]);
       }
 
       return mapRowToClassificacao(data);
@@ -703,23 +711,25 @@ export class SegmentDictionaryService {
     if (error) throw error;
 
     if (input.customName && nomeAnterior && nomeAnterior !== input.customName) {
-      await supabase
-        .from('it_se_configurations')
-        .update({ crop_name: input.customName })
-        .eq('tenant_id', tenantId)
-        .eq('crop_name', nomeAnterior);
-
-      await supabase
-        .from('customer_crop_areas')
-        .update({ crop_name: input.customName })
-        .eq('tenant_id', tenantId)
-        .eq('crop_name', nomeAnterior);
-
-      await supabase
-        .from('planejamento_cliente_segmento')
-        .update({ cultivo: input.customName })
-        .eq('tenant_id', tenantId)
-        .eq('cultivo', nomeAnterior);
+      // As três tabelas são independentes entre si — em paralelo (achado em
+      // auditoria de performance 31/08/2026).
+      await Promise.all([
+        supabase
+          .from('it_se_configurations')
+          .update({ crop_name: input.customName })
+          .eq('tenant_id', tenantId)
+          .eq('crop_name', nomeAnterior),
+        supabase
+          .from('customer_crop_areas')
+          .update({ crop_name: input.customName })
+          .eq('tenant_id', tenantId)
+          .eq('crop_name', nomeAnterior),
+        supabase
+          .from('planejamento_cliente_segmento')
+          .update({ cultivo: input.customName })
+          .eq('tenant_id', tenantId)
+          .eq('cultivo', nomeAnterior),
+      ]);
     }
 
     const produtos = await fetchProdutosPorCultura(supabase, tenantId, [id]);

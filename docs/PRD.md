@@ -953,3 +953,119 @@ menos que `xlsx` saia do `package.json` também, o que mataria a
 capacidade de ler planilha pontualmente sem ganho de segurança
 proporcional. Reabrir só se `xlsx` ganhar um caminho de exploração real
 (ex.: algum fluxo passar a processar upload de usuário com essa lib).
+
+### 16.11 Auditoria de performance + UX ao vivo, e correção de todos os achados (31/08/2026)
+
+Pedido do usuário: auditoria de performance em todas as features, testando
+de verdade (não só lendo código), seguida de proposta de melhorias de
+usabilidade — e depois "fix all": resolver tudo que a auditoria achou.
+Relatório publicado como Artifact (link na memória da sessão), consolidando
+achados de 2 agentes (backend/API e frontend/hooks, código real com
+`arquivo:linha`) e navegação ao vivo (login real, rede/console inspecionados,
+tenant A). Ordem de execução: bug de dado real primeiro, depois performance
+por severidade, depois UX.
+
+**Bug de dado real em produção, achado navegando (não por auditoria de
+código):** 3 de 5 clientes reais do tenant A mostravam "Cultura não
+cadastrada: Soja" em Meus Clientes. Causa: a cultura "Soja" foi desativada
+na unificação do catálogo IBGE (16.7), substituída por "Soja (em grão)",
+mas o Índice Tecnológico configurado pra "Soja" (R$450+500+1200/ha) ficou
+órfão — `/api/clientes` e `/api/planejamento/dashboard-full` calculavam VPM
+casando `crop_name` contra `it_se_configurations` por string, **sem checar
+se aquela cultura ainda está ativa**. Resultado: o VPM da Soja (R$5.805.000
+de potencial) já entrava nos totais (grupo econômico, footer, Planejamento)
+mesmo com a linha do cliente dizendo "não cadastrada" — inconsistência
+visível na tela e, mais grave, um valor real sendo somado por engano
+via configuração órfã.
+
+- **Correção de código** (defesa contra qualquer cultura desativada/órfã
+  futura): as duas rotas agora só somam VPM quando `crop_name` bate com
+  uma cultura **ativa** do tenant; caso contrário, `vpmCentavos = 0`.
+- **Migração de dado, autorizada explicitamente pelo usuário antes de
+  rodar** (script direto contra produção, fora do fluxo normal da UI):
+  `customer_crop_areas.crop_name`, `it_se_configurations.crop_name` e
+  `planejamento_cliente_segmento.cultivo` — as 4+3+5 linhas que diziam
+  "Soja" — renomeadas pra "Soja (em grão)", preservando as taxas R$/ha já
+  configuradas em vez de perdê-las. A cultura "Soja" órfã foi então
+  excluída de verdade (reaproveitando a checagem de uso do item #11,
+  16.9) depois de confirmado zero uso remanescente.
+- Verificado ao vivo: aviso sumiu, os 3 clientes passaram a mostrar VPM
+  real (R$3.225.000 / R$2.580.000 / R$430.000), e o total da carteira
+  (R$7.661.320) **não mudou** — confirma que o dinheiro já era real, só
+  estava mal atribuído/escondido, não inventado pela correção.
+
+**Performance — 4 altas, resolvidas:**
+1. `tenantId` placeholder truthy nas queries de dicionário causava fetch
+   duplicado (`useCultureDictionary`, `useSegmentDictionary`, Clientes,
+   Índice Tecnológico dobrava pra 4 requisições) — trocado por string
+   vazia + `enabled` real em 4 páginas.
+2. `/api/tenant/members` e `/api/estrutura-comercial` em 780-1149ms
+   (medido) por `listUsers()` paginar o projeto Supabase inteiro —
+   trocado por `getUserById()` direto nos poucos `user_id` que o tenant já
+   conhece via `user_tenants`. Medido depois: ~170-180ms em regime.
+3. `planejamento_cliente_segmento` GET sem paginação (risco de
+   truncamento silencioso do PostgREST em ~1000 linhas, a tabela que mais
+   cresce) — `fetchAllRows` aplicado.
+4. O bug de dado da Soja acima.
+
+**Performance — médias/baixas, resolvidas:** `/api/clientes` GET/POST/PATCH
+com 4 consultas independentes paralelizadas (`Promise.all`, era sequencial,
+250-628ms medido); Início sem mais fetch duplicado de sessão, 4 contagens
+migradas pra `useQuery` com cache de 5min (`useSession` ganhou o campo
+`fullName`, que a página usava via um fetch cru só por isso);
+`PlanejamentoTabs` (`heatmapData`/`combosComArea`) e `Heatmap` (índice
+cliente×cultivo em vez de `.find()` aninhado) memoizados; importação de
+CSV grava áreas em lote (1 upsert por cliente, não 1 por linha) e
+pré-resolve grupo econômico novo 1x por nome distinto (não 1x por linha);
+`ImportClientesService` trocou 2 `.find()` O(N×M) por `Map` O(1);
+propagação de rename de cultura/classificação (3 e 2 tabelas) e as 3
+checagens de `createClassificacao` paralelizadas; `ITMatrix` (`activeCulturas`/
+`activeSegmentos` memoizados — sem isso o memo de `rowTotals` nunca
+reaproveitava cache, recalculava a cada tecla mesmo memoizado);
+`SegmentSettings` (`roots`/`getChildren` viram `Map`, totalizador de
+culturas e sugestão de produto IBGE deixam de recalcular 2-3x por render);
+Estrutura Comercial (VPM por distrital/regional vira `Map` pré-calculado
+em vez de `filter().reduce()` a cada tecla do formulário). Dois índices
+faltantes (`planejamento_cliente_segmento.ctv_id`,
+`it_se_configurations.safra`) e `regionais`/`distritais`/`territorios`
+(criadas em 16.8, nunca espelhadas) adicionados a
+`docs/schema_completo_supabase.sql` — migration
+`20260831130000_indices_faltantes_planejamento_it.sql` aplicada.
+
+Não mexido, por avaliação própria: `motion layout` do Framer Motion nas
+listas de cultura/grupo (SegmentSettings) — o achado da auditoria descreve
+corretamente que escala mal, mas a correção seria remover a animação de
+reordenação (regressão de polish por um ganho hoje irrelevante, listas de
+poucas dezenas de itens); não removido.
+
+**UX — achados ao vivo, resolvidos:**
+- Banner "Cultura não cadastrada: X" em Clientes agora leva direto pra
+  `Configuração → Cultura` com a busca **pré-preenchida** com o nome
+  faltante (`?buscar=X`, novo em `SegmentSettings`/`CulturaPage`) — antes
+  levava pra tela genérica e o usuário tinha que digitar de novo.
+- "Convites enviados" (Usuários) trocou spinner central por skeleton no
+  formato das linhas finais — efeito colateral bom da correção #2 de
+  performance acima é que a espera ficou bem mais curta de qualquer forma.
+- Formulário "Adicionar linha" da Estrutura Comercial: 6 campos numa
+  régua só (truncava em telas mais estreitas que desktop largo) virou 3
+  blocos rotulados (Regional/Distrital/Território), cada um com
+  código+responsável emparelhados.
+- "+variante" que desaparece sem explicação quando a cultura ganha um
+  segundo produto no de-para agora mostra uma frase dizendo por quê no
+  lugar do botão.
+
+**Correção ao próprio relatório, registrada aqui pra não repetir:** o
+achado "internal_key exibido de 3 formas visuais diferentes" (Cultura,
+Índice Tecnológico, Grupo de Produtos) não se sustentou lendo o código —
+as 3 telas usam exatamente a mesma classe CSS pro badge cinza do
+internal_key (`SegmentSettings.tsx`, `ITMatrix.tsx`); o que pareceu
+"badge colorido" em Grupo de Produtos era o indicador de cor do gráfico
+do segmento (`classificacao.color`), um dado diferente, ao lado do mesmo
+badge cinza. Nenhuma mudança de código foi feita nesse item — a leitura
+visual inicial (sem abrir o código) estava imprecisa.
+
+**Verificação:** 37 testes (`vitest`) passando antes e depois, `tsc --noEmit`
+limpo, `eslint` limpo, `next build` completo (37 rotas) sem erros — e cada
+fix de UI conferido ao vivo no navegador (login real, tenant A), não só
+por tipo/build. `docs/schema_completo_supabase.sql` segue como espelho
+fiel do banco live.

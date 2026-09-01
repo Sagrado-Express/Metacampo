@@ -89,6 +89,10 @@ interface SegmentSettingsProps {
   /** Quando presente, o título da seção vira editável (clique pra trocar o
    *  apelido). null limpa o apelido e volta pro rótulo padrão. */
   onChangeLabelGrupoProduto?: (label: string | null) => Promise<void>;
+  /** Pré-preenche a busca de cultura (deep-link do aviso "Cultura não
+   *  cadastrada: X" em Meus Clientes, pra não obrigar o usuário a digitar o
+   *  nome de novo). */
+  initialCulturaSearch?: string;
 }
 
 // ============================================================
@@ -127,6 +131,7 @@ export function SegmentSettings({
   showOnlyClassifications = false,
   labelGrupoProduto: labelGrupoProdutoProp,
   onChangeLabelGrupoProduto,
+  initialCulturaSearch,
 }: SegmentSettingsProps) {
   const labelGrupoProduto = labelGrupoProdutoProp?.trim() || "Grupo de Produtos";
   const [editingLabel, setEditingLabel] = useState(false);
@@ -134,8 +139,8 @@ export function SegmentSettings({
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [newClassName, setNewClassName] = useState("");
   const [newSubClassName, setNewSubClassName] = useState<Record<string, string>>({});
-  const [culturaSearch, setCulturaSearch] = useState("");
-  const [showCulturaSuggestions, setShowCulturaSuggestions] = useState(false);
+  const [culturaSearch, setCulturaSearch] = useState(initialCulturaSearch || "");
+  const [showCulturaSuggestions, setShowCulturaSuggestions] = useState(!!initialCulturaSearch);
   const [addingVarianteFor, setAddingVarianteFor] = useState<string | null>(null);
   const [varianteDraft, setVarianteDraft] = useState("");
   const [addingProdutoFor, setAddingProdutoFor] = useState<string | null>(null);
@@ -146,10 +151,22 @@ export function SegmentSettings({
   const [dragCulturaIdx, setDragCulturaIdx] = useState<number | null>(null);
   const [dragClassificacaoIdx, setDragClassificacaoIdx] = useState<number | null>(null);
 
-  // Separate roots and children
-  const roots = classificacoes.filter((c) => c.parentKey === null);
-  const getChildren = (parentKey: string) =>
-    classificacoes.filter((c) => c.parentKey === parentKey);
+  // Separate roots and children. Memoizado: qualquer tecla digitada em
+  // qualquer campo da tela (busca, alias, nome de subgrupo) re-renderiza o
+  // componente inteiro, e sem memo esse filter (e o de getChildren, chamado
+  // uma vez por root) eram refeitos O(roots × classificacoes) a cada uma
+  // dessas teclas. Achado em auditoria de performance 31/08/2026.
+  const roots = useMemo(() => classificacoes.filter((c) => c.parentKey === null), [classificacoes]);
+  const childrenByParentKey = useMemo(() => {
+    const map = new Map<string, ClassificacaoItem[]>();
+    for (const c of classificacoes) {
+      if (c.parentKey === null) continue;
+      if (!map.has(c.parentKey)) map.set(c.parentKey, []);
+      map.get(c.parentKey)!.push(c);
+    }
+    return map;
+  }, [classificacoes]);
+  const getChildren = (parentKey: string) => childrenByParentKey.get(parentKey) || [];
 
   const toggleExpand = (key: string) => {
     setExpandedItems((prev) => {
@@ -747,7 +764,9 @@ export function SegmentSettings({
                           </div>
                         )}
                         {onAddProdutoIbge &&
-                          (addingProdutoFor === cultura.id ? (
+                          (addingProdutoFor === cultura.id ? (() => {
+                            const sugestoes = sugerirProdutosParaCultura(cultura, produtoDraft);
+                            return (
                             <div className="relative">
                               <div className="flex gap-1.5">
                                 <input
@@ -771,12 +790,12 @@ export function SegmentSettings({
                                   Associar
                                 </button>
                               </div>
-                              {sugerirProdutosParaCultura(cultura, produtoDraft).length > 0 && (
+                              {sugestoes.length > 0 && (
                                 <div
                                   onMouseDown={(e) => e.preventDefault()}
                                   className="absolute z-10 mt-1 w-56 bg-white rounded-lg border border-border/40 shadow-lg overflow-hidden"
                                 >
-                                  {sugerirProdutosParaCultura(cultura, produtoDraft).map((p) => (
+                                  {sugestoes.map((p) => (
                                     <button
                                       key={p.nome}
                                       onClick={() => salvarProdutoIbge(cultura, p.nome, p.tipo)}
@@ -793,7 +812,8 @@ export function SegmentSettings({
                                 </div>
                               )}
                             </div>
-                          ) : (
+                            );
+                          })() : (
                             <button
                               onClick={() => {
                                 setAddingProdutoFor(cultura.id);
@@ -845,6 +865,11 @@ export function SegmentSettings({
                             </button>
                           )}
                         </div>
+                      )}
+                      {cultura.ibgeProdutos.length > 1 && onAdicionarVariante && (
+                        <p className="mt-2 pt-2 border-t border-border/20 text-[10px] text-muted-foreground">
+                          &ldquo;+variante&rdquo; só aparece com 1 produto IBGE associado — esta cultura já tem {cultura.ibgeProdutos.length} (de-para acima).
+                        </p>
                       )}
                     </div>
                   </motion.div>
@@ -920,18 +945,22 @@ export function SegmentSettings({
         </div>
 
         {/* Totalizador */}
-        {culturas.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              <strong className="text-foreground">{culturas.filter(c => c.isActive).length}</strong> cultura{culturas.filter(c => c.isActive).length !== 1 ? "s" : ""} ativa{culturas.filter(c => c.isActive).length !== 1 ? "s" : ""} de <strong className="text-foreground">{culturas.length}</strong> total
-            </span>
-            {culturas.some(c => !c.isActive) && (
-              <span className="text-amber-600 font-medium">
-                {culturas.filter(c => !c.isActive).length} desabilitada{culturas.filter(c => !c.isActive).length !== 1 ? "s" : ""}
+        {culturas.length > 0 && (() => {
+          const ativasCount = culturas.filter(c => c.isActive).length;
+          const inativasCount = culturas.length - ativasCount;
+          return (
+            <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                <strong className="text-foreground">{ativasCount}</strong> cultura{ativasCount !== 1 ? "s" : ""} ativa{ativasCount !== 1 ? "s" : ""} de <strong className="text-foreground">{culturas.length}</strong> total
               </span>
-            )}
-          </div>
-        )}
+              {inativasCount > 0 && (
+                <span className="text-amber-600 font-medium">
+                  {inativasCount} desabilitada{inativasCount !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+          );
+        })()}
       </motion.section>
       )}
 

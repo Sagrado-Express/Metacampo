@@ -137,8 +137,17 @@ export function UserInvites() {
         </h3>
 
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 size={20} className="animate-spin text-emerald-600" />
+          <div className="border border-border/40 rounded-2xl divide-y divide-border/30 overflow-hidden animate-pulse">
+            {[0, 1].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <span className="shrink-0 size-4 rounded-full bg-muted/60" />
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="h-3.5 w-40 rounded bg-muted/60" />
+                  <div className="h-2.5 w-20 rounded bg-muted/40" />
+                </div>
+                <div className="h-6 w-20 rounded-lg bg-muted/40" />
+              </div>
+            ))}
           </div>
         ) : invites.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">Nenhum convite enviado ainda.</p>

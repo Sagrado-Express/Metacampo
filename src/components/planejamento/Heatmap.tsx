@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 
 interface HeatmapProps {
   data: { clientName: string; cropName: string; sharePercentual: number }[];
@@ -22,6 +22,17 @@ export default function Heatmap({ data, clients, crops, validCombos, onCellChang
   const [editing, setEditing] = useState<{ client: string; crop: string } | null>(null);
   const [draft, setDraft] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Índice "cliente::CULTIVO" -> linha, em vez de um .find() dentro de loop
+  // duplo (cliente × cultivo) refeito a cada render — hoje sem custo real (o
+  // caller já limita a 15 clientes), mas cresce O(clientes×cultivos×dados)
+  // por render se esse limite for removido. Achado em auditoria de
+  // performance 31/08/2026.
+  const dataByClientCrop = useMemo(() => {
+    const map = new Map<string, { clientName: string; cropName: string; sharePercentual: number }>();
+    for (const d of data) map.set(`${d.clientName}::${d.cropName.toUpperCase()}`, d);
+    return map;
+  }, [data]);
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -51,9 +62,7 @@ export default function Heatmap({ data, clients, crops, validCombos, onCellChang
       const cropIdx = crops.indexOf(editing.crop);
       const nextCrop = crops[cropIdx + 1];
       if (nextCrop) {
-        const match = data.find(
-          d => d.clientName === editing.client && d.cropName.toUpperCase() === nextCrop.toUpperCase()
-        );
+        const match = dataByClientCrop.get(`${editing.client}::${nextCrop.toUpperCase()}`);
         setEditing({ client: editing.client, crop: nextCrop });
         setDraft(String(match ? match.sharePercentual : 0));
         return;
@@ -80,7 +89,7 @@ export default function Heatmap({ data, clients, crops, validCombos, onCellChang
             <tr key={client} className="border-b border-border/20 hover:bg-muted/10 transition-colors">
               <td className="py-3 font-black text-slate-800 pl-2">{client}</td>
               {crops.map(crop => {
-                const match = data.find(d => d.clientName === client && d.cropName.toUpperCase() === crop.toUpperCase());
+                const match = dataByClientCrop.get(`${client}::${crop.toUpperCase()}`);
                 const val = match ? match.sharePercentual : 0;
                 const isEditing = editing?.client === client && editing?.crop === crop;
                 const hasArea = validCombos.has(`${client}::${crop.toUpperCase()}`);
