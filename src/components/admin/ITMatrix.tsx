@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   TrendingUp,
   Save,
@@ -9,6 +10,9 @@ import {
   AlertCircle,
   Loader2,
   Info,
+  Sprout,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 import { useITConfigurations, UpsertITConfigInput } from "@/hooks/useITConfigurations";
 import { useQueryClient } from "@tanstack/react-query";
@@ -155,6 +159,26 @@ export function ITMatrix({
     [safra]
   );
 
+  // Navegação por setas entre células, tipo planilha (sugestão de UX,
+  // 05/09/2026) — Tab já move na ordem natural do HTML, isto cobre
+  // cima/baixo/esquerda/direita sem precisar soltar o teclado.
+  const moveFocus = useCallback(
+    (rowIdx: number, colIdx: number, dRow: number, dCol: number) => {
+      const targetRow = rowIdx + dRow;
+      const targetCol = colIdx + dCol;
+      if (targetRow < 0 || targetRow >= activeCulturas.length) return;
+      if (targetCol < 0 || targetCol >= activeSegmentos.length) return;
+      const targetCultura = activeCulturas[targetRow];
+      const targetSeg = activeSegmentos[targetCol];
+      const el = document.getElementById(
+        `it-cell-${targetCultura.internalKey}-${targetSeg.internalKey}`
+      ) as HTMLInputElement | null;
+      el?.focus();
+      el?.select();
+    },
+    [activeCulturas, activeSegmentos]
+  );
+
   const handleSaveAll = async () => {
     if (dirtyKeys.size === 0) return;
     setSavingAll(true);
@@ -231,23 +255,54 @@ export function ITMatrix({
   }, [activeCulturas, activeSegmentos, draft, safra]);
 
   if (isLoadingIT) {
+    // Skeleton no formato real da grade (já conhecemos culturas/segmentos
+    // ativos neste ponto) em vez de spinner central (sugestão de UX,
+    // 05/09/2026).
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground text-sm gap-2">
-        <Loader2 size={16} className="animate-spin" />
-        Carregando Índice Tecnológico...
+      <div className="rounded-2xl border border-border/40 overflow-hidden animate-pulse">
+        <div className="flex gap-3 p-3 bg-muted/20 border-b border-border/30">
+          <div className="h-3.5 flex-1 max-w-[140px] rounded bg-muted/50" />
+          {activeSegmentos.map((seg) => (
+            <div key={seg.id} className="h-3.5 flex-1 rounded bg-muted/50" />
+          ))}
+        </div>
+        {activeCulturas.map((cultura) => (
+          <div key={cultura.id} className="flex gap-3 p-3 border-b border-border/20 last:border-0">
+            <div className="h-7 flex-1 max-w-[140px] rounded-lg bg-muted/40" />
+            {activeSegmentos.map((seg) => (
+              <div key={seg.id} className="h-7 flex-1 rounded-lg bg-muted/30" />
+            ))}
+          </div>
+        ))}
       </div>
     );
   }
 
   if (activeCulturas.length === 0 || activeSegmentos.length === 0) {
+    // Estado vazio com CTA direto, em vez de só um texto — poupa o usuário
+    // de ter que descobrir sozinho pra onde ir (sugestão de UX, 05/09/2026).
+    const faltaCultura = activeCulturas.length === 0;
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center gap-3 text-muted-foreground">
-        <Info size={32} className="text-muted-foreground/40" />
-        <p className="text-sm font-medium">
-          {activeCulturas.length === 0
-            ? "Nenhuma cultura ativa. Adicione culturas na aba Cultivos."
-            : "Nenhum grupo de produto ativo. Adicione na aba Grupos de Produtos."}
+        <div className="p-3 rounded-2xl bg-violet-500/10 text-violet-600">
+          {faltaCultura ? <Sprout size={28} /> : <Layers size={28} />}
+        </div>
+        <p className="text-sm font-medium max-w-xs">
+          {faltaCultura
+            ? "Nenhuma cultura ativa ainda. O Índice Tecnológico precisa de pelo menos uma pra funcionar."
+            : "Nenhum grupo de produto ativo ainda. O Índice Tecnológico precisa de pelo menos um pra funcionar."}
         </p>
+        <Link
+          href={
+            faltaCultura
+              ? "/workspace/settings/configuracao/cultura"
+              : "/workspace/settings/configuracao/grupos-de-produtos"
+          }
+          className="flex items-center gap-1.5 mt-1 px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 transition-colors"
+        >
+          {faltaCultura ? "Cadastrar cultura" : "Cadastrar grupo de produto"}
+          <ArrowRight size={13} />
+        </Link>
       </div>
     );
   }
@@ -414,7 +469,7 @@ export function ITMatrix({
                 </td>
 
                 {/* Cells */}
-                {activeSegmentos.map((seg) => {
+                {activeSegmentos.map((seg, colIdx) => {
                   const key = cellKey(safra, cultura.customName, seg.customName);
                   const isDirty = dirtyKeys.has(key);
                   const isSaved = savedKeys.has(key);
@@ -466,6 +521,30 @@ export function ITMatrix({
                               seg.customName,
                               e.target.value
                             );
+                          }}
+                          onKeyDown={(e) => {
+                            const input = e.currentTarget;
+                            if (e.key === "ArrowUp") {
+                              e.preventDefault();
+                              moveFocus(rowIdx, colIdx, -1, 0);
+                            } else if (e.key === "ArrowDown" || e.key === "Enter") {
+                              e.preventDefault();
+                              moveFocus(rowIdx, colIdx, 1, 0);
+                            } else if (e.key === "ArrowLeft" && input.selectionStart === 0) {
+                              // Só a borda esquerda da seleção/cursor importa
+                              // — exigir as duas (como no primeiro rascunho)
+                              // travava a navegação assim que a célula abria
+                              // com o texto todo selecionado (padrão ao
+                              // pousar nela via teclado ou clique).
+                              e.preventDefault();
+                              moveFocus(rowIdx, colIdx, 0, -1);
+                            } else if (
+                              e.key === "ArrowRight" &&
+                              input.selectionEnd === input.value.length
+                            ) {
+                              e.preventDefault();
+                              moveFocus(rowIdx, colIdx, 0, 1);
+                            }
                           }}
                           placeholder="R$ 0,00"
                           className={`w-full px-2 py-1.5 rounded-lg text-center text-xs font-medium border transition-all focus:outline-none focus:ring-2 ${

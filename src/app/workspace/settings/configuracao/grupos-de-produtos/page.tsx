@@ -72,9 +72,29 @@ export default function GruposDeProdutosPage() {
   };
 
   if (isLoadingSession || (isLoading && !isError)) {
+    // Skeleton no formato real das linhas — mesmo padrão de Usuários/Convites
+    // e Cultura, em vez de spinner central (sugestão de UX, 05/09/2026).
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">
-        Carregando grupos de produtos…
+      <div className="space-y-6">
+        <div className="glass-card p-6">
+          <div className="h-5 w-40 rounded bg-muted/60 animate-pulse mb-2" />
+          <div className="h-3.5 w-full max-w-md rounded bg-muted/40 animate-pulse mb-6" />
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-border/30 bg-white/40 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <span className="size-3.5 rounded bg-muted/50" />
+                  <span className="size-4 rounded-full bg-muted/50" />
+                  <div className="h-4 w-32 rounded bg-muted/60" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-16 rounded bg-muted/40" />
+                  <span className="size-5 rounded-full bg-muted/40" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

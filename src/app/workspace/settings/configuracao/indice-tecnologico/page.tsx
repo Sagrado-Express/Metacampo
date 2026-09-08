@@ -21,9 +21,36 @@ export default function IndiceTecnologicoPage() {
   const hasApiError = isErrorClassifications || isErrorCultures;
 
   if (isLoading) {
+    // Skeleton no formato real da matriz — mesmo padrão de Usuários/Convites,
+    // Cultura e Grupos de Produtos, em vez de spinner central (sugestão de
+    // UX, 05/09/2026).
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground animate-pulse">
-        Carregando Índice Tecnológico…
+      <div className="space-y-6">
+        <div className="glass-card p-6">
+          <div className="flex items-center gap-3 mb-6 animate-pulse">
+            <div className="size-9 rounded-xl bg-muted/50" />
+            <div className="space-y-1.5">
+              <div className="h-4 w-40 rounded bg-muted/60" />
+              <div className="h-3 w-56 rounded bg-muted/40" />
+            </div>
+          </div>
+          <div className="rounded-2xl border border-border/40 overflow-hidden animate-pulse">
+            <div className="flex gap-3 p-3 bg-muted/20 border-b border-border/30">
+              <div className="h-3.5 flex-1 max-w-[140px] rounded bg-muted/50" />
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-3.5 flex-1 rounded bg-muted/50" />
+              ))}
+            </div>
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="flex gap-3 p-3 border-b border-border/20 last:border-0">
+                <div className="h-7 flex-1 max-w-[140px] rounded-lg bg-muted/40" />
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-7 flex-1 rounded-lg bg-muted/30" />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

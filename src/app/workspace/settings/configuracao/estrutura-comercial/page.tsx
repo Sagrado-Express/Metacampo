@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, Map as MapIcon, Plus, Trash2 } from "lucide-
 import { useSession } from "@/hooks/useSession";
 import { toast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/utils";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface Member {
   userId: string;
@@ -59,6 +60,7 @@ export default function EstruturaComercialPage() {
     ctvUserId: "",
   });
   const [salvando, setSalvando] = useState(false);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery({
     queryKey: ["tenant-members"],
@@ -182,7 +184,8 @@ export default function EstruturaComercialPage() {
         : nivel === "distrital"
           ? `Excluir o distrital "${label}"? Todos os territórios dentro dele também serão excluídos.`
           : `Excluir o território "${label}"?`;
-    if (!window.confirm(aviso)) return;
+    const ok = await confirm({ title: aviso, confirmLabel: "Excluir", danger: true });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/estrutura-comercial?nivel=${nivel}&id=${id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -216,6 +219,7 @@ export default function EstruturaComercialPage() {
 
   return (
     <div className="space-y-6">
+      {confirmDialog}
       {!isAdmin && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
           <strong>⚠ Somente leitura.</strong> Só administradores podem alterar a estrutura comercial do tenant.

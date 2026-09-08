@@ -17,10 +17,12 @@ import {
   X,
   Check,
   ArrowRightLeft,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/utils";
 import { CATALOGO_IBGE, type TipoCultura } from "@/data/culturas_ibge";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 // ============================================================
 // Types (local to this component, mirrors TenantClassificacao)
@@ -157,6 +159,10 @@ export function SegmentSettings({
   const [editingAliases, setEditingAliases] = useState<Record<string, string>>({});
   const [renaming, setRenaming] = useState<{ kind: "classificacao" | "cultura"; id: string } | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
+  // Erro de nome duplicado (ou outro) destacado no próprio campo, além do
+  // toast — um toast passa despercebido se o usuário já rolou a tela
+  // (sugestão de UX, 05/09/2026).
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [dragCulturaIdx, setDragCulturaIdx] = useState<number | null>(null);
   const [dragClassificacaoIdx, setDragClassificacaoIdx] = useState<number | null>(null);
   // Índice sobre o qual o mouse está passando durante o arrasto — separado
@@ -170,6 +176,10 @@ export function SegmentSettings({
   const [substituindo, setSubstituindo] = useState(false);
   const [editingAliasText, setEditingAliasText] = useState<{ itemId: string; alias: string } | null>(null);
   const [aliasEditDraft, setAliasEditDraft] = useState("");
+  const [aliasEditError, setAliasEditError] = useState<string | null>(null);
+  // Substitui window.confirm() nativo — some da tela sem seguir a
+  // identidade visual e não dá pra automatizar em teste (achado 05/09/2026).
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   // Separate roots and children. Memoizado: qualquer tecla digitada em
   // qualquer campo da tela (busca, alias, nome de subgrupo) re-renderiza o
@@ -346,15 +356,14 @@ export function SegmentSettings({
   };
 
   const handlePromoteAlias = async (item: ClassificacaoItem, alias: string) => {
-    if (
-      !window.confirm(
-        `Usar "${alias}" como nome deste grupo de produto?\n\n` +
-          `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
-          `O código interno (${item.internalKey}) não muda.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Usar "${alias}" como nome deste grupo de produto?`,
+      message:
+        `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
+        `O código interno (${item.internalKey}) não muda.`,
+      confirmLabel: "Usar como nome",
+    });
+    if (!ok) return;
     try {
       await onPromoteAlias(item.id, alias);
       toast.success(`"${alias}" agora é o nome`);
@@ -394,15 +403,14 @@ export function SegmentSettings({
   };
 
   const handlePromoteCulturaAlias = async (item: CulturaItem, alias: string) => {
-    if (
-      !window.confirm(
-        `Usar "${alias}" como nome desta cultura?\n\n` +
-          `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
-          `O código interno (${item.internalKey}) não muda.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Usar "${alias}" como nome desta cultura?`,
+      message:
+        `"${item.customName}" passa a ser apelido, então o reconhecimento de CSV/ERP continua funcionando.\n` +
+        `O código interno (${item.internalKey}) não muda.`,
+      confirmLabel: "Usar como nome",
+    });
+    if (!ok) return;
     const restantes = item.aliases.filter((a) => a.toLowerCase() !== alias.toLowerCase());
     const jaTem = restantes.some((a) => a.toLowerCase() === item.customName.toLowerCase());
     const novosAliases = jaTem ? restantes : [...restantes, item.customName];
@@ -428,24 +436,32 @@ export function SegmentSettings({
   const startEditAliasText = (itemId: string, alias: string) => {
     setEditingAliasText({ itemId, alias });
     setAliasEditDraft(alias);
+    setAliasEditError(null);
   };
 
   const commitEditCulturaAliasText = async (item: CulturaItem) => {
     if (!editingAliasText) return;
     const novo = aliasEditDraft.trim();
     const { alias: antigo } = editingAliasText;
-    setEditingAliasText(null);
-    if (!novo || novo === antigo) return;
+    if (!novo || novo === antigo) {
+      setEditingAliasText(null);
+      setAliasEditError(null);
+      return;
+    }
     if (item.aliases.some((a) => a !== antigo && a.toLowerCase() === novo.toLowerCase())) {
-      toast.error(`"${novo}" já é um apelido desta cultura.`);
+      setAliasEditError(`"${novo}" já é um apelido desta cultura.`);
       return;
     }
     const updatedAliases = item.aliases.map((a) => (a === antigo ? novo : a));
     try {
       await onSaveCultura({ ...item, aliases: updatedAliases });
+      setEditingAliasText(null);
+      setAliasEditError(null);
       toast.success("Apelido atualizado");
     } catch (err) {
-      toast.error(getErrorMessage(err) || "Erro ao atualizar apelido");
+      const message = getErrorMessage(err) || "Erro ao atualizar apelido";
+      setAliasEditError(message);
+      toast.error(message);
     }
   };
 
@@ -453,18 +469,25 @@ export function SegmentSettings({
     if (!editingAliasText) return;
     const novo = aliasEditDraft.trim();
     const { alias: antigo } = editingAliasText;
-    setEditingAliasText(null);
-    if (!novo || novo === antigo) return;
+    if (!novo || novo === antigo) {
+      setEditingAliasText(null);
+      setAliasEditError(null);
+      return;
+    }
     if (item.aliases.some((a) => a !== antigo && a.toLowerCase() === novo.toLowerCase())) {
-      toast.error(`"${novo}" já é um apelido deste grupo de produto.`);
+      setAliasEditError(`"${novo}" já é um apelido deste grupo de produto.`);
       return;
     }
     const updatedAliases = item.aliases.map((a) => (a === antigo ? novo : a));
     try {
       await onSaveClassificacao({ ...item, aliases: updatedAliases });
+      setEditingAliasText(null);
+      setAliasEditError(null);
       toast.success("Apelido atualizado");
     } catch (err) {
-      toast.error(getErrorMessage(err) || "Erro ao atualizar apelido");
+      const message = getErrorMessage(err) || "Erro ao atualizar apelido";
+      setAliasEditError(message);
+      toast.error(message);
     }
   };
 
@@ -478,17 +501,17 @@ export function SegmentSettings({
     if (!toId || !onSubstituirCultura) return;
     const destino = culturas.find((c) => c.id === toId);
     if (!destino) return;
-    if (
-      !window.confirm(
-        `Substituir "${fromCultura.customName}" por "${destino.customName}" em todo o sistema?\n\n` +
-          `Todos os clientes, Índice Tecnológico e planejamento que hoje usam "${fromCultura.customName}" passam a usar "${destino.customName}". ` +
-          `Onde o mesmo cliente/segmento já tiver dado nas duas culturas, o de "${destino.customName}" prevalece.\n\n` +
-          `"${fromCultura.customName}" não é excluída automaticamente — fica sem uso, e o botão de excluir passa a funcionar nela.\n\n` +
-          `Essa ação não pode ser desfeita.`
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Substituir "${fromCultura.customName}" por "${destino.customName}" em todo o sistema?`,
+      message:
+        `Todos os clientes, Índice Tecnológico e planejamento que hoje usam "${fromCultura.customName}" passam a usar "${destino.customName}". ` +
+        `Onde o mesmo cliente/segmento já tiver dado nas duas culturas, o de "${destino.customName}" prevalece.\n\n` +
+        `"${fromCultura.customName}" não é excluída automaticamente — fica sem uso, e o botão de excluir passa a funcionar nela.\n\n` +
+        `Essa ação não pode ser desfeita.`,
+      confirmLabel: "Substituir",
+      danger: true,
+    });
+    if (!ok) return;
     setSubstituindo(true);
     try {
       const resultado = await onSubstituirCultura(fromCultura.id, toId);
@@ -531,33 +554,44 @@ export function SegmentSettings({
   const startRename = (kind: "classificacao" | "cultura", id: string, currentName: string) => {
     setRenaming({ kind, id });
     setRenameDraft(currentName);
+    setRenameError(null);
   };
 
   const commitRename = async (item: ClassificacaoItem | CulturaItem) => {
     const name = renameDraft.trim();
-    setRenaming(null);
-    if (!name || name === item.customName) return;
+    if (!name || name === item.customName) {
+      setRenaming(null);
+      setRenameError(null);
+      return;
+    }
     try {
       if (renaming?.kind === "cultura") {
         await onSaveCultura({ ...(item as CulturaItem), customName: name });
       } else {
         await onSaveClassificacao({ ...(item as ClassificacaoItem), customName: name });
       }
+      setRenaming(null);
+      setRenameError(null);
       toast.success("Nome atualizado");
     } catch (err) {
-      toast.error(getErrorMessage(err) || "Erro ao renomear");
+      // Mantém o campo aberto com o erro destacado, em vez de fechar e só
+      // avisar no toast — o usuário já está olhando pra esse input.
+      const message = getErrorMessage(err) || "Erro ao renomear";
+      setRenameError(message);
+      toast.error(message);
     }
   };
 
   // ─── Exclusão com confirmação ───
   const handleDeleteCulturaClick = async (cultura: CulturaItem) => {
-    if (
-      !window.confirm(
-        `Excluir "${cultura.customName}" de vez?\n\n` +
-          `Só funciona se nenhum cliente, Índice Tecnológico ou planejamento já usa essa cultura — nesse caso, use o interruptor ao lado pra desabilitar em vez de excluir.`
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: `Excluir "${cultura.customName}" de vez?`,
+      message:
+        "Só funciona se nenhum cliente, Índice Tecnológico ou planejamento já usa essa cultura — nesse caso, use o interruptor ao lado pra desabilitar em vez de excluir.",
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await onDeleteCultura(cultura.id);
       toast.success("Cultura excluída de vez");
@@ -567,7 +601,13 @@ export function SegmentSettings({
   };
 
   const handleDeleteClassificacaoClick = async (item: ClassificacaoItem) => {
-    if (!window.confirm(`Excluir o grupo de produto "${item.customName}"?\nEssa ação não pode ser desfeita.`)) return;
+    const ok = await confirm({
+      title: `Excluir o grupo de produto "${item.customName}"?`,
+      message: "Essa ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await onDeleteClassificacao(item.id);
       toast.success("Grupo de produto excluído");
@@ -617,18 +657,33 @@ export function SegmentSettings({
 
   // Input de renomeação reutilizável
   const renderRenameInput = (item: ClassificacaoItem | CulturaItem) => (
-    <input
-      autoFocus
-      type="text"
-      value={renameDraft}
-      onChange={(e) => setRenameDraft(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commitRename(item);
-        else if (e.key === "Escape") setRenaming(null);
-      }}
-      onBlur={() => commitRename(item)}
-      className="px-2 py-1 rounded-lg border-2 border-primary/60 bg-white text-sm font-medium outline-none w-44"
-    />
+    <span className="relative inline-block">
+      <input
+        autoFocus
+        type="text"
+        value={renameDraft}
+        onChange={(e) => {
+          setRenameDraft(e.target.value);
+          if (renameError) setRenameError(null);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commitRename(item);
+          else if (e.key === "Escape") {
+            setRenaming(null);
+            setRenameError(null);
+          }
+        }}
+        onBlur={() => commitRename(item)}
+        className={`px-2 py-1 rounded-lg border-2 bg-white text-sm font-medium outline-none w-44 ${
+          renameError ? "border-red-400 focus:ring-1 focus:ring-red-300" : "border-primary/60"
+        }`}
+      />
+      {renameError && (
+        <span className="absolute left-0 top-full mt-1 z-10 w-56 text-[10px] leading-snug text-red-600 bg-white border border-red-200 rounded-lg px-2 py-1 shadow-md">
+          {renameError}
+        </span>
+      )}
+    </span>
   );
 
   // ============================================================
@@ -641,6 +696,7 @@ export function SegmentSettings({
 
   return (
     <div className="space-y-8">
+      {confirmDialog}
       {/* Header — only shown when rendering both sections */}
       {!showOnlyCulturas && !showOnlyClassifications && (
         <div>
@@ -715,7 +771,32 @@ export function SegmentSettings({
             >
               <div className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-3">
-                  <GripVertical size={14} className="text-muted-foreground/40 cursor-grab" />
+                  <div className="flex items-center gap-0.5">
+                    <GripVertical size={14} className="text-muted-foreground/40 cursor-grab" />
+                    {/* Alternativa ao arrastar — teclado, touch e leitor de
+                        tela não lidam bem com drag-and-drop nativo (sugestão
+                        de UX, 05/09/2026). */}
+                    <div className="flex flex-col -my-1 ml-0.5">
+                      <button
+                        onClick={() => handleReorderCulturas(index, index - 1)}
+                        disabled={index === 0}
+                        className="text-muted-foreground/40 hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        title="Mover pra cima"
+                        aria-label={`Mover "${cultura.customName}" pra cima`}
+                      >
+                        <ChevronUp size={12} />
+                      </button>
+                      <button
+                        onClick={() => handleReorderCulturas(index, index + 1)}
+                        disabled={index === culturas.length - 1}
+                        className="text-muted-foreground/40 hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        title="Mover pra baixo"
+                        aria-label={`Mover "${cultura.customName}" pra baixo`}
+                      >
+                        <ChevronDown size={12} />
+                      </button>
+                    </div>
+                  </div>
                   {renaming?.kind === "cultura" && renaming.id === cultura.id ? (
                     renderRenameInput(cultura)
                   ) : (
@@ -858,18 +939,32 @@ export function SegmentSettings({
                         </span>
                         {cultura.aliases.map((alias) =>
                           editingAliasText?.itemId === cultura.id && editingAliasText.alias === alias ? (
+                            <span key={alias} className="relative inline-block">
                             <input
-                              key={alias}
                               autoFocus
                               value={aliasEditDraft}
-                              onChange={(e) => setAliasEditDraft(e.target.value)}
+                              onChange={(e) => {
+                                setAliasEditDraft(e.target.value);
+                                if (aliasEditError) setAliasEditError(null);
+                              }}
                               onBlur={() => commitEditCulturaAliasText(cultura)}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") commitEditCulturaAliasText(cultura);
-                                if (e.key === "Escape") setEditingAliasText(null);
+                                if (e.key === "Escape") {
+                                  setEditingAliasText(null);
+                                  setAliasEditError(null);
+                                }
                               }}
-                              className="px-2 py-1 rounded-full border border-primary/60 bg-white text-[11px] outline-none w-28"
+                              className={`px-2 py-1 rounded-full border bg-white text-[11px] outline-none w-28 ${
+                                aliasEditError ? "border-red-400" : "border-primary/60"
+                              }`}
                             />
+                            {aliasEditError && (
+                              <span className="absolute left-0 top-full mt-1 z-10 w-48 text-[10px] leading-snug text-red-600 bg-white border border-red-200 rounded-lg px-2 py-1 shadow-md">
+                                {aliasEditError}
+                              </span>
+                            )}
+                            </span>
                           ) : (
                             <span
                               key={alias}
@@ -1260,10 +1355,35 @@ export function SegmentSettings({
                 >
                   <div className="flex items-center justify-between p-3">
                     <div className="flex items-center gap-3">
-                      <GripVertical
-                        size={14}
-                        className="text-muted-foreground/40 cursor-grab"
-                      />
+                      <div className="flex items-center gap-0.5">
+                        <GripVertical
+                          size={14}
+                          className="text-muted-foreground/40 cursor-grab"
+                        />
+                        {/* Alternativa ao arrastar — teclado, touch e leitor
+                            de tela não lidam bem com drag-and-drop nativo
+                            (sugestão de UX, 05/09/2026). */}
+                        <div className="flex flex-col -my-1 ml-0.5">
+                          <button
+                            onClick={() => handleReorderClassificacoes(index, index - 1)}
+                            disabled={index === 0}
+                            className="text-muted-foreground/40 hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                            title="Mover pra cima"
+                            aria-label={`Mover "${root.customName}" pra cima`}
+                          >
+                            <ChevronUp size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleReorderClassificacoes(index, index + 1)}
+                            disabled={index === roots.length - 1}
+                            className="text-muted-foreground/40 hover:text-foreground disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                            title="Mover pra baixo"
+                            aria-label={`Mover "${root.customName}" pra baixo`}
+                          >
+                            <ChevronDown size={12} />
+                          </button>
+                        </div>
+                      </div>
                       {/* Color swatch */}
                       <input
                         type="color"
@@ -1351,18 +1471,32 @@ export function SegmentSettings({
                             </span>
                             {root.aliases.map((alias) =>
                               editingAliasText?.itemId === root.id && editingAliasText.alias === alias ? (
+                                <span key={alias} className="relative inline-block">
                                 <input
-                                  key={alias}
                                   autoFocus
                                   value={aliasEditDraft}
-                                  onChange={(e) => setAliasEditDraft(e.target.value)}
+                                  onChange={(e) => {
+                                    setAliasEditDraft(e.target.value);
+                                    if (aliasEditError) setAliasEditError(null);
+                                  }}
                                   onBlur={() => commitEditClassificacaoAliasText(root)}
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") commitEditClassificacaoAliasText(root);
-                                    if (e.key === "Escape") setEditingAliasText(null);
+                                    if (e.key === "Escape") {
+                                      setEditingAliasText(null);
+                                      setAliasEditError(null);
+                                    }
                                   }}
-                                  className="px-2 py-1 rounded-full border border-primary/60 bg-white text-[11px] outline-none w-28"
+                                  className={`px-2 py-1 rounded-full border bg-white text-[11px] outline-none w-28 ${
+                                    aliasEditError ? "border-red-400" : "border-primary/60"
+                                  }`}
                                 />
+                                {aliasEditError && (
+                                  <span className="absolute left-0 top-full mt-1 z-10 w-48 text-[10px] leading-snug text-red-600 bg-white border border-red-200 rounded-lg px-2 py-1 shadow-md">
+                                    {aliasEditError}
+                                  </span>
+                                )}
+                                </span>
                               ) : (
                               <span
                                 key={alias}

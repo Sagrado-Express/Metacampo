@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/providers/SidebarProvider";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import {
   Home,
   Users,
@@ -34,7 +35,8 @@ interface MenuItem {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { isCollapsed, toggleSidebar, isMobileOpen, closeMobileSidebar } = useSidebar();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
@@ -77,15 +79,35 @@ export function Sidebar() {
   const [expandedMenuOverride, setExpandedMenuOverride] = useState<string | null | undefined>(undefined);
   const expandedMenu = expandedMenuOverride === undefined ? menuAbertoPelaRota : expandedMenuOverride;
 
+  // No mobile a sidebar é gaveta em tela cheia, não faz sentido "encolher
+  // pra ícone" (não sobra espaço nenhum pra economizar) — sempre mostra os
+  // rótulos completos quando aberta lá, independente do collapse do desktop.
+  const effectiveCollapsed = isMobile ? false : isCollapsed;
+
   return (
-    <motion.aside 
-      initial={false}
-      animate={{ 
-        width: isCollapsed ? 80 : 280,
-        transition: { type: "spring", stiffness: 300, damping: 30 }
-      }}
-      className="fixed left-0 top-0 h-screen border-r border-border/40 flex flex-col p-4 bg-white/40 backdrop-blur-xl z-50 overflow-hidden group/sidebar shadow-2xl shadow-primary/5"
-    >
+    <>
+      {/* Backdrop da gaveta mobile — clicar fora fecha (sugestão de UX, 05/09/2026) */}
+      <AnimatePresence>
+        {isMobile && isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeMobileSidebar}
+            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        initial={false}
+        animate={{
+          width: effectiveCollapsed ? 80 : 280,
+          x: isMobile ? (isMobileOpen ? 0 : -300) : 0,
+          transition: { type: "spring", stiffness: 300, damping: 30 },
+        }}
+        className="fixed left-0 top-0 h-screen border-r border-border/40 flex flex-col p-4 bg-white/95 md:bg-white/40 backdrop-blur-xl z-50 overflow-hidden group/sidebar shadow-2xl shadow-primary/5"
+      >
       {/* Header & Toggle Indicator */}
       <div className="flex items-center justify-between mb-10 px-2">
         <div className="flex items-center gap-3 min-w-max">
@@ -93,8 +115,8 @@ export function Sidebar() {
             M
           </div>
           <AnimatePresence>
-            {!isCollapsed && (
-              <motion.span 
+            {!effectiveCollapsed && (
+              <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
@@ -105,13 +127,13 @@ export function Sidebar() {
             )}
           </AnimatePresence>
         </div>
-        
-        <button 
-          onClick={toggleSidebar}
+
+        <button
+          onClick={isMobile ? closeMobileSidebar : toggleSidebar}
           className="p-2 hover:bg-primary/10 rounded-xl transition-all text-primary/60 hover:text-primary"
-          title={isCollapsed ? "Expandir" : "Recolher"}
+          title={isMobile ? "Fechar" : isCollapsed ? "Expandir" : "Recolher"}
         >
-          {isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
+          {isMobile ? <ChevronLeft size={20} /> : isCollapsed ? <Menu size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
       
@@ -144,7 +166,7 @@ export function Sidebar() {
               </div>
 
               <AnimatePresence mode="wait">
-                {!isCollapsed && (
+                {!effectiveCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -156,12 +178,12 @@ export function Sidebar() {
                 )}
               </AnimatePresence>
 
-              {hasChildren && !isCollapsed && (
+              {hasChildren && !effectiveCollapsed && (
                 <ChevronDown size={14} className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`} />
               )}
 
               {/* Enhanced Tooltip for Collapsed Mode */}
-              {isCollapsed && (
+              {effectiveCollapsed && (
                 <div className="absolute left-full ml-4 px-3 py-2 bg-primary text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 pointer-events-none group-hover/item:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl">
                   {item.label}
                   <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 border-8 border-transparent border-right-primary" />
@@ -175,18 +197,18 @@ export function Sidebar() {
               {hasChildren ? (
                 <button
                   type="button"
-                  onClick={() => (isCollapsed ? router.push(item.href) : setExpandedMenuOverride(isOpen ? null : item.label))}
+                  onClick={() => (effectiveCollapsed ? router.push(item.href) : setExpandedMenuOverride(isOpen ? null : item.label))}
                   className={itemClasses}
                 >
                   {content}
                 </button>
               ) : (
-                <Link href={item.href} className={itemClasses}>
+                <Link href={item.href} onClick={closeMobileSidebar} className={itemClasses}>
                   {content}
                 </Link>
               )}
 
-              {hasChildren && !isCollapsed && (
+              {hasChildren && !effectiveCollapsed && (
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
@@ -201,6 +223,7 @@ export function Sidebar() {
                           <Link
                             key={child.href}
                             href={child.href}
+                            onClick={closeMobileSidebar}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
                               isChildActive
                                 ? "bg-primary/10 text-primary"
@@ -228,8 +251,8 @@ export function Sidebar() {
         <div className="shrink-0 w-6 flex justify-center">
           <LogOut size={20} />
         </div>
-        {!isCollapsed && (
-          <motion.span 
+        {!effectiveCollapsed && (
+          <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="font-black text-[10px] uppercase tracking-[0.25em] whitespace-nowrap"
@@ -237,14 +260,15 @@ export function Sidebar() {
             Sair do Sistema
           </motion.span>
         )}
-        
-        {isCollapsed && (
+
+        {effectiveCollapsed && (
           <div className="absolute left-full ml-4 px-3 py-2 bg-destructive text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 pointer-events-none group-hover/logout:opacity-100 transition-opacity whitespace-nowrap z-50 shadow-xl">
             Sair
           </div>
         )}
       </button>
-    </motion.aside>
+      </motion.aside>
+    </>
   );
 }
 
