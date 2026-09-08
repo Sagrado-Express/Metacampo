@@ -41,7 +41,14 @@ export default function IndiceTecnologicoPage() {
         </div>
       )}
       <div className="glass-card p-6">
-        <ITMatrix key={safra} culturas={cultures} classificacoes={classifications} safra={safra} onSafraChange={setSafra} />
+        {/* Sem `key={safra}` (removido 03/09/2026): remontar a cada troca de
+            safra descartava silenciosamente edições não salvas — o usuário
+            zerava uma célula, trocava de safra pra mexer em outra, e a
+            primeira edição sumia sem aviso. Agora o componente persiste
+            entre safras (o próprio ITMatrix isola o estado por chave
+            safra+cultivo+segmento) e ele pode revisar/salvar edições de
+            mais de uma safra de uma vez, com aviso de pendência cruzada. */}
+        <ITMatrix culturas={cultures} classificacoes={classifications} safra={safra} onSafraChange={setSafra} />
       </div>
     </div>
   );

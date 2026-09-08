@@ -53,8 +53,14 @@ function parseBRL(raw: string): number {
   return rounded * 100; // Store as centavos (always whole R$)
 }
 
-function cellKey(cultivo: string, segmento: string): string {
-  return `${cultivo}|${segmento}`;
+// A chave inclui a safra: sem isso, trocar de safra podia fazer uma edição
+// não salva de uma safra "vazar" pra célula de mesmo cultivo×segmento em
+// outra safra (bug relatado pelo Marco Polo, 03/09/2026 — "zerei e voltou
+// o valor antigo"). Com a safra na chave, draft/dirtyKeys/savedKeys nunca
+// colidem entre safras diferentes, mesmo que o usuário edite mais de uma
+// sem salvar entre uma troca e outra.
+function cellKey(safra: string, cultivo: string, segmento: string): string {
+  return `${safra}|${cultivo}|${segmento}`;
 }
 
 // ============================================================
@@ -112,25 +118,31 @@ export function ITMatrix({
     const initial: MatrixDraft = {};
     activeCulturas.forEach((cultura) => {
       activeSegmentos.forEach((seg) => {
-        const key = cellKey(cultura.customName, seg.customName);
+        const key = cellKey(safra, cultura.customName, seg.customName);
         initial[key] = getCellValue(cultura.customName, seg.customName);
       });
     });
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDraft((prev) => {
-      // Only update non-dirty cells to preserve user edits
-      const merged = { ...initial };
+      // Preserva células dirty desta E de outras safras (o usuário pode
+      // editar mais de uma safra antes de salvar) — só as não-dirty desta
+      // safra são substituídas pelo valor do servidor.
+      const merged: MatrixDraft = { ...prev, ...initial };
       dirtyKeys.forEach((k) => {
         if (prev[k] !== undefined) merged[k] = prev[k];
       });
       return merged;
     });
+  // safra entra explicitamente nas deps: getCellValue pode manter a mesma
+  // referência entre safras por causa do keepPreviousData do react-query
+  // (reaproveita o array anterior como placeholder), o que faria este efeito
+  // não rodar na hora certa da troca de safra.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCulturas.length, activeSegmentos.length, getCellValue]);
+  }, [activeCulturas.length, activeSegmentos.length, getCellValue, safra]);
 
   const handleCellChange = useCallback(
     (cultivo: string, segmento: string, rawValue: string) => {
-      const key = cellKey(cultivo, segmento);
+      const key = cellKey(safra, cultivo, segmento);
       const centavos = parseBRL(rawValue);
       setDraft((prev) => ({ ...prev, [key]: centavos }));
       setDirtyKeys((prev) => new Set(prev).add(key));
@@ -140,7 +152,7 @@ export function ITMatrix({
         return next;
       });
     },
-    []
+    [safra]
   );
 
   const handleSaveAll = async () => {
@@ -151,10 +163,14 @@ export function ITMatrix({
     try {
       const ops: Promise<unknown>[] = [];
 
+      // A safra vem da própria chave, não do closure — permite salvar de
+      // uma vez edições feitas em mais de uma safra antes de clicar Salvar.
+      const safrasAfetadas = new Set<string>();
       dirtyKeys.forEach((key) => {
-        const [cultivo, segmento] = key.split("|");
+        const [keySafra, cultivo, segmento] = key.split("|");
+        safrasAfetadas.add(keySafra);
         const input: UpsertITConfigInput = {
-          safra,
+          safra: keySafra,
           cultivo,
           segmento,
           valorPorHectareCentavos: draft[key] ?? 0,
@@ -163,6 +179,15 @@ export function ITMatrix({
       });
 
       await Promise.all(ops);
+
+      // upsertConfig só invalida a query da SAFRA DESTE hook (a que está
+      // aberta na tela agora) — uma safra diferente que também recebeu
+      // edição fica com cache desatualizado até isto aqui, senão o usuário
+      // troca de safra e vê o valor antigo mesmo já tendo salvo (mesma
+      // queixa que motivou esse recurso: "salvei e não mudou").
+      safrasAfetadas.forEach((s) => {
+        queryClient.invalidateQueries({ queryKey: ['it-configurations', s] });
+      });
 
       // Invalidate VPM-dependent queries so other pages refetch with new IT values
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
@@ -198,12 +223,12 @@ export function ITMatrix({
     const map: Record<string, number> = {};
     for (const cultura of activeCulturas) {
       map[cultura.customName] = activeSegmentos.reduce(
-        (sum, seg) => sum + (draft[cellKey(cultura.customName, seg.customName)] ?? 0),
+        (sum, seg) => sum + (draft[cellKey(safra, cultura.customName, seg.customName)] ?? 0),
         0
       );
     }
     return map;
-  }, [activeCulturas, activeSegmentos, draft]);
+  }, [activeCulturas, activeSegmentos, draft, safra]);
 
   if (isLoadingIT) {
     return (
@@ -234,65 +259,94 @@ export function ITMatrix({
       className="space-y-5"
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600">
-            <TrendingUp size={20} />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-violet-500/10 text-violet-600">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Índice Tecnológico</h2>
+              <p className="text-xs text-muted-foreground">
+                Valor de referência R$/ha por cultivo × grupo de produto
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold">Índice Tecnológico</h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
-              Valor de referência R$/ha por cultivo × grupo de produto — Safra{" "}
-              {editingSafra ? (
-                <input
-                  autoFocus
-                  value={safraDraft}
-                  onChange={(e) => setSafraDraft(e.target.value)}
-                  onBlur={() => {
-                    setEditingSafra(false);
-                    const trimmed = safraDraft.trim();
-                    if (trimmed && trimmed !== safra) onSafraChange(trimmed);
-                    else setSafraDraft(safra);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") e.currentTarget.blur();
-                    if (e.key === "Escape") {
-                      setSafraDraft(safra);
-                      setEditingSafra(false);
-                    }
-                  }}
-                  placeholder="ex: 26/27"
-                  className="px-2 py-0.5 rounded-lg border border-violet-300 bg-white text-xs font-medium text-foreground w-20 focus:outline-none focus:ring-1 focus:ring-violet-400"
-                />
-              ) : (
-                <button
-                  onClick={() => {
-                    setSafraDraft(safra);
-                    setEditingSafra(true);
-                  }}
-                  className="font-medium text-foreground underline decoration-dotted decoration-violet-400 underline-offset-2 hover:text-violet-700 transition-colors"
-                  title="Clique para trocar de safra"
-                >
-                  {safra}
-                </button>
-              )}
-            </p>
-          </div>
+
+          <button
+            id="btn-save-it-matrix"
+            onClick={handleSaveAll}
+            disabled={dirtyKeys.size === 0 || savingAll}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-violet-500/20"
+          >
+            {savingAll ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Save size={14} />
+            )}
+            Salvar{dirtyKeys.size > 0 ? ` (${dirtyKeys.size} alterações)` : ""}
+          </button>
         </div>
 
-        <button
-          id="btn-save-it-matrix"
-          onClick={handleSaveAll}
-          disabled={dirtyKeys.size === 0 || savingAll}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-violet-500/20"
-        >
-          {savingAll ? (
-            <Loader2 size={14} className="animate-spin" />
+        {/* Badge de safra — destacado à parte do título, pra deixar claro que
+            TODA a tabela abaixo pertence a uma safra só (pedido do Marco
+            Polo, 03/09/2026: "não fica intuitivo saber em qual ano-safra
+            eu digitei"). */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Safra:</span>
+          {editingSafra ? (
+            <input
+              autoFocus
+              value={safraDraft}
+              onChange={(e) => setSafraDraft(e.target.value)}
+              onBlur={() => {
+                setEditingSafra(false);
+                const trimmed = safraDraft.trim();
+                if (trimmed && trimmed !== safra) onSafraChange(trimmed);
+                else setSafraDraft(safra);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") {
+                  setSafraDraft(safra);
+                  setEditingSafra(false);
+                }
+              }}
+              placeholder="ex: 26/27"
+              className="px-2 py-0.5 rounded-lg border border-violet-300 bg-white text-xs font-medium text-foreground w-20 focus:outline-none focus:ring-1 focus:ring-violet-400"
+            />
           ) : (
-            <Save size={14} />
+            <button
+              onClick={() => {
+                setSafraDraft(safra);
+                setEditingSafra(true);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-violet-100 text-violet-800 text-xs font-bold hover:bg-violet-200 transition-colors"
+              title="Clique para trocar de safra"
+            >
+              {safra}
+            </button>
           )}
-          Salvar{dirtyKeys.size > 0 ? ` (${dirtyKeys.size} alterações)` : ""}
-        </button>
+        </div>
+
+        {/* Aviso quando há edições pendentes em safras diferentes da que
+            está aberta agora — sem isso, "Salvar" persiste células
+            "invisíveis" no momento (de outras safras) sem o usuário notar. */}
+        {(() => {
+          const outrasSafrasComPendencia = new Set(
+            Array.from(dirtyKeys)
+              .map((k) => k.split("|")[0])
+              .filter((s) => s !== safra)
+          );
+          if (outrasSafrasComPendencia.size === 0) return null;
+          return (
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+              <Info size={12} className="shrink-0" />
+              Também há alterações não salvas na(s) safra(s){" "}
+              <strong>{Array.from(outrasSafrasComPendencia).join(", ")}</strong> — &quot;Salvar&quot; persiste todas de uma vez.
+            </div>
+          );
+        })()}
       </div>
 
       {/* Error Banner */}
@@ -361,7 +415,7 @@ export function ITMatrix({
 
                 {/* Cells */}
                 {activeSegmentos.map((seg) => {
-                  const key = cellKey(cultura.customName, seg.customName);
+                  const key = cellKey(safra, cultura.customName, seg.customName);
                   const isDirty = dirtyKeys.has(key);
                   const isSaved = savedKeys.has(key);
                   const cellVal = draft[key] ?? 0;
@@ -374,6 +428,14 @@ export function ITMatrix({
                     >
                       <div className="relative">
                         <input
+                          // A chave (que agora inclui a safra) como React key
+                          // força o input a remontar quando o usuário troca
+                          // de safra — sem isso, defaultValue não força o
+                          // DOM a atualizar o texto exibido, e a célula
+                          // continuava mostrando o número da safra anterior
+                          // até o usuário clicar nela (bug relatado pelo
+                          // Marco Polo, 03/09/2026).
+                          key={key}
                           id={`it-cell-${cultura.internalKey}-${seg.internalKey}`}
                           type="text"
                           defaultValue={

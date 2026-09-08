@@ -57,7 +57,20 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { customName, displayOrder, id, isActive, aliases, ibgeProduto, ibgeTipo, addProdutoIbge } = body;
+    const { customName, displayOrder, id, isActive, aliases, ibgeProduto, ibgeTipo, addProdutoIbge, substituirPor } = body;
+
+    // Substituição em massa: repointa clientes/Índice Tecnológico/planejamento
+    // da cultura `id` pra `substituirPor` — corpo { id, substituirPor }.
+    // Pedido do Marco Polo, 03/09/2026 (ver segmentDictionary.service.ts).
+    if (id && substituirPor) {
+      const resultado = await SegmentDictionaryService.substituirCultura(
+        ctx.supabase,
+        ctx.tenantId,
+        id,
+        substituirPor
+      );
+      return NextResponse.json(resultado);
+    }
 
     // Associar mais um produto IBGE a uma cultura já existente (de-para,
     // 31/08/2026) — corpo { id, addProdutoIbge: { produto, tipo } }.
@@ -104,7 +117,12 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('[Cultures API] Supabase error (POST):', error);
     const message = getErrorMessage(error);
-    if (message.includes('já existe') || message.includes('já está associado')) {
+    if (
+      message.includes('já existe') ||
+      message.includes('já está associado') ||
+      message.includes('substituir uma cultura por ela mesma') ||
+      message.includes('cultura desabilitada')
+    ) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
     return unavailable('salvar');

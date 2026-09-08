@@ -9,15 +9,11 @@ import {
   TrendingUp,
   Settings2,
   Loader2,
-  CheckCircle2,
-  Circle,
   ArrowRight,
-  Sprout,
-  Tags,
-  Ruler,
   AlertTriangle,
 } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import { PrimeirosPassos } from "@/components/PrimeirosPassos";
 
 // Cada lista aqui só serve pra contar itens do checklist — cacheada 5min
 // (mesmo padrão dos hooks de dicionário) pra não recarregar do zero toda
@@ -84,39 +80,14 @@ export default function InicioPage() {
     );
   }
 
+  // A renderização do checklist em si virou <PrimeirosPassos /> (03/09/2026,
+  // pra poder reabrir em Configurações) — este array sobrevive só pra contar
+  // pendentes(), usado no aviso de "sistema não configurado" pro não-admin.
   const passos = [
-    {
-      icon: <Sprout size={16} />,
-      titulo: "Cadastrar culturas",
-      descricao: "Soja, milho, algodão — o que a sua carteira atende.",
-      feito: (setup?.culturas ?? 0) > 0,
-      contagem: setup?.culturas,
-      href: "/workspace/settings/configuracao",
-    },
-    {
-      icon: <Tags size={16} />,
-      titulo: "Cadastrar segmentos",
-      descricao: "As linhas de produto que você vende em cada cultura.",
-      feito: (setup?.segmentos ?? 0) > 0,
-      contagem: setup?.segmentos,
-      href: "/workspace/settings/segments",
-    },
-    {
-      icon: <Ruler size={16} />,
-      titulo: "Definir o Índice Tecnológico",
-      descricao: "Quanto vale, por hectare, cada cultura em cada segmento.",
-      feito: (setup?.indices ?? 0) > 0,
-      contagem: setup?.indices,
-      href: "/workspace/settings/configuracao",
-    },
-    {
-      icon: <Users2 size={16} />,
-      titulo: "Cadastrar produtores",
-      descricao: "Com as áreas e culturas de cada um.",
-      feito: (setup?.clientes ?? 0) > 0,
-      contagem: setup?.clientes,
-      href: "/workspace/clientes",
-    },
+    { feito: (setup?.culturas ?? 0) > 0 },
+    { feito: (setup?.segmentos ?? 0) > 0 },
+    { feito: (setup?.indices ?? 0) > 0 },
+    { feito: (setup?.clientes ?? 0) > 0 },
   ];
 
   const abas = [
@@ -209,59 +180,7 @@ export default function InicioPage() {
         </div>
       )}
 
-      {setup && isAdmin && (
-        <div className="glass-card-premium p-6">
-          <div className="flex items-baseline justify-between mb-5">
-            <h2 className="text-xs font-black uppercase tracking-[0.25em] text-muted-foreground">
-              Primeiros passos
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              {pendentes === 0 ? "tudo configurado" : `${pendentes} pendente(s)`}
-            </span>
-          </div>
-
-          <ol className="space-y-1">
-            {passos.map((p, i) => (
-              <li key={p.titulo}>
-                <Link
-                  href={p.href}
-                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/20 transition-colors group"
-                >
-                  <span className="mt-0.5 shrink-0">
-                    {p.feito ? (
-                      <CheckCircle2 size={18} className="text-emerald-600" />
-                    ) : (
-                      <Circle size={18} className="text-muted-foreground/40" />
-                    )}
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="flex items-center gap-2">
-                      <span className="text-muted-foreground/60">{p.icon}</span>
-                      <span
-                        className={`text-sm font-bold ${p.feito ? "text-slate-700" : "text-[#3E2723]"}`}
-                      >
-                        {i + 1}. {p.titulo}
-                      </span>
-                      {p.feito && (
-                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                          {p.contagem} cadastrado(s)
-                        </span>
-                      )}
-                    </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">
-                      {p.descricao}
-                    </span>
-                  </span>
-                  <ArrowRight
-                    size={15}
-                    className="mt-1 shrink-0 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors"
-                  />
-                </Link>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+      {setup && isAdmin && <PrimeirosPassos />}
 
       {/* O que cada aba faz */}
       <div>

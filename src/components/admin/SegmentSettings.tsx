@@ -16,6 +16,7 @@ import {
   Layers,
   X,
   Check,
+  ArrowRightLeft,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { getErrorMessage } from "@/lib/utils";
@@ -79,6 +80,13 @@ interface SegmentSettingsProps {
   onAddProdutoIbge?: (culturaId: string, produto: string, tipo: TipoCultura | null) => Promise<void>;
   /** Remove uma associação do de-para — a cultura em si não é afetada. */
   onRemoveProdutoIbge?: (culturaId: string, produto: string) => Promise<void>;
+  /** Substitui uma cultura por outra já existente em todo o dado do tenant
+   *  (clientes, Índice Tecnológico, planejamento) — pra permitir excluir a
+   *  de origem depois sem reeditar cliente por cliente. */
+  onSubstituirCultura?: (
+    fromId: string,
+    toId: string
+  ) => Promise<{ areas: number; areasConflito: number; it: number; itConflito: number; planejamento: number; planejamentoConflito: number }>;
   /** When true, renders only the Culturas section (used by the Cultura tab). */
   showOnlyCulturas?: boolean;
   /** When true, renders only the Grupos de Produtos section (used by the Grupos de Produtos tab). */
@@ -127,6 +135,7 @@ export function SegmentSettings({
   onAdicionarVariante,
   onAddProdutoIbge,
   onRemoveProdutoIbge,
+  onSubstituirCultura,
   showOnlyCulturas = false,
   showOnlyClassifications = false,
   labelGrupoProduto: labelGrupoProdutoProp,
@@ -150,6 +159,17 @@ export function SegmentSettings({
   const [renameDraft, setRenameDraft] = useState("");
   const [dragCulturaIdx, setDragCulturaIdx] = useState<number | null>(null);
   const [dragClassificacaoIdx, setDragClassificacaoIdx] = useState<number | null>(null);
+  // Índice sobre o qual o mouse está passando durante o arrasto — separado
+  // do índice arrastado (dragCulturaIdx), pra poder destacar o ALVO do
+  // drop, não só o item sendo movido (pedido do Marco Polo, 03/09/2026:
+  // "não tá mostrando pra onde ele tá mudando quando arrasto").
+  const [dragOverCulturaIdx, setDragOverCulturaIdx] = useState<number | null>(null);
+  const [dragOverClassificacaoIdx, setDragOverClassificacaoIdx] = useState<number | null>(null);
+  const [substituindoCultura, setSubstituindoCultura] = useState<string | null>(null);
+  const [substituirDraft, setSubstituirDraft] = useState("");
+  const [substituindo, setSubstituindo] = useState(false);
+  const [editingAliasText, setEditingAliasText] = useState<{ itemId: string; alias: string } | null>(null);
+  const [aliasEditDraft, setAliasEditDraft] = useState("");
 
   // Separate roots and children. Memoizado: qualquer tecla digitada em
   // qualquer campo da tela (busca, alias, nome de subgrupo) re-renderiza o
@@ -404,6 +424,93 @@ export function SegmentSettings({
     }
   };
 
+  // ─── Editar o texto de um apelido já existente (sem remover e recriar) ───
+  const startEditAliasText = (itemId: string, alias: string) => {
+    setEditingAliasText({ itemId, alias });
+    setAliasEditDraft(alias);
+  };
+
+  const commitEditCulturaAliasText = async (item: CulturaItem) => {
+    if (!editingAliasText) return;
+    const novo = aliasEditDraft.trim();
+    const { alias: antigo } = editingAliasText;
+    setEditingAliasText(null);
+    if (!novo || novo === antigo) return;
+    if (item.aliases.some((a) => a !== antigo && a.toLowerCase() === novo.toLowerCase())) {
+      toast.error(`"${novo}" já é um apelido desta cultura.`);
+      return;
+    }
+    const updatedAliases = item.aliases.map((a) => (a === antigo ? novo : a));
+    try {
+      await onSaveCultura({ ...item, aliases: updatedAliases });
+      toast.success("Apelido atualizado");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao atualizar apelido");
+    }
+  };
+
+  const commitEditClassificacaoAliasText = async (item: ClassificacaoItem) => {
+    if (!editingAliasText) return;
+    const novo = aliasEditDraft.trim();
+    const { alias: antigo } = editingAliasText;
+    setEditingAliasText(null);
+    if (!novo || novo === antigo) return;
+    if (item.aliases.some((a) => a !== antigo && a.toLowerCase() === novo.toLowerCase())) {
+      toast.error(`"${novo}" já é um apelido deste grupo de produto.`);
+      return;
+    }
+    const updatedAliases = item.aliases.map((a) => (a === antigo ? novo : a));
+    try {
+      await onSaveClassificacao({ ...item, aliases: updatedAliases });
+      toast.success("Apelido atualizado");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao atualizar apelido");
+    }
+  };
+
+  // ─── Substituição em massa (03/09/2026) ───
+  // Repointa clientes/Índice Tecnológico/planejamento de uma cultura pra
+  // outra já existente — pra viabilizar excluir a de origem sem reeditar
+  // cliente por cliente. Conflitos (mesmo cliente/segmento com dado nas
+  // duas) descartam o valor da origem, mantendo o da cultura de destino.
+  const handleConfirmSubstituir = async (fromCultura: CulturaItem) => {
+    const toId = substituirDraft;
+    if (!toId || !onSubstituirCultura) return;
+    const destino = culturas.find((c) => c.id === toId);
+    if (!destino) return;
+    if (
+      !window.confirm(
+        `Substituir "${fromCultura.customName}" por "${destino.customName}" em todo o sistema?\n\n` +
+          `Todos os clientes, Índice Tecnológico e planejamento que hoje usam "${fromCultura.customName}" passam a usar "${destino.customName}". ` +
+          `Onde o mesmo cliente/segmento já tiver dado nas duas culturas, o de "${destino.customName}" prevalece.\n\n` +
+          `"${fromCultura.customName}" não é excluída automaticamente — fica sem uso, e o botão de excluir passa a funcionar nela.\n\n` +
+          `Essa ação não pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+    setSubstituindo(true);
+    try {
+      const resultado = await onSubstituirCultura(fromCultura.id, toId);
+      const partes: string[] = [];
+      if (resultado.areas) partes.push(`${resultado.areas} área(s) de cliente`);
+      if (resultado.it) partes.push(`${resultado.it} config. de Índice Tecnológico`);
+      if (resultado.planejamento) partes.push(`${resultado.planejamento} linha(s) de planejamento`);
+      const conflitos = resultado.areasConflito + resultado.itConflito + resultado.planejamentoConflito;
+      toast.success(
+        partes.length
+          ? `Substituído: ${partes.join(", ")}${conflitos ? ` — ${conflitos} conflito(s) mantiveram o valor de "${destino.customName}"` : ""}`
+          : "Nenhum dado precisou ser substituído"
+      );
+      setSubstituindoCultura(null);
+      setSubstituirDraft("");
+    } catch (err) {
+      toast.error(getErrorMessage(err) || "Erro ao substituir cultura");
+    } finally {
+      setSubstituindo(false);
+    }
+  };
+
   const handleToggleActive = async (item: ClassificacaoItem) => {
     try {
       await onSaveClassificacao({ ...item, isActive: !item.isActive });
@@ -584,17 +691,26 @@ export function SegmentSettings({
               draggable
               onDragStart={() => setDragCulturaIdx(index)}
               onDragOver={(e) => e.preventDefault()}
+              onDragEnter={() => {
+                if (dragCulturaIdx !== null && dragCulturaIdx !== index) setDragOverCulturaIdx(index);
+              }}
               onDrop={() => {
                 if (dragCulturaIdx !== null) handleReorderCulturas(dragCulturaIdx, index);
                 setDragCulturaIdx(null);
+                setDragOverCulturaIdx(null);
               }}
-              onDragEnd={() => setDragCulturaIdx(null)}
-              className={`rounded-xl border transition-all ${
-                dragCulturaIdx === index ? "opacity-40" : ""
-              } ${
-                cultura.isActive
-                  ? "bg-white/60 border-border/50"
-                  : "bg-muted/20 border-border/20 opacity-50"
+              onDragEnd={() => {
+                setDragCulturaIdx(null);
+                setDragOverCulturaIdx(null);
+              }}
+              className={`rounded-xl border-2 transition-all ${
+                dragCulturaIdx === index
+                  ? "opacity-40 border-transparent bg-white/60"
+                  : dragOverCulturaIdx === index
+                  ? "border-emerald-400 border-dashed bg-emerald-50/60"
+                  : cultura.isActive
+                  ? "border-border/50 bg-white/60"
+                  : "border-border/20 bg-muted/20 opacity-50"
               }`}
             >
               <div className="flex items-center justify-between p-3">
@@ -648,6 +764,20 @@ export function SegmentSettings({
                       <ToggleLeft size={20} />
                     )}
                   </button>
+                  {onSubstituirCultura && culturas.some((c) => c.id !== cultura.id && c.isActive) && (
+                    <button
+                      onClick={() => {
+                        setSubstituindoCultura(
+                          substituindoCultura === cultura.id ? null : cultura.id
+                        );
+                        setSubstituirDraft("");
+                      }}
+                      className="text-muted-foreground/50 hover:text-blue-600 transition-colors"
+                      title="Substituir esta cultura por outra em todo o sistema"
+                    >
+                      <ArrowRightLeft size={14} />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDeleteCulturaClick(cultura)}
                     className="text-muted-foreground/50 hover:text-destructive transition-colors"
@@ -657,6 +787,53 @@ export function SegmentSettings({
                   </button>
                 </div>
               </div>
+
+              {/* Painel de substituição em massa */}
+              <AnimatePresence>
+                {substituindoCultura === cultura.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-3 pt-1 border-t border-border/30">
+                      <p className="text-[10px] text-muted-foreground mb-2">
+                        Substitui &quot;{cultura.customName}&quot; por outra cultura em todos os
+                        clientes, Índice Tecnológico e planejamento — útil pra depois conseguir
+                        excluir &quot;{cultura.customName}&quot; sem reeditar cliente por cliente.
+                      </p>
+                      <div className="flex gap-1.5">
+                        <select
+                          value={substituirDraft}
+                          onChange={(e) => setSubstituirDraft(e.target.value)}
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-border/30 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        >
+                          <option value="">Substituir por...</option>
+                          {culturas
+                            // Só ativas: migrar pra uma cultura desabilitada
+                            // recriaria o mesmo bug de VPM órfão da auditoria
+                            // de 31/08 (dado passa a apontar pra uma cultura
+                            // que o cálculo de VPM ignora).
+                            .filter((c) => c.id !== cultura.id && c.isActive)
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.customName}
+                              </option>
+                            ))}
+                        </select>
+                        <button
+                          onClick={() => handleConfirmSubstituir(cultura)}
+                          disabled={!substituirDraft || substituindo}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {substituindo ? "Substituindo..." : "Confirmar"}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Apelidos panel */}
               <AnimatePresence>
@@ -679,28 +856,49 @@ export function SegmentSettings({
                           {cultura.customName}
                           <span className="font-normal opacity-70">em uso</span>
                         </span>
-                        {cultura.aliases.map((alias) => (
-                          <span
-                            key={alias}
-                            className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-muted/40 text-[11px]"
-                          >
-                            {alias}
-                            <button
-                              onClick={() => handlePromoteCulturaAlias(cultura, alias)}
-                              className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 transition-colors"
-                              title={`Usar "${alias}" como nome desta cultura`}
+                        {cultura.aliases.map((alias) =>
+                          editingAliasText?.itemId === cultura.id && editingAliasText.alias === alias ? (
+                            <input
+                              key={alias}
+                              autoFocus
+                              value={aliasEditDraft}
+                              onChange={(e) => setAliasEditDraft(e.target.value)}
+                              onBlur={() => commitEditCulturaAliasText(cultura)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") commitEditCulturaAliasText(cultura);
+                                if (e.key === "Escape") setEditingAliasText(null);
+                              }}
+                              className="px-2 py-1 rounded-full border border-primary/60 bg-white text-[11px] outline-none w-28"
+                            />
+                          ) : (
+                            <span
+                              key={alias}
+                              className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-muted/40 text-[11px]"
                             >
-                              usar como nome
-                            </button>
-                            <button
-                              onClick={() => handleRemoveCulturaAlias(cultura, alias)}
-                              className="text-muted-foreground hover:text-destructive transition-colors"
-                              title="Remover apelido"
-                            >
-                              <X size={10} />
-                            </button>
-                          </span>
-                        ))}
+                              <span
+                                className="cursor-text hover:underline decoration-dotted"
+                                title="Duplo clique para editar o texto do apelido"
+                                onDoubleClick={() => startEditAliasText(cultura.id, alias)}
+                              >
+                                {alias}
+                              </span>
+                              <button
+                                onClick={() => handlePromoteCulturaAlias(cultura, alias)}
+                                className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                title={`Usar "${alias}" como nome desta cultura`}
+                              >
+                                usar como nome
+                              </button>
+                              <button
+                                onClick={() => handleRemoveCulturaAlias(cultura, alias)}
+                                className="text-muted-foreground hover:text-destructive transition-colors"
+                                title="Remover apelido"
+                              >
+                                <X size={10} />
+                              </button>
+                            </span>
+                          )
+                        )}
                       </div>
                       <p className="text-[10px] text-muted-foreground mb-2">
                         Trocar o nome (duplo clique) sobrescreve sem guardar o anterior — pra
@@ -1026,6 +1224,8 @@ export function SegmentSettings({
           {roots.map((root, index) => {
             const children = getChildren(root.internalKey);
             const isExpanded = expandedItems.has(root.internalKey);
+            const isDraggingThis = dragClassificacaoIdx === index;
+            const isDragOverThis = dragOverClassificacaoIdx === index && dragClassificacaoIdx !== index;
 
             return (
               <motion.div
@@ -1034,19 +1234,28 @@ export function SegmentSettings({
                 draggable
                 onDragStart={() => setDragClassificacaoIdx(index)}
                 onDragOver={(e) => e.preventDefault()}
+                onDragEnter={() => {
+                  if (dragClassificacaoIdx !== null && dragClassificacaoIdx !== index) setDragOverClassificacaoIdx(index);
+                }}
                 onDrop={() => {
                   if (dragClassificacaoIdx !== null) handleReorderClassificacoes(dragClassificacaoIdx, index);
                   setDragClassificacaoIdx(null);
+                  setDragOverClassificacaoIdx(null);
                 }}
-                onDragEnd={() => setDragClassificacaoIdx(null)}
-                className={`space-y-1 ${dragClassificacaoIdx === index ? "opacity-40" : ""}`}
+                onDragEnd={() => {
+                  setDragClassificacaoIdx(null);
+                  setDragOverClassificacaoIdx(null);
+                }}
+                className={`space-y-1 ${isDraggingThis ? "opacity-40" : ""}`}
               >
                 {/* Root classification */}
                 <div
-                  className={`rounded-xl border transition-all ${
-                    root.isActive
-                      ? "bg-white/60 border-border/50"
-                      : "bg-muted/20 border-border/20 opacity-50"
+                  className={`rounded-xl border-2 transition-all ${
+                    isDragOverThis
+                      ? "border-blue-400 border-dashed bg-blue-50/60"
+                      : root.isActive
+                      ? "border-border/50 bg-white/60"
+                      : "border-border/20 bg-muted/20 opacity-50"
                   }`}
                 >
                   <div className="flex items-center justify-between p-3">
@@ -1140,12 +1349,32 @@ export function SegmentSettings({
                               {root.customName}
                               <span className="font-normal opacity-70">em uso</span>
                             </span>
-                            {root.aliases.map((alias) => (
+                            {root.aliases.map((alias) =>
+                              editingAliasText?.itemId === root.id && editingAliasText.alias === alias ? (
+                                <input
+                                  key={alias}
+                                  autoFocus
+                                  value={aliasEditDraft}
+                                  onChange={(e) => setAliasEditDraft(e.target.value)}
+                                  onBlur={() => commitEditClassificacaoAliasText(root)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") commitEditClassificacaoAliasText(root);
+                                    if (e.key === "Escape") setEditingAliasText(null);
+                                  }}
+                                  className="px-2 py-1 rounded-full border border-primary/60 bg-white text-[11px] outline-none w-28"
+                                />
+                              ) : (
                               <span
                                 key={alias}
                                 className="inline-flex items-center gap-1 pl-2 pr-1 py-1 rounded-full bg-muted/40 text-[11px]"
                               >
-                                {alias}
+                                <span
+                                  className="cursor-text hover:underline decoration-dotted"
+                                  title="Duplo clique para editar o texto do apelido"
+                                  onDoubleClick={() => startEditAliasText(root.id, alias)}
+                                >
+                                  {alias}
+                                </span>
                                 <button
                                   onClick={() => handlePromoteAlias(root, alias)}
                                   className="px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-700 hover:bg-emerald-100 transition-colors"
@@ -1161,7 +1390,8 @@ export function SegmentSettings({
                                   <X size={10} />
                                 </button>
                               </span>
-                            ))}
+                              )
+                            )}
                           </div>
                           <p className="text-[10px] text-muted-foreground mb-2">
                             Trocar o nome mantém o código interno e move o nome anterior para

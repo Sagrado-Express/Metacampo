@@ -106,6 +106,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('[Classifications API] Supabase error (PATCH):', error);
+    // Renomear ou promover um apelido a nome passa por aqui (updateClassificacao/
+    // promoverAliasParaNome), não pelo POST — sem esta checagem, a duplicata
+    // detectada em updateClassificacao caía no 503 genérico em vez do 400 com
+    // a mensagem clara (mesmo bug já corrigido do lado de Cultura, achado
+    // auditando de novo em 05/09/2026).
+    const message = getErrorMessage(error);
+    if (message.includes('já existe')) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     return unavailable('atualizar');
   }
 }

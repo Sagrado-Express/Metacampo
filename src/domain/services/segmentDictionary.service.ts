@@ -266,6 +266,24 @@ export class SegmentDictionaryService {
           .eq('id', id)
           .maybeSingle();
         nomeAnterior = atual?.custom_name ?? null;
+
+        // Mesma checagem de duplicata do lado de culturas — renomear ou
+        // promover um apelido a nome podia criar dois grupos de produto com
+        // o mesmo custom_name sem aviso (bug relatado 03/09/2026).
+        if (nomeAnterior !== null && input.customName !== nomeAnterior) {
+          const { data: conflito, error: conflitoError } = await supabase
+            .from('tenant_config_classificacoes')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true)
+            .neq('id', id)
+            .ilike('custom_name', input.customName)
+            .maybeSingle();
+          if (conflitoError) throw conflitoError;
+          if (conflito) {
+            throw new Error(`Grupo de produto "${input.customName}" já existe.`);
+          }
+        }
       }
 
       const { data, error } = await supabase
@@ -698,6 +716,25 @@ export class SegmentDictionaryService {
         .eq('id', id)
         .maybeSingle();
       nomeAnterior = atual?.custom_name ?? null;
+
+      // Renomear (duplo clique) ou promover um apelido a nome podiam criar
+      // duas culturas com o mesmo custom_name — só internal_key é único no
+      // banco. Sem essa checagem, as duas passavam a existir sem aviso
+      // nenhum (bug relatado pelo Marco Polo, 03/09/2026).
+      if (nomeAnterior !== null && input.customName !== nomeAnterior) {
+        const { data: conflito, error: conflitoError } = await supabase
+          .from('tenant_config_culturas')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .eq('is_active', true)
+          .neq('id', id)
+          .ilike('custom_name', input.customName)
+          .maybeSingle();
+        if (conflitoError) throw conflitoError;
+        if (conflito) {
+          throw new Error(`Cultura "${input.customName}" já existe.`);
+        }
+      }
     }
 
     const { data, error } = await supabase
@@ -798,6 +835,139 @@ export class SegmentDictionaryService {
       .eq('id', id)
       .eq('tenant_id', tenantId);
     if (deleteError) throw deleteError;
+  }
+
+  /**
+   * Substitui uma cultura por outra já existente em todo o dado do tenant —
+   * repointa `customer_crop_areas`, `it_se_configurations` e
+   * `planejamento_cliente_segmento` da cultura de origem pra de destino.
+   * A cultura de origem em si NÃO é excluída (fica com 0 usos, e o botão
+   * "Excluir" já existente passa a funcionar nela).
+   *
+   * Pedido do Marco Polo, 03/09/2026: hoje excluir uma cultura em uso exige
+   * reeditar cliente por cliente pra tirar a referência — inviável com uma
+   * carteira de centenas de clientes. Decisão do usuário (mesma data): em
+   * caso de conflito (o mesmo cliente/safra+segmento já tem registro nas
+   * duas culturas), o valor da cultura de DESTINO prevalece — o da origem
+   * é descartado nesse caso específico, não somado.
+   */
+  static async substituirCultura(
+    supabase: SupabaseClient,
+    tenantId: string,
+    fromId: string,
+    toId: string
+  ): Promise<{ areas: number; areasConflito: number; it: number; itConflito: number; planejamento: number; planejamentoConflito: number }> {
+    if (fromId === toId) {
+      throw new Error('Não é possível substituir uma cultura por ela mesma.');
+    }
+
+    const [{ data: de, error: deErr }, { data: para, error: paraErr }] = await Promise.all([
+      supabase.from('tenant_config_culturas').select('custom_name').eq('id', fromId).eq('tenant_id', tenantId).single(),
+      supabase.from('tenant_config_culturas').select('custom_name, is_active').eq('id', toId).eq('tenant_id', tenantId).single(),
+    ]);
+    if (deErr) throw deErr;
+    if (paraErr) throw paraErr;
+    // Migrar pra uma cultura desabilitada recriaria o bug de VPM órfão da
+    // auditoria de 31/08 (dado passa a apontar pra uma cultura que o
+    // cálculo de VPM ignora) — a UI já filtra isso, checagem aqui é defesa
+    // em profundidade, não o único ponto de bloqueio.
+    if (!para.is_active) {
+      throw new Error('Não é possível substituir por uma cultura desabilitada.');
+    }
+    const nomeDe = de.custom_name;
+    const nomePara = para.custom_name;
+
+    // 1. customer_crop_areas — UNIQUE(customer_id, crop_name): conflita
+    //    quando o mesmo cliente já tem área cadastrada nas duas culturas.
+    const [{ data: areasDe, error: areasDeErr }, { data: areasPara, error: areasParaErr }] = await Promise.all([
+      supabase.from('customer_crop_areas').select('id, customer_id').eq('tenant_id', tenantId).eq('crop_name', nomeDe),
+      supabase.from('customer_crop_areas').select('customer_id').eq('tenant_id', tenantId).eq('crop_name', nomePara),
+    ]);
+    if (areasDeErr) throw areasDeErr;
+    if (areasParaErr) throw areasParaErr;
+    const clientesComPara = new Set((areasPara ?? []).map((a) => a.customer_id));
+    const areasSemConflito = (areasDe ?? []).filter((a) => !clientesComPara.has(a.customer_id));
+    const areasComConflito = (areasDe ?? []).filter((a) => clientesComPara.has(a.customer_id));
+
+    if (areasSemConflito.length) {
+      const { error } = await supabase
+        .from('customer_crop_areas')
+        .update({ crop_name: nomePara })
+        .in('id', areasSemConflito.map((a) => a.id));
+      if (error) throw error;
+    }
+    if (areasComConflito.length) {
+      const { error } = await supabase
+        .from('customer_crop_areas')
+        .delete()
+        .in('id', areasComConflito.map((a) => a.id));
+      if (error) throw error;
+    }
+
+    // 2. it_se_configurations — chave conceitual (safra, segment_name):
+    //    conflita quando já existe configuração da cultura destino pro
+    //    mesmo par safra+segmento.
+    const [{ data: itDe, error: itDeErr }, { data: itPara, error: itParaErr }] = await Promise.all([
+      supabase.from('it_se_configurations').select('id, safra, segment_name').eq('tenant_id', tenantId).eq('crop_name', nomeDe),
+      supabase.from('it_se_configurations').select('safra, segment_name').eq('tenant_id', tenantId).eq('crop_name', nomePara),
+    ]);
+    if (itDeErr) throw itDeErr;
+    if (itParaErr) throw itParaErr;
+    const chavesItPara = new Set((itPara ?? []).map((c) => `${c.safra}|${c.segment_name}`));
+    const itSemConflito = (itDe ?? []).filter((c) => !chavesItPara.has(`${c.safra}|${c.segment_name}`));
+    const itComConflito = (itDe ?? []).filter((c) => chavesItPara.has(`${c.safra}|${c.segment_name}`));
+
+    if (itSemConflito.length) {
+      const { error } = await supabase
+        .from('it_se_configurations')
+        .update({ crop_name: nomePara })
+        .in('id', itSemConflito.map((c) => c.id));
+      if (error) throw error;
+    }
+    if (itComConflito.length) {
+      const { error } = await supabase
+        .from('it_se_configurations')
+        .delete()
+        .in('id', itComConflito.map((c) => c.id));
+      if (error) throw error;
+    }
+
+    // 3. planejamento_cliente_segmento — UNIQUE(tenant_id, cliente_id,
+    //    cultivo, segmento): conflita quando o mesmo cliente já tem
+    //    planejamento na cultura destino pro mesmo segmento.
+    const [{ data: planDe, error: planDeErr }, { data: planPara, error: planParaErr }] = await Promise.all([
+      supabase.from('planejamento_cliente_segmento').select('id, cliente_id, segmento').eq('tenant_id', tenantId).eq('cultivo', nomeDe),
+      supabase.from('planejamento_cliente_segmento').select('cliente_id, segmento').eq('tenant_id', tenantId).eq('cultivo', nomePara),
+    ]);
+    if (planDeErr) throw planDeErr;
+    if (planParaErr) throw planParaErr;
+    const chavesPlanPara = new Set((planPara ?? []).map((p) => `${p.cliente_id}|${p.segmento}`));
+    const planSemConflito = (planDe ?? []).filter((p) => !chavesPlanPara.has(`${p.cliente_id}|${p.segmento}`));
+    const planComConflito = (planDe ?? []).filter((p) => chavesPlanPara.has(`${p.cliente_id}|${p.segmento}`));
+
+    if (planSemConflito.length) {
+      const { error } = await supabase
+        .from('planejamento_cliente_segmento')
+        .update({ cultivo: nomePara })
+        .in('id', planSemConflito.map((p) => p.id));
+      if (error) throw error;
+    }
+    if (planComConflito.length) {
+      const { error } = await supabase
+        .from('planejamento_cliente_segmento')
+        .delete()
+        .in('id', planComConflito.map((p) => p.id));
+      if (error) throw error;
+    }
+
+    return {
+      areas: areasSemConflito.length,
+      areasConflito: areasComConflito.length,
+      it: itSemConflito.length,
+      itConflito: itComConflito.length,
+      planejamento: planSemConflito.length,
+      planejamentoConflito: planComConflito.length,
+    };
   }
 }
 

@@ -114,6 +114,22 @@ export default function CulturaPage() {
     invalidateCultures();
   };
 
+  // Substituição em massa (03/09/2026): repointa clientes/Índice
+  // Tecnológico/planejamento de uma cultura pra outra já existente.
+  const handleSubstituirCultura = async (fromId: string, toId: string) => {
+    const response = await fetch("/api/cultures", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: fromId, substituirPor: toId }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || err.message || "Erro ao substituir cultura");
+    }
+    invalidateCultures();
+    return response.json();
+  };
+
   const handleRemoveProdutoIbge = async (culturaId: string, produto: string) => {
     const response = await fetch(
       `/api/cultures?tenantId=${tenantId}&id=${culturaId}&removeProduto=${encodeURIComponent(produto)}`,
@@ -161,6 +177,7 @@ export default function CulturaPage() {
           onAdicionarVariante={handleAdicionarVariante}
           onAddProdutoIbge={handleAddProdutoIbge}
           onRemoveProdutoIbge={handleRemoveProdutoIbge}
+          onSubstituirCultura={handleSubstituirCultura}
           showOnlyCulturas
           initialCulturaSearch={buscarInicial}
         />

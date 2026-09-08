@@ -111,8 +111,16 @@ export function useITConfigurations(safra: string) {
 
   const upsertMutation = useMutation({
     mutationFn: async (input: UpsertITConfigInput) => {
-      const existing = getCell(input.cultivo, input.segmento);
-      if (existing) return updateITConfiguration({ ...input, id: existing.id });
+      // matrixMap só tem os dados da safra deste hook (`safra`, o parâmetro
+      // com que ele foi chamado) — pra uma edição pendente de OUTRA safra
+      // (permitido desde 03/09/2026, ver ITMatrix.tsx), consultar matrixMap
+      // aqui daria o id errado (de outra safra) ou nenhum id, mesmo que a
+      // linha já exista. Nesse caso o POST decide create/update sozinho,
+      // contra a safra pedida de verdade (upsert por chave natural).
+      if (input.safra === safra) {
+        const existing = getCell(input.cultivo, input.segmento);
+        if (existing) return updateITConfiguration({ ...input, id: existing.id });
+      }
       return createITConfiguration(input);
     },
     onSuccess: () => invalidate(),

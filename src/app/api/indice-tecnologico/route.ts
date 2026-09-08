@@ -92,17 +92,44 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'safra, cultivo, segmento e valorPorHectareCentavos são obrigatórios' }, { status: 400 });
     }
 
-    const { data, error: dbError } = await supabase
+    // Upsert por chave natural (tenant, safra, cultivo, segmento) — não há
+    // UNIQUE constraint em it_se_configurations pra isso, então o client
+    // decidia create/update sozinho olhando o cache da safra ATUALMENTE
+    // carregada. Isso quebrava ao salvar edições pendentes de uma safra
+    // diferente da que está aberta na tela (permitido desde 03/09/2026,
+    // ver ITMatrix.tsx): o cache errado ou não achava a linha (duplicava
+    // via POST) ou achava um id de OUTRA safra por coincidência de nome
+    // (sobrescrevia a linha errada via PATCH). Decidindo aqui, no servidor,
+    // contra a safra pedida de verdade, os dois problemas somem.
+    const { data: existente, error: existenteError } = await supabase
       .from('it_se_configurations')
-      .insert({
-        tenant_id: tenantId,
-        safra,
-        crop_name: cultivo,
-        segment_name: segmento,
-        value_per_hectare: valorPorHectareCentavos
-      })
-      .select()
-      .single();
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('safra', safra)
+      .eq('crop_name', cultivo)
+      .eq('segment_name', segmento)
+      .maybeSingle();
+    if (existenteError) throw existenteError;
+
+    const { data, error: dbError } = existente
+      ? await supabase
+          .from('it_se_configurations')
+          .update({ value_per_hectare: valorPorHectareCentavos })
+          .eq('id', existente.id)
+          .eq('tenant_id', tenantId)
+          .select()
+          .single()
+      : await supabase
+          .from('it_se_configurations')
+          .insert({
+            tenant_id: tenantId,
+            safra,
+            crop_name: cultivo,
+            segment_name: segmento,
+            value_per_hectare: valorPorHectareCentavos
+          })
+          .select()
+          .single();
 
     if (dbError) throw dbError;
 
