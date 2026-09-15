@@ -7,15 +7,17 @@ import Link from 'next/link';
 import { ChevronLeft, BarChart3 } from 'lucide-react';
 
 /**
- * Planejamento — consolidado de 5 abas para 2 (decisão de UX 07/2026):
+ * Planejamento — consolidado de 5 abas para 2 (decisão de UX 07/2026), com
+ * uma 3ª aba somada em 15/09/2026 (fecha o Passo 5 do GTMGC):
  *  - Resumo: visão executiva (o que já foi planejado)
  *  - Editar: superfície única de edição (Heatmap) + Matriz consolidada
+ *  - Acompanhamento: meta planejada vs realizado importado, ao longo da safra
  * As antigas abas Carteira / Por Cultivo / Por Segmento foram absorvidas
  * pelo Resumo; a lista completa da carteira vive em /workspace/clientes.
  */
 export default function PlanejamentoPage() {
   const { isLoading } = useSession();
-  const [tab, setTab] = useState<'resumo' | 'editar'>('resumo');
+  const [tab, setTab] = useState<'resumo' | 'editar' | 'acompanhamento'>('resumo');
 
   if (isLoading) {
     return (
@@ -47,9 +49,9 @@ export default function PlanejamentoPage() {
         </div>
       </div>
 
-      {/* Tabs list — 2 abas */}
+      {/* Tabs list — 3 abas */}
       <div className="flex gap-1 p-1 bg-muted/30 rounded-2xl border border-border/40">
-        {(['resumo', 'editar'] as const).map(t => (
+        {(['resumo', 'editar', 'acompanhamento'] as const).map(t => (
           <button
             key={t}
             id={`tab-${t}`}
@@ -62,6 +64,7 @@ export default function PlanejamentoPage() {
           >
             {t === 'resumo' && 'Resumo'}
             {t === 'editar' && 'Editar'}
+            {t === 'acompanhamento' && 'Acompanhamento'}
           </button>
         ))}
       </div>

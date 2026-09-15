@@ -95,9 +95,13 @@ CREATE TABLE IF NOT EXISTS public.it_se_configurations (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Faturamento — hoje só recebe POST direto via /api/faturamento.
---    Não existe parser de CSV nem tela de conciliação (Épico 5 do PRD,
---    Passo 12 do GTMGC): a tabela existe, a ingestão não.
+-- 5. Faturamento — ingestão real via POST /api/faturamento/import
+--    (upload de CSV, Épico 5 do PRD, Passo 12 do GTMGC), 15/09/2026.
+--    UNIQUE(tenant_id, mes, id_ctv, segmento): reimportar o mesmo mês
+--    substitui a linha (upsert com onConflict), não duplica.
+--    Ainda sem coluna de safra/ano — só uma safra ativa por tenant hoje,
+--    mesma limitação de planejamento_cliente_segmento (ver PRD §16.1
+--    Passo 5). Resolver antes de comparar safra-a-safra.
 CREATE TABLE IF NOT EXISTS public.faturamento_snapshots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id),
@@ -108,6 +112,8 @@ CREATE TABLE IF NOT EXISTS public.faturamento_snapshots (
     valor_meta_centavos BIGINT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS uq_faturamento_tenant_mes_ctv_segmento
+    ON public.faturamento_snapshots(tenant_id, mes, id_ctv, segmento);
 
 -- 6. Culturas configuráveis por tenant (Regra Nº6: nunca lista fixa).
 --    aliases é TEXT[], não JSONB — corrigido em relação a uma versão

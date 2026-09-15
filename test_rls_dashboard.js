@@ -25,7 +25,7 @@ const USERS = [
   { label: 'Tenant B', email: 'teste2@metacampo.com', password: 'Teste123!@#', tenant: '22222222-2222-2222-2222-222222222222' },
 ];
 
-const TABLES = ['clientes', 'customer_crop_areas', 'tenant_config_culturas', 'tenant_config_classificacoes'];
+const TABLES = ['clientes', 'customer_crop_areas', 'tenant_config_culturas', 'tenant_config_classificacoes', 'faturamento_snapshots'];
 
 async function signIn(u) {
   const res = await fetch(`${URL}/auth/v1/token?grant_type=password`, {

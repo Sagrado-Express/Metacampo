@@ -18,7 +18,7 @@ import { useITConfigurations, UpsertITConfigInput } from "@/hooks/useITConfigura
 import { useQueryClient } from "@tanstack/react-query";
 import { TenantCultura, TenantClassificacao } from "@/types/schema";
 import { toast } from "@/lib/toast";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessage, parseBRLParaCentavos as parseBRL } from "@/lib/utils";
 
 // ============================================================
 // Types
@@ -45,16 +45,6 @@ function formatBRL(centavos: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-function parseBRL(raw: string): number {
-  // Accept "4.000,00" or "4000.00" or plain "4000"
-  const cleaned = raw.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
-  const parsed = parseFloat(cleaned);
-  if (isNaN(parsed)) return 0;
-  // Block decimals: round to nearest integer before converting to centavos
-  const rounded = Math.round(parsed);
-  return rounded * 100; // Store as centavos (always whole R$)
 }
 
 // A chave inclui a safra: sem isso, trocar de safra podia fazer uma edição

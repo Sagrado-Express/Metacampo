@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSidebar } from "@/providers/SidebarProvider";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import {
@@ -35,6 +36,7 @@ interface MenuItem {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isCollapsed, toggleSidebar, isMobileOpen, closeMobileSidebar } = useSidebar();
   const isMobile = useIsMobile();
 
@@ -42,6 +44,14 @@ export function Sidebar() {
     try {
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (res.ok) {
+        // O QueryClient é um singleton (QueryProvider) com staleTime global
+        // de 5min — sem isso, o próximo login na MESMA aba reaproveitava
+        // cache de sessão/dados do usuário anterior (dado de outro tenant
+        // ou outra permissão aparecendo na tela até cada query expirar
+        // sozinha). Achado ao vivo testando o Acompanhamento Orçamentário
+        // (15/09/2026) — provavelmente a causa real do incidente "sessão
+        // trocou de tenant" de 17/08/2026, nunca identificado na época.
+        queryClient.clear();
         router.push("/login");
         router.refresh();
       }

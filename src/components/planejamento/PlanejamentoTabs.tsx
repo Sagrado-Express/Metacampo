@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import Heatmap from './Heatmap';
+import Acompanhamento from './Acompanhamento';
 import { Layers, Sprout, LayoutGrid, Pencil } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
@@ -20,7 +21,7 @@ import { toast } from '@/lib/toast';
  */
 
 interface PlanejamentoTabsProps {
-  tab: 'resumo' | 'editar';
+  tab: 'resumo' | 'editar' | 'acompanhamento';
   onGoToEditar?: () => void;
 }
 
@@ -167,6 +168,11 @@ export default function PlanejamentoTabs({ tab, onGoToEditar }: PlanejamentoTabs
         };
       });
   }, [planejamento, segmentoAtivo, clients]);
+
+  // Acompanhamento busca os próprios dados (não depende de dashboard-full)
+  // — sai daqui antes dos checks de loading/erro abaixo, que só dizem
+  // respeito às abas Resumo/Editar.
+  if (tab === 'acompanhamento') return <Acompanhamento />;
 
   if (isLoading) return <PlanejamentoSkeleton />;
 

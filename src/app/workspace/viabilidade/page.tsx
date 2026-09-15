@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { ChevronLeft, Target, Loader2, TrendingUp, Wallet } from "lucide-react";
 import { toast } from "@/lib/toast";
+import { parseBRLParaCentavos as parseBRL } from "@/lib/utils";
 
 /**
  * /workspace/viabilidade — Passo 1 do GTMGC.
@@ -32,13 +33,6 @@ function formatBRL(centavos: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-function parseBRL(raw: string): number {
-  const cleaned = raw.replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
-  const parsed = parseFloat(cleaned);
-  if (isNaN(parsed)) return 0;
-  return Math.round(parsed) * 100;
 }
 
 export default function ViabilidadePage() {

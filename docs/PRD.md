@@ -298,33 +298,47 @@ configuráveis por empresa, sem lista fixa hardcoded.
 
 ---
 
-### ÉPICO 5: Ingestão de Faturamento com Persistência Real
+### ÉPICO 5: Ingestão de Faturamento com Persistência Real — ✅ FEITO (15/09/2026)
 **Objetivo:** upload de CSV salva dados de verdade (não processa e descarta).
 
-#### E5-S1: Persistir resultado da ingestão de CSV
+#### E5-S1: Persistir resultado da ingestão de CSV — ✅ Feito
 **Como** CTV ou Gestor, **quero** fazer upload de um CSV de faturamento periodicamente,
 **para que** o sistema calcule Saldo TO-GO com dados reais.
 
-**Fluxo principal:**
-1. Usuário faz upload do CSV no formato esperado
-2. Sistema parseia e reconcilia aliases de segmento (lógica já existe em `IngestionMapper`)
-3. Sistema exibe modal de conciliação para segmentos não reconhecidos
-4. Usuário confirma o mapeamento
-5. Sistema **salva** o resultado consolidado em `faturamento_snapshots`
+**Fluxo principal (como implementado):**
+1. Usuário faz upload do CSV (`mes, email_ctv, segmento, valor_realizado`) em
+   `/workspace/planejamento/faturamento/importar` — mesmo padrão dry-run/commit
+   do importador de clientes.
+2. Sistema resolve e-mail do CTV, resolve segmento por nome/apelido atual
+   (`SegmentDictionaryService.getActiveClassificacoes`) e calcula a meta na
+   hora somando `planejamento_cliente_segmento` (join por `clientes.ctv_id`,
+   nunca pelo `ctv_id` da própria linha de planejamento).
+3. Segmento não reconhecido bloqueia o commit (botão desabilitado) até o
+   usuário corrigir o CSV ou cadastrar o grupo de produto — não existe modal
+   de conciliação separado; a correção é cadastrar o alias em Configurações
+   e reimportar. **Nota:** a frase original desta story ("lógica já existe em
+   `IngestionMapper`") era otimista — essa classe nunca existiu no código.
+4. `POST /api/faturamento/import` grava via `upsert` com `UNIQUE(tenant_id,
+   mes, id_ctv, segmento)` — reimportar o mesmo mês substitui, não duplica.
 
 **Edge cases:**
-- Se segmento do CSV não existe no cadastro do tenant: sistema bloqueia e pede
-  conciliação manual antes de salvar
-- Se CSV duplicado (mesmo mês já importado): sistema avisa e pergunta se deve substituir
+- Segmento do CSV não existe no cadastro do tenant: bloqueado até correção. ✅
+- CSV duplicado (mesmo mês já importado): substitui via upsert, sem duplicar. ✅
 
 **Critérios de Aceite:**
-- [ ] Dado um CSV válido, quando importado, então os dados aparecem em
-  `faturamento_snapshots` (não somem após o upload)
-- [ ] Dado um segmento desconhecido, quando detectado, então a importação é
-  bloqueada até conciliação manual
+- [x] Dado um CSV válido, quando importado, então os dados aparecem em
+  `faturamento_snapshots` (não somem após o upload) — testado ao vivo,
+  `npm run test:rls` inclui `faturamento_snapshots`.
+- [x] Dado um segmento desconhecido, quando detectado, então a importação é
+  bloqueada até conciliação manual — testado ao vivo.
 
 **Story Points:** 5
 **Prioridade:** Must Have
+
+**Lacuna conhecida:** `faturamento_snapshots` não tem coluna de safra/ano, só
+`mes` — uma segunda safra completa vai colidir mês-a-mês com a primeira em
+qualquer soma. Mesma limitação de `planejamento_cliente_segmento`. Resolver
+antes de comparar safra-a-safra.
 
 ---
 
@@ -458,23 +472,25 @@ precisa ser recriada do zero — ver Seção 16.
 | 2 | Cadastro da carteira (cliente × cultivo × hectares) | ✅ Completo | `/workspace/clientes` — multi-área, VPM real, avisos de pendência |
 | 3 | Potencial por cultivo (dashboard parte 1) | ✅ Completo | Planejamento → Resumo → "Por Cultivo" |
 | 4 | Meta por segmento em cada cliente × cultivo | ✅ Completo | Apetite (heatmap por segmento), Planejamento → Editar |
-| 5 | Calibrar apetite ao longo do ano + "portais no tempo" (janelas fenológicas) | 🟡 Metade | Calibrar o % existe. Monitorar ao longo do ano / alertar janela fechando — não existe; nenhuma tela viva tenta isso |
+| 5 | Calibrar apetite ao longo do ano + "portais no tempo" (janelas fenológicas) | 🟡 Metade | Calibrar o % ✅ e monitorar meta vs realizado ao longo da safra ✅ (Planejamento → Acompanhamento, 15/09/2026, ver 16.10). Alertar janela fenológica fechando (produto específico, data específica) segue não implementado — adiado explicitamente por Marco Polo em 15/09/2026, não reabrir sem pedido |
 | 6 | Consolidado por cultivo (dashboard parte 2) | ✅ Completo | Mesmos cards do Passo 3 (potencial + planejado) |
 | 7 | Previsão consolidada por segmento | ✅ Completo | Planejamento → Resumo → "Por Classificação de Produto" |
 | 8 | Matriz segmento × cultivo | ✅ Completo | Planejamento → Editar → Matriz |
 | 9 | Carteira consolidada, uma linha por cliente | 🟡 Metade | `/workspace/clientes` já é uma linha por cliente com VPM potencial, mas não mostra a estimativa planejada ao lado |
 | 10 | Handshake — CTV confirma meta oficial (congela o plano) | ❌ Zero | RN-06. Tabela `official_safra_plans` nunca teve rota nem tela; **removida** em 04/08/2026 por estar vazia e sem uso |
 | 11 | Quantos segmentos por cliente (profundidade de relacionamento) | ❌ Zero | Nenhuma tela agrega essa contagem por cliente |
-| 12 | Faturamento real vs meta (Saldo TO-GO) | 🟡 Só API | `/api/faturamento` grava em `faturamento_snapshots`, mas não há parser de CSV nem conciliação nem tela (Épico 5) |
+| 12 | Faturamento real vs meta (Saldo TO-GO) | ✅ Completo | Épico 5 fechado 15/09/2026 — `/workspace/planejamento/faturamento/importar` (CSV real) + Planejamento → Acompanhamento (Saldo TO-GO por CTV e por CTV×segmento). Falta só dimensão de safra/ano na tabela (ver nota no Épico 5, Seção 6) |
 | 13 | Grau de confiança (régua de 5 cores) | ❌ Zero | Tabela `customer_faixas` removida 04/08/2026, 0 rota. As colunas equivalentes em `clientes` (`confidence_level` etc.) existem mas não são lidas/escritas por nenhum código |
 | 14 | Segmentação multi-critério (risco, perfil, relacionamento) | ❌ Zero | Tabela `scoring_weights` removida 04/08/2026. Colunas `performance_band`/`credit_rating`/`wallet_share`/`qualitative_weight` em `clientes` existem, mortas |
 | 15 | Método de Pareto (classificação 80/20) | ❌ Zero | Sem rota, sem tela. Tentativas órfãs (`ParetoPlanning.tsx`, `ParetoSegmentation.tsx`) removidas 04/08/2026 |
 | 16 | Frequência de visitas por cliente | ❌ Zero | `visitService.ts` estava órfão, removido 04/08/2026 |
 
-**Fechados de ponta a ponta: 7 de 16** (1, 2, 3, 4, 6, 7, 8) — o núcleo que
-sustenta VPM e planejamento por segmento, mais Viabilidade (04/08/2026).
-**Pela metade: 3** (5, 9, 12) — existe base ou API, falta tela ou a
-segunda metade da lógica.
+**Fechados de ponta a ponta: 8 de 16** (1, 2, 3, 4, 6, 7, 8, 12) — o núcleo
+que sustenta VPM e planejamento por segmento, mais Viabilidade (04/08/2026)
+e Faturamento real vs meta (15/09/2026).
+**Pela metade: 2** (5, 9) — Passo 5 falta só o alerta de janela fenológica
+(explicitamente adiado); Passo 9 falta mostrar a estimativa planejada ao
+lado do VPM potencial em `/workspace/clientes`.
 **Zero: 6** (10, 11, 13, 14, 15, 16) — sem schema, sem rota, sem tela.
 
 ### 16.2 Épicos do Sprint 0 (Seção 4) × status real
@@ -490,7 +506,7 @@ segunda metade da lógica.
 | E3-S3 Segmentos/cultivos configuráveis | ✅ Feito | Além do escopo original: apelidos, promoção de apelido a nome, catálogo IBGE (64 culturas da PAM, 5 com separação por safra via LSPA, ver 16.7). Abas Culturas/Cultivos unificadas em uma só, "Cultura" (19-20/08/2026) |
 | E4-S1 Religar `/workspace` a dados reais | ✅ Feito | Via rota diferente da prevista: a tela foi substituída (Início), não "religada" |
 | E4-S2 Religar `/ctv`/`/manager`/`/admin`/`/governance` | ➖ Obsoleto | Removidas por serem código morto (mock, zero rota apontando pra elas), não religadas |
-| E5-S1 Persistir CSV | ❌ Não feito | Sem parser, sem conciliação, sem tela |
+| E5-S1 Persistir CSV | ✅ Feito | 15/09/2026 — ver Épico 5 e 16.10 |
 
 ### 16.3 Como manter isto atualizado
 
@@ -1069,3 +1085,57 @@ limpo, `eslint` limpo, `next build` completo (37 rotas) sem erros — e cada
 fix de UI conferido ao vivo no navegador (login real, tenant A), não só
 por tipo/build. `docs/schema_completo_supabase.sql` segue como espelho
 fiel do banco live.
+
+### 16.12 Épico 5 (ingestão de faturamento) + fecha o Passo 5 (Acompanhamento Orçamentário) (15/09/2026)
+
+Pedido do Daniel na call de 15/09 com o Marco Polo: "o que falta [do Passo
+5] é aquela parte de monitoramento ao longo da safra, que é o acompanhamento
+orçamentário." Auditoria confirmou que a "tabela de resultado" citada como
+referência não existe viva no código (o mais próximo é `ExecutiveCockpit.tsx`,
+deletado em 04/08/2026 por ser 100% mock) — construído do zero sobre dados
+reais, não uma resurreição desse componente.
+
+**Entregue:** migration `20260915120000` (constraint `UNIQUE(tenant_id, mes,
+id_ctv, segmento)` em `faturamento_snapshots`, aplicada via `supabase db
+push`); `FaturamentoImportService.ts` + `/api/faturamento/import` (dry-run/
+commit, mesmo padrão do importador de clientes) fecham o Épico 5; nova aba
+"Acompanhamento" em Planejamento (`/api/planejamento/acompanhamento` +
+`Acompanhamento.tsx`) fecha a metade que faltava do Passo 5 — meta (recalculada
+na hora de `planejamento_cliente_segmento`) vs realizado (importado),
+Saldo TO-GO, rollup território→distrital→regional pra admin (reaproveita o
+padrão de `estrutura-comercial/page.tsx`), só a própria linha pra não-admin.
+
+**Dois bugs reais achados testando ao vivo (não por leitura de código):**
+1. `parseBRLParaCentavos` (`src/lib/utils.ts`, consolidado de duas cópias
+   idênticas em `ITMatrix.tsx`/`viabilidade/page.tsx` nesta mesma sessão)
+   inflava valores em 100x pra qualquer texto com decimal em ponto
+   ("1000.00" virava R$100.000,00) — o comentário da função já prometia
+   aceitar esse formato, o código nunca entregou. Achado importando um CSV
+   de teste. Corrigido pra desambiguar "." vs "," pelo último separador que
+   aparece, com teste de unidade cobrindo os dois formatos (não existia
+   nenhum teste pra essa função antes).
+2. **Vazamento de dado entre sessões na mesma aba**: o `QueryClient` do
+   React Query é um singleton com `staleTime` global de 5min
+   (`QueryProvider.tsx`) e `handleLogout` (`Sidebar.tsx`) nunca limpava o
+   cache — o próximo login na mesma aba reaproveitava dado (financeiro,
+   inclusive) do usuário/tenant anterior até cada query expirar sozinha.
+   Reproduzido de forma determinística: `naoadmin.teste@metacampo.com`
+   via, na tela, os 3 cards de CTV do admin de Tenant A logo após logar,
+   mesmo com `/api/planejamento/acompanhamento` e `/api/auth/session`
+   respondendo corretamente e de forma isolada quando consultados direto
+   (confirma que o servidor/RLS nunca esteve errado — o vazamento era
+   100% de cache do navegador). **Esta é muito provavelmente a causa raiz
+   do incidente registrado em memória de sessão de 17/08/2026 ("sessão
+   trocou de tenant"), na época investigado e encerrado como "RLS
+   reverificado são, causa do cookie não identificada"** — o "cookie" nunca
+   foi o problema; o suspeito certo era o cache do React Query.
+   Corrigido com `queryClient.clear()` em `handleLogout`.
+
+**Verificação:** `tsc --noEmit`/`eslint` limpos; 56 testes `vitest` passando
+(19 novos: `FaturamentoImportService`, `utils.parseBRLParaCentavos`);
+`npm run test:rls` com `faturamento_snapshots` incluído, isolamento
+confirmado com 2 JWTs reais; fluxo de import (criar → substituir mesmo mês
+→ segmento não reconhecido bloqueia) testado ao vivo no tenant de teste;
+visibilidade admin-vs-não-admin re-testada ao vivo **depois** do fix de
+cache, com logout/login real entre as duas contas, confirmando que o
+vazamento não se repete.
